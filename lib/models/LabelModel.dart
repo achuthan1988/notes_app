@@ -4,7 +4,6 @@ class LabelModel {
 
   LabelModel(this.labelTitle);
 
-
   LabelModel.param(this.id, this.labelTitle);
 
   Map<String, dynamic> toMap() {
@@ -13,5 +12,4 @@ class LabelModel {
       'labelTitle': labelTitle,
     };
   }
-
 }

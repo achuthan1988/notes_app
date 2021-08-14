@@ -4,10 +4,93 @@ import 'package:notes_app/models/LabelModel.dart';
 import 'package:notes_app/models/NotesModel.dart';
 import 'package:notes_app/util/HexColor.dart';
 import 'package:path/path.dart';
+import 'package:popover/popover.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'new_note_page.dart';
 import 'util/constants.dart' as Constants;
+
+class PalletteWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Scrollbar(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: ListView(
+            padding: const EdgeInsets.all(8),
+            children: [
+              InkWell(
+                onTap: () {},
+                child: Container(
+                  height: 50,
+                  color: Colors.amber[100],
+                  child: const Center(child: Text('Entry A')),
+                ),
+              ),
+              const Divider(),
+              Container(
+                height: 50,
+                color: Colors.amber[200],
+                child: const Center(child: Text('Entry B')),
+              ),
+              const Divider(),
+              Container(
+                height: 50,
+                color: Colors.amber[300],
+                child: const Center(child: Text('Entry C')),
+              ),
+              const Divider(),
+              Container(
+                height: 50,
+                color: Colors.amber[400],
+                child: const Center(child: Text('Entry D')),
+              ),
+              const Divider(),
+              Container(
+                height: 50,
+                color: Colors.amber[500],
+                child: const Center(child: Text('Entry E')),
+              ),
+              const Divider(),
+              Container(
+                height: 50,
+                color: Colors.amber[600],
+                child: const Center(child: Text('Entry F')),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // TODO: implement build
+    // return GridView.builder(
+    //   padding: EdgeInsets.all(2.0),
+    //   itemBuilder: (context, position) {
+    //     return GestureDetector(
+    //       onTap: () {
+    //         print("on Tap of pallette pop up");
+    //
+    //       },
+    //       child: Container(
+    //         width: 20,
+    //         height: 20,
+    //         decoration: BoxDecoration(
+    //             shape: BoxShape.circle, color: Constants.bgArray[0]),
+    //       ),
+    //     );
+    //   },
+    //   shrinkWrap: true,
+    //   itemCount: Constants.bgArray.length,
+    //   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+    //     crossAxisCount: 2,
+    //     crossAxisSpacing: 0.0,
+    //     mainAxisSpacing: 0.0,
+    //   ),
+    // );
+  }
+}
 
 class LandingPage extends StatefulWidget {
   @override
@@ -20,8 +103,10 @@ class _LandingPageState extends State<LandingPage> {
   bool isToggleAppBar = false;
   bool isListPopulated = false;
   List<bool> longPressList = [];
+  List<bool> labelsCheckedList = [];
   List<NotesModel> notesModelList = new List<NotesModel>();
   List<LabelModel> labelModelList = new List<LabelModel>();
+  List<NotesModel> longPressedNotesList = [];
   var sliderTitleArray = ["Home", "Edit Labels", "Settings"];
   var sliderIconsArray = [Icons.home_rounded, Icons.edit, Icons.settings];
   static int numOfNotesSelected = 0;
@@ -90,6 +175,7 @@ class _LandingPageState extends State<LandingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        resizeToAvoidBottomInset: false,
         appBar: (!isToggleAppBar
             ? AppBar(
                 title: Text("Landing Page"),
@@ -135,10 +221,29 @@ class _LandingPageState extends State<LandingPage> {
                 ),
                 actions: [
                   Flexible(
-                    child: Icon(
-                      Icons.label_outline,
-                      color: Colors.blue,
-                      size: 30.0,
+                    child: GestureDetector(
+                      child: Icon(
+                        Icons.label_outline,
+                        color: Colors.blue,
+                        size: 30.0,
+                      ),
+                      onTap: () {
+                        print("label onTap pressed");
+                        /*
+                        * (1) show a dialog with UI as per set requirement
+                        * (2) Populate based on entries in Labels table
+                        * (3) attaching a note(s) with labels and updating in DB
+                        * (4) displaying button tags(needs to be seen whether
+                        *  to display button tags in landing/detailed because
+                        *  of spacing constraints).
+                        * (5) Sidebar also has the list of labels, click
+                        * displays notes for each label.(dynamic sidebar).
+                        * (6)
+                        *
+                        * */
+
+                        showLabelsDialog(context);
+                      },
                     ),
                   ),
                   Flexible(
@@ -150,6 +255,18 @@ class _LandingPageState extends State<LandingPage> {
                       ),
                       onTap: () {
                         print("pallette icon clicked!!");
+
+                        showPopover(
+                          context: context,
+                          transitionDuration: const Duration(milliseconds: 150),
+                          bodyBuilder: (context) => PalletteWidget(),
+                          onPop: () => print('Popover was popped!'),
+                          direction: PopoverDirection.bottom,
+                          width: 200,
+                          height: 400,
+                          arrowHeight: 15,
+                          arrowWidth: 30,
+                        );
                       },
                     ),
                   ),
@@ -230,6 +347,8 @@ class _LandingPageState extends State<LandingPage> {
                             if (!longPressList[position]) {
                               setState(() {
                                 longPressList[position] = true;
+                                longPressedNotesList
+                                    .add(notesModelList[position]);
                                 isToggleAppBar = true;
                                 numOfNotesSelected += 1;
                               });
@@ -334,6 +453,201 @@ class _LandingPageState extends State<LandingPage> {
                       ),
                     );
             }));
+  }
+
+  BoxDecoration myBoxDecoration() {
+    return BoxDecoration(
+      border: Border.all(width: 3.0),
+      borderRadius: BorderRadius.all(
+          Radius.circular(3.0) //                 <--- border radius here
+          ),
+    );
+  }
+
+  showLabelsDialog(BuildContext context) {
+    TextEditingController controller = new TextEditingController();
+    List<String> labelIdsList = [];
+    AlertDialog alert;
+    // set up the button
+    Widget okButton = TextButton(
+      child: Text("OK"),
+      onPressed: () {
+        var idString = labelIdsList.join(",");
+        print("idString: $idString");
+        updateNotesIdList(idString, longPressedNotesList);
+        Navigator.pop(context);
+
+        /*
+        * (1) Update noteLabelIdsStr column of corresponding note in first
+        * table with the above string.
+        * (2) UI of note to be updated with string labels of ids selected ,
+        * with first two notes shown wrap and more than 2 labels to be shown
+        * as +1 etc as third note.Detailed labels to be shown in detailed on
+        * click of note.
+        * (3)
+        *
+        *
+        * */
+      },
+    );
+
+    // set up the AlertDialog
+    alert = AlertDialog(
+      content: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: StatefulBuilder(builder: (context, _mainSetState) {
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.topLeft,
+                child: Text("Label Note",
+                    style: TextStyle(
+                        fontSize: 14.0,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w800)),
+              ),
+              SizedBox(height: 2),
+              Theme(
+                data: new ThemeData(
+                  primaryColor: Colors.black26,
+                  primaryColorDark: Colors.black,
+                ),
+                child: SizedBox(
+                  height: 40.0,
+                  child: TextField(
+                    onChanged: ((String txt) {
+                      print("Textfield onChanged String $txt");
+                    }),
+                    onTap: () {
+                      print("onTap()");
+                    },
+                    autofocus: true,
+                    maxLines: 1,
+                    controller: controller,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 12.0,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w600),
+                    decoration: InputDecoration(
+                      contentPadding: EdgeInsets.all(7.0),
+                      isDense: true,
+                      border: new OutlineInputBorder(
+                        borderSide: new BorderSide(color: Colors.black26),
+                      ),
+                      hintText: "Enter Label",
+                      hintStyle: TextStyle(
+                          fontSize: 14.0,
+                          color: Colors.black26,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ),
+              Container(
+                margin: EdgeInsets.only(top: 5.0),
+                child: FutureBuilder(
+                    future: getAllLabels(),
+                    builder: (context, AsyncSnapshot snapshot) {
+                      if (!snapshot.hasData) {
+                        return Center(child: Text(""));
+                      } else {
+                        return Container(
+                          height: 200.0,
+                          key: UniqueKey(),
+                          child: ListView.builder(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: snapshot.data.length,
+                              scrollDirection: Axis.vertical,
+                              shrinkWrap: true,
+                              itemBuilder: (BuildContext context, int index) {
+                                return StatefulBuilder(
+                                    builder: (_context, _setState) {
+                                  return Container(
+                                      height: 25.0,
+                                      key: UniqueKey(),
+                                      child: Row(key: UniqueKey(), children: [
+                                        Icon(Icons.label,
+                                            color: Colors.black54),
+                                        Expanded(
+                                          child: Center(
+                                            child: Text(
+                                              snapshot.data[index].labelTitle,
+                                              style: TextStyle(
+                                                  fontSize: 12.0,
+                                                  color: Colors.black54,
+                                                  fontWeight: FontWeight.w800),
+                                            ),
+                                          ),
+                                        ),
+                                        Checkbox(
+                                            checkColor: Colors.white,
+                                            value: labelsCheckedList[index],
+                                            onChanged: (bool value) {
+                                              _setState(() {
+                                                labelsCheckedList[index] =
+                                                    value;
+                                                String idCurrent = snapshot
+                                                    .data[index].id
+                                                    .toString();
+                                                if (labelIdsList
+                                                    .contains(idCurrent)) {
+                                                  labelIdsList
+                                                      .remove(idCurrent);
+                                                } else {
+                                                  labelIdsList.add(idCurrent);
+                                                }
+                                              });
+                                            }),
+                                      ]));
+                                });
+                              }),
+                        );
+                      }
+                    }),
+              ),
+              Divider(),
+              GestureDetector(
+                child: Container(
+                  child: Row(
+                    children: [
+                      Icon(Icons.add, color: Colors.black54),
+                      Text(
+                        "Create Label",
+                        style: TextStyle(color: Colors.black54, fontSize: 12.0),
+                      )
+                    ],
+                  ),
+                ),
+                onTap: () {
+                  if (controller.value.toString().isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      content: Text("Enter a label title"),
+                    ));
+                  } else {
+                    var labelObject = LabelModel(controller.text.toString());
+                    insertNewLabel(labelObject);
+                    controller.text = "";
+                    _mainSetState(() {});
+                  }
+                },
+              )
+            ],
+          );
+        }),
+      ),
+      actions: [okButton],
+    );
+    labelIdsList = [];
+    // show the dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
   }
 
 /*  void _showPopupMenu(BuildContext context, Offset offset) async {
@@ -461,6 +775,7 @@ class _LandingPageState extends State<LandingPage> {
                                 onTap: () {
                                   print("close note clicked!");
                                   _setState(() {
+                                    longPressedNotesList = [];
                                     isNewNoteAdded = false;
                                   });
                                 },
@@ -741,6 +1056,22 @@ class _LandingPageState extends State<LandingPage> {
     return updateCount;
   }
 
+  Future<void> updateNotesIdList(
+      String labelIdsStr, List<NotesModel> longPressedNotesList) async {
+    print("inside updateNotesIdList() longPressedNotesList.length: "
+        "${longPressedNotesList.length} labelIdsStr :$labelIdsStr");
+    notesDB =
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+
+    for (int i = 0; i < longPressedNotesList.length; i++) {
+      Map<String, dynamic> row = {'noteLabelIdsStr': labelIdsStr};
+      int updateCount = await notesDB.update('notes', row,
+          where: 'id = ?', whereArgs: [longPressedNotesList[i].id]);
+      print("inside updateNotesIdList updateCount: $updateCount");
+    }
+    
+  }
+
   Future<int> deleteLabel(LabelModel model) async {
     print("inside deleteLabel() modelID: ${model.id}");
 
@@ -784,6 +1115,7 @@ class _LandingPageState extends State<LandingPage> {
     if (!isListPopulated) {
       longPressList =
           List<bool>.generate(notesModelList.length, (int index) => false);
+
       isListPopulated = true;
     }
     return notesModelList;
@@ -797,7 +1129,8 @@ class _LandingPageState extends State<LandingPage> {
     final List<Map<String, dynamic>> maps = await db.query('notes');
     // Convert the List<Map<String, dynamic> into a List<NotesModel>.
     return List.generate(maps.length, (i) {
-      return NotesModel(
+      return NotesModel.param(
+          maps[i]['id'],
           maps[i]['noteTitle'],
           maps[i]['noteContent'],
           maps[i]['noteType'],
@@ -817,6 +1150,7 @@ class _LandingPageState extends State<LandingPage> {
     final List<Map<String, dynamic>> maps = await db.query('TblLabels');
     // Convert the List<Map<String, dynamic> into a List<Label>.
     print("getAllLabels size ${maps.length}");
+    labelsCheckedList = List<bool>.generate(maps.length, (int index) => false);
     return List.generate(maps.length, (i) {
       return LabelModel.param(maps[i]['id'], maps[i]['labelTitle']);
     });
