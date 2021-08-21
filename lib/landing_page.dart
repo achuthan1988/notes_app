@@ -169,6 +169,7 @@ class _LandingPageState extends State<LandingPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    initDB();
     numOfNotesSelected = 0;
   }
 
@@ -231,11 +232,13 @@ class _LandingPageState extends State<LandingPage> {
                         print("label onTap pressed");
                         /*
                         * (1) show a dialog with UI as per set requirement
-                        * (2) Populate based on entries in Labels table
-                        * (3) attaching a note(s) with labels and updating in DB
+                        * (done)
+                        * (2) Populate based on entries in Labels table (done)
+                        * (3) attaching a note(s) with labels and updating in
+                        *  DB (done)
                         * (4) displaying button tags(needs to be seen whether
                         *  to display button tags in landing/detailed because
-                        *  of spacing constraints).
+                        *  of spacing constraints).(done)
                         * (5) Sidebar also has the list of labels, click
                         * displays notes for each label.(dynamic sidebar).
                         * (6)
@@ -323,10 +326,19 @@ class _LandingPageState extends State<LandingPage> {
         body: FutureBuilder<List>(
             future: initDB(),
             builder: (context, snapshot) {
+              print("inside builder of FutureBuilder ${snapshot.hasData}");
+
               return snapshot.hasData
                   ? GridView.builder(
                       padding: EdgeInsets.all(2.0),
                       itemBuilder: (context, position) {
+                        print("inside itemBuilder of GridView");
+                        List<Widget> widgetList = getLabelTagWidgets(
+                            notesModelList[position],
+                            notesModelList[position].noteBgColorHex);
+                        print("inside itemBuilder widgetList.length "
+                            "${widgetList.length}");
+
                         return GestureDetector(
                           onTap: () {
                             NotesModel notesModel = notesModelList[position];
@@ -337,13 +349,16 @@ class _LandingPageState extends State<LandingPage> {
                                         notesModel, 'heroTag $position')));
                           },
                           onLongPress: () {
-                            print("inside onLongPress");
+                            print("inside onLongPress longPressList[position]"
+                                " ${longPressList[position]}");
                             /*(1) set indicator to denote selection on note
-                      (2) Update counter in new app bar , based on number of notes selected
-                      (3) Click of close ('X') button , deselects all notes ,restores default app bar
+                            (done)
+                      (2) Update counter in new app bar , based on number of notes selected(done)
+                      (3) Click of close ('X') button , deselects all notes ,restores default app bar(done)
                       (4) functionality for label icon , palette icon , options menu features , (multiple notes cases to be kept in mind)
                       (5)
                     * */
+
                             if (!longPressList[position]) {
                               setState(() {
                                 longPressList[position] = true;
@@ -367,47 +382,46 @@ class _LandingPageState extends State<LandingPage> {
                                       color: HexColor(notesModelList[position]
                                           .noteBgColorHex)),
                                   child: Column(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisSize: MainAxisSize.max,
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
+                                        CrossAxisAlignment.start,
                                     children: [
+                                      Flexible(
+                                        child: Container(
+                                          padding: EdgeInsets.all(2.0),
+                                          child: Text(
+                                            notesModelList[position].noteTitle,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                                fontSize: 14.0,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w600),
+                                          ),
+                                        ),
+                                      ),
+                                      Flexible(
+                                        child: Container(
+                                          padding: EdgeInsets.all(2.0),
+                                          child: Text(
+                                            notesModelList[position]
+                                                .noteContent,
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 10,
+                                            style: TextStyle(
+                                                fontSize: 12.0,
+                                                color: Colors.black,
+                                                fontWeight: FontWeight.w300),
+                                          ),
+                                        ),
+                                      ),
                                       Expanded(
-                                        child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Flexible(
-                                              child: Container(
-                                                padding: EdgeInsets.all(2.0),
-                                                child: Text(
-                                                  notesModelList[position]
-                                                      .noteTitle,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  style: TextStyle(
-                                                      fontSize: 14.0,
-                                                      color: Colors.black,
-                                                      fontWeight:
-                                                          FontWeight.w600),
-                                                ),
-                                              ),
-                                            ),
-                                            Container(
-                                              padding: EdgeInsets.all(2.0),
-                                              child: Text(
-                                                notesModelList[position]
-                                                    .noteContent,
-                                                overflow: TextOverflow.ellipsis,
-                                                maxLines: 10,
-                                                style: TextStyle(
-                                                    fontSize: 12.0,
-                                                    color: Colors.black,
-                                                    fontWeight:
-                                                        FontWeight.w300),
-                                              ),
-                                            ),
-                                          ],
+                                        child: Align(
+                                          alignment: Alignment.bottomLeft,
+                                          child: Wrap(
+                                            children: widgetList,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -455,6 +469,157 @@ class _LandingPageState extends State<LandingPage> {
             }));
   }
 
+  Color darkerColorByPerc(Color color, [double amount = .1]) {
+    assert(amount >= 0 && amount <= 1);
+
+    final hsl = HSLColor.fromColor(color);
+    final hslDark = hsl.withLightness((hsl.lightness - amount).clamp(0.0, 1.0));
+
+    return hslDark.toColor();
+  }
+
+  List<Widget> getLabelTagWidgets(NotesModel notesModel, String bgHexStr) {
+    print("inside getLabelTagWidgets()");
+    Color bgTagColor = darkerColorByPerc(HexColor(bgHexStr), 0.15);
+    String labelIdsStr = notesModel.noteLabelIdsStr;
+    print("in getLabelTagWidgets labelIdsStr: $labelIdsStr");
+    List<String> labelIdArr = labelIdsStr.split(",");
+    List<String> selectedLabelsStrArr = [];
+    List<Widget> widgetList = [];
+    int totalLabelSize = labelIdArr.length;
+    int noOfLabelCounters = totalLabelSize > 2 ? (totalLabelSize - 2) : 0;
+    Widget trailingWidget = (noOfLabelCounters > 0
+        ? Container(
+            margin: EdgeInsets.all(3.0),
+            child: Text(
+              "+" + noOfLabelCounters.toString(),
+              style: TextStyle(
+                  fontSize: 12.0,
+                  color: Colors.black45,
+                  fontWeight: FontWeight.w800),
+            ),
+            decoration: BoxDecoration(
+              color: bgTagColor,
+              border: Border.all(
+                color: Colors.transparent,
+                width: 2.0,
+              ),
+              borderRadius: BorderRadius.circular(5.0),
+            ),
+          )
+        : null);
+
+    print(
+        "inside getLabelTagWidgets labelModelList.length ${labelModelList.length}");
+    print("inside getLabelTagWidgets labelIdArr.length ${labelIdArr.length} "
+        "labelIdArr ${labelIdArr[0]}");
+
+    if (labelIdsStr != "") {
+      for (int i = 0; i < labelModelList.length; i++) {
+        for (int j = 0; j < labelIdArr.length; j++) {
+          if (labelModelList[i].id == int.parse(labelIdArr[j])) {
+            selectedLabelsStrArr.add(labelModelList[i].labelTitle);
+          }
+        }
+      }
+      int finalSize =
+          (selectedLabelsStrArr.length > 2 ? (2) : selectedLabelsStrArr.length);
+
+      for (int i = 0; i < finalSize; i++) {
+        print("labelTitle ${selectedLabelsStrArr[i]}");
+        String labelTitle = selectedLabelsStrArr[i].trim();
+
+        widgetList.add(Container(
+          margin: EdgeInsets.all(3.0),
+          child: SizedBox(
+            width: 50.0,
+            child: Text(
+              labelTitle,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 12.0,
+                  color: Colors.black45,
+                  fontWeight: FontWeight.w800),
+            ),
+          ),
+          decoration: BoxDecoration(
+            color: bgTagColor,
+            border: Border.all(
+              color: Colors.transparent,
+              width: 2.0,
+            ),
+            borderRadius: BorderRadius.circular(5.0),
+          ),
+        ));
+      }
+
+      if (trailingWidget != null) {
+        widgetList.add(trailingWidget);
+      }
+      print(
+          "inside getLabelTagWidgets() widgetList.length: ${widgetList.length}");
+    }
+    return widgetList;
+  }
+
+  // Future<List<Widget>> getLabelChips(int position) async {
+  //   print("inside getLabelChips()");
+  //   List<Widget> widgetList = [];
+  //   notesDB =
+  //       await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+  //
+  //   String labelIdsStr = notesModelList[position].noteLabelIdsStr;
+  //   List<String> labelIdArr = labelIdsStr.split(",");
+  //   int totalLabelSize = labelIdArr.length;
+  //   int noOfLabelCounters = totalLabelSize > 2 ? (totalLabelSize - 2) : 0;
+  //   Widget trailingWidget = (noOfLabelCounters > 0
+  //       ? Container(child: Text("+" + noOfLabelCounters.toString()))
+  //       : null);
+  //   int finalSize =
+  //       (totalLabelSize > 2 ? (totalLabelSize - 2) : totalLabelSize);
+  //
+  //   for (int i = 0; i < finalSize; i++) {
+  //     List<String> columnsToSelect = ["labelTitle"];
+  //     String whereString = 'id = ?';
+  //     List<dynamic> whereArguments = [labelIdArr[i]];
+  //     List<Map> result = await notesDB.query("TblLabels",
+  //         columns: columnsToSelect,
+  //         where: whereString,
+  //         whereArgs: whereArguments);
+  //
+  //     result.forEach((row) {
+  //       String labelTitle = row
+  //           .toString()
+  //           .substring(0, row.toString().length - 1)
+  //           .split(":")[1]
+  //           .trim();
+  //       widgetList.add(Container(
+  //         child: Text(
+  //           labelTitle,
+  //           style: TextStyle(
+  //               fontSize: 12.0,
+  //               color: Colors.black45,
+  //               fontWeight: FontWeight.w800),
+  //         ),
+  //         decoration: BoxDecoration(
+  //           color: Colors.transparent,
+  //           border: Border.all(
+  //             color: Colors.transparent,
+  //             width: 2.0,
+  //           ),
+  //           borderRadius: BorderRadius.circular(15),
+  //         ),
+  //       ));
+  //     });
+  //
+  //     if (trailingWidget != null) {
+  //       widgetList.add(trailingWidget);
+  //     }
+  //   }
+  //
+  //   return widgetList;
+  // }
+
   BoxDecoration myBoxDecoration() {
     return BoxDecoration(
       border: Border.all(width: 3.0),
@@ -467,6 +632,7 @@ class _LandingPageState extends State<LandingPage> {
   showLabelsDialog(BuildContext context) {
     TextEditingController controller = new TextEditingController();
     List<String> labelIdsList = [];
+    String selectedLabelsStr = "";
     AlertDialog alert;
     // set up the button
     Widget okButton = TextButton(
@@ -474,7 +640,9 @@ class _LandingPageState extends State<LandingPage> {
       onPressed: () {
         var idString = labelIdsList.join(",");
         print("idString: $idString");
-        updateNotesIdList(idString, longPressedNotesList);
+        if (idString != "") {
+          updateNotesIdList(idString, longPressedNotesList);
+        }
         Navigator.pop(context);
 
         /*
@@ -490,7 +658,13 @@ class _LandingPageState extends State<LandingPage> {
         * */
       },
     );
+    print("longPressedNotesList.length ${longPressedNotesList.length}");
 
+    if (longPressedNotesList.length == 1) {
+      selectedLabelsStr = longPressedNotesList[0].noteLabelIdsStr;
+    }
+
+    print("in showLabelsDialog selectedLabelsStr $selectedLabelsStr");
     // set up the AlertDialog
     alert = AlertDialog(
       content: SingleChildScrollView(
@@ -583,7 +757,11 @@ class _LandingPageState extends State<LandingPage> {
                                         ),
                                         Checkbox(
                                             checkColor: Colors.white,
-                                            value: labelsCheckedList[index],
+                                            value: (selectedLabelsStr.contains(
+                                                    snapshot.data[index].id
+                                                        .toString())
+                                                ? true
+                                                : labelsCheckedList[index]),
                                             onChanged: (bool value) {
                                               _setState(() {
                                                 labelsCheckedList[index] =
@@ -1069,7 +1247,6 @@ class _LandingPageState extends State<LandingPage> {
           where: 'id = ?', whereArgs: [longPressedNotesList[i].id]);
       print("inside updateNotesIdList updateCount: $updateCount");
     }
-    
   }
 
   Future<int> deleteLabel(LabelModel model) async {
@@ -1084,6 +1261,7 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Future<List> initDB() async {
+    print("inside initDB()");
     WidgetsFlutterBinding.ensureInitialized();
 // Open the database and store the reference.
     final Future<Database> database = openDatabase(
@@ -1107,7 +1285,7 @@ class _LandingPageState extends State<LandingPage> {
       // path to perform database upgrades and downgrades.
       version: 1,
     );
-    notesDB = database;
+    notesDB = await database;
 
     notesModelList = await getAllNotes();
     labelModelList = await getAllLabels();
@@ -1118,15 +1296,20 @@ class _LandingPageState extends State<LandingPage> {
 
       isListPopulated = true;
     }
+    print("inside initDB() labelModelList.length ${labelModelList.length}");
+    print("inside initDB() notesModelList.length ${notesModelList.length}");
+
     return notesModelList;
   }
 
   Future<List<NotesModel>> getAllNotes() async {
+    print("inside getAllNotes()");
     // Get a reference to the database.
     final Database db = await notesDB;
 
     // Query the table for all The Notes.
     final List<Map<String, dynamic>> maps = await db.query('notes');
+    print("length of notes map: ${maps.length}");
     // Convert the List<Map<String, dynamic> into a List<NotesModel>.
     return List.generate(maps.length, (i) {
       return NotesModel.param(
@@ -1143,13 +1326,22 @@ class _LandingPageState extends State<LandingPage> {
 
   Future<List<LabelModel>> getAllLabels() async {
     print("inside getAllLabels()");
-    // Get a reference to the database.
-    final Database db = await notesDB;
-
     // Query the table for all The Labels.
-    final List<Map<String, dynamic>> maps = await db.query('TblLabels');
+    final List<Map<String, dynamic>> maps = await notesDB.query('TblLabels');
     // Convert the List<Map<String, dynamic> into a List<Label>.
     print("getAllLabels size ${maps.length}");
+    labelsCheckedList = List<bool>.generate(maps.length, (int index) => false);
+    return List.generate(maps.length, (i) {
+      return LabelModel.param(maps[i]['id'], maps[i]['labelTitle']);
+    });
+  }
+
+  Future<List<LabelModel>> getSelectedLabels() async {
+    print("inside getSelectedLabels()");
+    // Query the table for all The Labels.
+    final List<Map<String, dynamic>> maps = await notesDB.query('TblLabels');
+    // Convert the List<Map<String, dynamic> into a List<Label>.
+    print("getSelectedLabels size ${maps.length}");
     labelsCheckedList = List<bool>.generate(maps.length, (int index) => false);
     return List.generate(maps.length, (i) {
       return LabelModel.param(maps[i]['id'], maps[i]['labelTitle']);
