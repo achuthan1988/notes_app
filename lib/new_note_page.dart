@@ -77,7 +77,10 @@ class _NewNotePageState extends State<NewNotePage> {
         notesDB = db;
         // Run the CREATE TABLE statement on the database.
         db.execute(
-          "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT)",
+          "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
+          " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
+          "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT,"
+          "isNotePinned INTEGER)",
         );
         db.execute(
             "CREATE TABLE TblLabels(id INTEGER PRIMARY KEY AUTOINCREMENT, labelTitle TEXT)");
@@ -245,7 +248,8 @@ class _NewNotePageState extends State<NewNotePage> {
         '#${bgHexMain.value.toRadixString(16)}',
         "",
         "",
-        "");
+        "",
+        0);
 
     return noteObject;
   }

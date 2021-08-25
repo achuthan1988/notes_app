@@ -4,93 +4,10 @@ import 'package:notes_app/models/LabelModel.dart';
 import 'package:notes_app/models/NotesModel.dart';
 import 'package:notes_app/util/HexColor.dart';
 import 'package:path/path.dart';
-import 'package:popover/popover.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'new_note_page.dart';
 import 'util/constants.dart' as Constants;
-
-class PalletteWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      child: Scrollbar(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: ListView(
-            padding: const EdgeInsets.all(8),
-            children: [
-              InkWell(
-                onTap: () {},
-                child: Container(
-                  height: 50,
-                  color: Colors.amber[100],
-                  child: const Center(child: Text('Entry A')),
-                ),
-              ),
-              const Divider(),
-              Container(
-                height: 50,
-                color: Colors.amber[200],
-                child: const Center(child: Text('Entry B')),
-              ),
-              const Divider(),
-              Container(
-                height: 50,
-                color: Colors.amber[300],
-                child: const Center(child: Text('Entry C')),
-              ),
-              const Divider(),
-              Container(
-                height: 50,
-                color: Colors.amber[400],
-                child: const Center(child: Text('Entry D')),
-              ),
-              const Divider(),
-              Container(
-                height: 50,
-                color: Colors.amber[500],
-                child: const Center(child: Text('Entry E')),
-              ),
-              const Divider(),
-              Container(
-                height: 50,
-                color: Colors.amber[600],
-                child: const Center(child: Text('Entry F')),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    // TODO: implement build
-    // return GridView.builder(
-    //   padding: EdgeInsets.all(2.0),
-    //   itemBuilder: (context, position) {
-    //     return GestureDetector(
-    //       onTap: () {
-    //         print("on Tap of pallette pop up");
-    //
-    //       },
-    //       child: Container(
-    //         width: 20,
-    //         height: 20,
-    //         decoration: BoxDecoration(
-    //             shape: BoxShape.circle, color: Constants.bgArray[0]),
-    //       ),
-    //     );
-    //   },
-    //   shrinkWrap: true,
-    //   itemCount: Constants.bgArray.length,
-    //   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-    //     crossAxisCount: 2,
-    //     crossAxisSpacing: 0.0,
-    //     mainAxisSpacing: 0.0,
-    //   ),
-    // );
-  }
-}
 
 class LandingPage extends StatefulWidget {
   @override
@@ -102,68 +19,14 @@ class _LandingPageState extends State<LandingPage> {
   var notesDB;
   bool isToggleAppBar = false;
   bool isListPopulated = false;
-  List<bool> longPressList = [];
+
   List<bool> labelsCheckedList = [];
   List<NotesModel> notesModelList = new List<NotesModel>();
   List<LabelModel> labelModelList = new List<LabelModel>();
-  List<NotesModel> longPressedNotesList = [];
+  Map longPressedNotesMap = new Map();
   var sliderTitleArray = ["Home", "Edit Labels", "Settings"];
   var sliderIconsArray = [Icons.home_rounded, Icons.edit, Icons.settings];
   static int numOfNotesSelected = 0;
-  var _defaultAppBar = AppBar(
-    title: Text("Landing Page"),
-  );
-  var _selectedAppBar = AppBar(
-    backgroundColor: Colors.white,
-    leading: Padding(
-      padding: const EdgeInsets.all(5.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly, // set your alignment
-        children: [
-          Flexible(
-            child: Icon(
-              Icons.close,
-              color: Colors.blue,
-              size: 30.0,
-            ),
-          ),
-          Spacer(),
-          Flexible(
-            child: Text(
-              numOfNotesSelected.toString(),
-              style: TextStyle(
-                  color: Colors.blue,
-                  fontSize: 20.0,
-                  fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    ),
-    actions: [
-      Flexible(
-        child: Icon(
-          Icons.label_outline,
-          color: Colors.blue,
-          size: 30.0,
-        ),
-      ),
-      Flexible(
-        child: Icon(
-          Icons.color_lens_outlined,
-          color: Colors.blue,
-          size: 30.0,
-        ),
-      ),
-      Flexible(
-        child: Icon(
-          Icons.more_vert,
-          color: Colors.blue,
-          size: 30.0,
-        ),
-      )
-    ],
-  );
 
   @override
   void initState() {
@@ -201,8 +64,9 @@ class _LandingPageState extends State<LandingPage> {
                             setState(() {
                               isToggleAppBar = false;
                               numOfNotesSelected = 0;
-                              longPressList = List<bool>.generate(
-                                  notesModelList.length, (int index) => false);
+                              notesModelList.forEach((notesModel) {
+                                longPressedNotesMap[notesModel.id] = false;
+                              });
                             });
                           },
                         ),
@@ -259,17 +123,17 @@ class _LandingPageState extends State<LandingPage> {
                       onTap: () {
                         print("pallette icon clicked!!");
 
-                        showPopover(
-                          context: context,
-                          transitionDuration: const Duration(milliseconds: 150),
-                          bodyBuilder: (context) => PalletteWidget(),
-                          onPop: () => print('Popover was popped!'),
-                          direction: PopoverDirection.bottom,
-                          width: 200,
-                          height: 400,
-                          arrowHeight: 15,
-                          arrowWidth: 30,
-                        );
+                        /*
+                        * (1) Show all constant 8 colors as circles , inside
+                        * an alert dialog, with no button
+                        * (2) All long pressed notes to be updated with the
+                        * selected hex color in Table.
+                        * (3) UI to reflect the new BG color for all relevant
+                        *  notes.
+                        *
+                        * */
+
+                        showColorPaletteDialog(context);
                       },
                     ),
                   ),
@@ -327,136 +191,428 @@ class _LandingPageState extends State<LandingPage> {
             future: initDB(),
             builder: (context, snapshot) {
               print("inside builder of FutureBuilder ${snapshot.hasData}");
-
               return snapshot.hasData
-                  ? GridView.builder(
-                      padding: EdgeInsets.all(2.0),
-                      itemBuilder: (context, position) {
-                        print("inside itemBuilder of GridView");
-                        List<Widget> widgetList = getLabelTagWidgets(
-                            notesModelList[position],
-                            notesModelList[position].noteBgColorHex);
-                        print("inside itemBuilder widgetList.length "
-                            "${widgetList.length}");
-
-                        return GestureDetector(
-                          onTap: () {
-                            NotesModel notesModel = notesModelList[position];
-                            Navigator.push(
-                                context,
-                                ScaleRoute(
-                                    page: NewNotePage(
-                                        notesModel, 'heroTag $position')));
-                          },
-                          onLongPress: () {
-                            print("inside onLongPress longPressList[position]"
-                                " ${longPressList[position]}");
-                            /*(1) set indicator to denote selection on note
-                            (done)
-                      (2) Update counter in new app bar , based on number of notes selected(done)
-                      (3) Click of close ('X') button , deselects all notes ,restores default app bar(done)
-                      (4) functionality for label icon , palette icon , options menu features , (multiple notes cases to be kept in mind)
-                      (5)
-                    * */
-
-                            if (!longPressList[position]) {
-                              setState(() {
-                                longPressList[position] = true;
-                                longPressedNotesList
-                                    .add(notesModelList[position]);
-                                isToggleAppBar = true;
-                                numOfNotesSelected += 1;
-                              });
-                            }
-                          },
-                          child: Hero(
-                            tag: 'heroTag $position',
-                            child: Stack(
-                              children: [
-                                Container(
-                                  margin: EdgeInsets.all(3.0),
-                                  padding: EdgeInsets.all(1.0),
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.all(
-                                          Radius.circular(7.0)),
-                                      color: HexColor(notesModelList[position]
-                                          .noteBgColorHex)),
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    mainAxisSize: MainAxisSize.max,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Flexible(
-                                        child: Container(
-                                          padding: EdgeInsets.all(2.0),
-                                          child: Text(
-                                            notesModelList[position].noteTitle,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                                fontSize: 14.0,
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.w600),
-                                          ),
-                                        ),
-                                      ),
-                                      Flexible(
-                                        child: Container(
-                                          padding: EdgeInsets.all(2.0),
-                                          child: Text(
-                                            notesModelList[position]
-                                                .noteContent,
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 10,
-                                            style: TextStyle(
-                                                fontSize: 12.0,
-                                                color: Colors.black,
-                                                fontWeight: FontWeight.w300),
-                                          ),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Align(
-                                          alignment: Alignment.bottomLeft,
-                                          child: Wrap(
-                                            children: widgetList,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                  ? SingleChildScrollView(
+                      child: new Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Visibility(
+                          visible: (notesModelList.every((notesModel) =>
+                                  (notesModel.isNotePinned == 0))
+                              ? false
+                              : true),
+                          child: Column(
+                            children: [
+                              Align(
+                                alignment: Alignment.topLeft,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(5.0),
+                                  child: Text(
+                                    "Pinned",
+                                    style: TextStyle(
+                                        fontSize: 14.0, color: Colors.black87,
+                                        fontWeight: FontWeight.w600),
                                   ),
                                 ),
-                                Positioned(
-                                  top: 0,
-                                  right: 2.0,
-                                  child: Visibility(
-                                    visible: longPressList[position],
-                                    maintainState: true,
-                                    maintainSize: true,
-                                    maintainAnimation: true,
-                                    child: Container(
-                                        width: 15.0,
-                                        height: 15.0,
-                                        child: Icon(
-                                          Icons.check_circle,
-                                          color: Colors.black87,
-                                        )),
-                                  ), //CircularAvatar
-                                ),
-                              ],
-                            ),
+                              ),
+                              GridView(
+                                  padding: EdgeInsets.all(2.0),
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 2.0,
+                                    mainAxisSpacing: 2.0,
+                                  ),
+                                  children: List.generate(
+                                      notesModelList
+                                          .where((i) => i.isNotePinned == 1)
+                                          .toList()
+                                          .length, (position) {
+                                    print("inside itemBuilder of GridView");
+                                    List<NotesModel> filteredList =
+                                        notesModelList
+                                            .where((i) => i.isNotePinned == 1)
+                                            .toList();
+                                    List<Widget> widgetList =
+                                        getLabelTagWidgets(
+                                            filteredList[position],
+                                            filteredList[position]
+                                                .noteBgColorHex);
+                                    print(
+                                        "inside itemBuilder widgetList.length "
+                                        "${widgetList.length}");
+
+                                    return GestureDetector(
+                                      onTap: () {
+                                        NotesModel notesModel =
+                                            filteredList[position];
+                                        Navigator.push(
+                                            context,
+                                            ScaleRoute(
+                                                page: NewNotePage(notesModel,
+                                                    'heroTag $position')));
+                                      },
+                                      onLongPress: () {
+                                        print(
+                                            "inside onLongPress longPressList[position]");
+
+                                        if (!longPressedNotesMap[
+                                            filteredList[position].id]) {
+                                          setState(() {
+                                            longPressedNotesMap[
+                                                    filteredList[position].id] =
+                                                true;
+                                            isToggleAppBar = true;
+                                            numOfNotesSelected += 1;
+                                          });
+                                        }
+                                      },
+                                      child: Hero(
+                                        tag: 'heroTag $position',
+                                        child: Stack(
+                                          children: [
+                                            Container(
+                                              margin: EdgeInsets.all(3.0),
+                                              padding: EdgeInsets.all(1.0),
+                                              decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(7.0)),
+                                                  color: HexColor(
+                                                      filteredList[position]
+                                                          .noteBgColorHex)),
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                mainAxisSize: MainAxisSize.max,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Align(
+                                                    alignment:
+                                                        Alignment.topRight,
+                                                    child: GestureDetector(
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(3.0),
+                                                        child: Icon(
+                                                          Icons.push_pin_sharp,
+                                                          color: Colors.black,
+                                                          size: 24.0,
+                                                        ),
+                                                      ),
+                                                      onTap: () {
+                                                        updateRowPinnedState(
+                                                            0,
+                                                            filteredList[
+                                                                position]);
+                                                      },
+                                                    ),
+                                                  ),
+                                                  Flexible(
+                                                    child: Container(
+                                                      padding:
+                                                          EdgeInsets.all(2.0),
+                                                      child: Text(
+                                                        filteredList[position]
+                                                            .noteTitle,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: TextStyle(
+                                                            fontSize: 14.0,
+                                                            color: Colors.black,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w600),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Flexible(
+                                                    child: Container(
+                                                      padding:
+                                                          EdgeInsets.all(2.0),
+                                                      child: Text(
+                                                        filteredList[position]
+                                                            .noteContent,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        maxLines: 10,
+                                                        style: TextStyle(
+                                                            fontSize: 12.0,
+                                                            color: Colors.black,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w300),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Align(
+                                                      alignment:
+                                                          Alignment.bottomLeft,
+                                                      child: Wrap(
+                                                        children: widgetList,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top: 0,
+                                              right: 2.0,
+                                              child: Visibility(
+                                                visible: longPressedNotesMap[
+                                                    filteredList[position].id],
+                                                maintainState: true,
+                                                maintainSize: true,
+                                                maintainAnimation: true,
+                                                child: Container(
+                                                    width: 15.0,
+                                                    height: 15.0,
+                                                    child: Icon(
+                                                      Icons.check_circle,
+                                                      color: Colors.black87,
+                                                    )),
+                                              ), //CircularAvatar
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  })),
+                            ],
                           ),
-                        );
-                      },
-                      shrinkWrap: true,
-                      itemCount: notesModelList.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 0.0,
-                        mainAxisSpacing: 0.0,
-                      ),
-                    )
+                        ),
+                        Visibility(
+                          visible: (notesModelList.every(
+                                  (notesModel) => notesModel.isNotePinned == 1)
+                              ? false
+                              : true),
+                          child: Column(
+                            children: [
+                              Visibility(
+                                visible: (notesModelList.every((notesModel) =>
+                                        notesModel.isNotePinned == 0)
+                                    ? false
+                                    : true),
+                                child: Align(
+                                  alignment: Alignment.topLeft,
+                                  child: Padding(
+
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Text(
+                                      "Others",
+                                      style: TextStyle(
+                                          fontSize: 14.0, color: Colors.black87,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              GridView(
+                                  padding: EdgeInsets.all(2.0),
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 2,
+                                    crossAxisSpacing: 2.0,
+                                    mainAxisSpacing: 2.0,
+                                  ),
+                                  children: List.generate(
+                                      notesModelList
+                                          .where((i) => i.isNotePinned == 0)
+                                          .toList()
+                                          .length, (position) {
+                                    print("inside itemBuilder of GridView");
+                                    List<NotesModel> filteredList =
+                                        notesModelList
+                                            .where((i) => i.isNotePinned == 0)
+                                            .toList();
+
+                                    List<Widget> widgetList =
+                                        getLabelTagWidgets(
+                                            filteredList[position],
+                                            filteredList[position]
+                                                .noteBgColorHex);
+                                    print(
+                                        "inside itemBuilder widgetList.length "
+                                        "${widgetList.length}");
+
+                                    return GestureDetector(
+                                      onTap: () {
+                                        NotesModel notesModel =
+                                            filteredList[position];
+                                        Navigator.push(
+                                            context,
+                                            ScaleRoute(
+                                                page: NewNotePage(notesModel,
+                                                    'heroTag $position')));
+                                      },
+                                      onLongPress: () {
+                                        print(
+                                            "inside onLongPress longPressList[position]");
+
+                                        if (!longPressedNotesMap[
+                                            filteredList[position].id]) {
+                                          setState(() {
+                                            longPressedNotesMap[
+                                                    filteredList[position].id] =
+                                                true;
+                                            isToggleAppBar = true;
+                                            numOfNotesSelected += 1;
+                                          });
+                                        }
+                                      },
+                                      child: Hero(
+                                        tag: 'heroTag $position',
+                                        child: Stack(
+                                          children: [
+                                            Container(
+                                              margin: EdgeInsets.all(3.0),
+                                              padding: EdgeInsets.all(1.0),
+                                              decoration: BoxDecoration(
+                                                  borderRadius:
+                                                      BorderRadius.all(
+                                                          Radius.circular(7.0)),
+                                                  color: HexColor(
+                                                      filteredList[position]
+                                                          .noteBgColorHex)),
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                mainAxisSize: MainAxisSize.max,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Align(
+                                                    alignment:
+                                                        Alignment.topRight,
+                                                    child: GestureDetector(
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(3.0),
+                                                        child: Icon(
+                                                          Icons
+                                                              .push_pin_outlined,
+                                                          color: Colors.black,
+                                                          size: 24.0,
+                                                        ),
+                                                      ),
+                                                      onTap: () {
+                                                        /*
+                                                          * (1) update pinned
+                                                          * state
+                                                          * of corresponding
+                                                          * row to 1.
+                                                          * (2) Call set
+                                                          * state to trigger
+                                                          * reordering of lists.
+                                                          * (3) Pinned
+                                                          * section and
+                                                          * others section
+                                                          * with headers to
+                                                          * be visible
+                                                          * (4) Pinned note
+                                                          * to have filled
+                                                          * pin icon
+                                                          *
+                                                          *
+                                                          *
+                                                          * */
+
+                                                        updateRowPinnedState(
+                                                            1,
+                                                            filteredList[
+                                                                position]);
+                                                      },
+                                                    ),
+                                                  ),
+                                                  Flexible(
+                                                    child: Container(
+                                                      padding:
+                                                          EdgeInsets.all(2.0),
+                                                      child: Text(
+                                                        filteredList[position]
+                                                            .noteTitle,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: TextStyle(
+                                                            fontSize: 14.0,
+                                                            color: Colors.black,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w600),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Flexible(
+                                                    child: Container(
+                                                      padding:
+                                                          EdgeInsets.all(2.0),
+                                                      child: Text(
+                                                        filteredList[position]
+                                                            .noteContent,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        maxLines: 10,
+                                                        style: TextStyle(
+                                                            fontSize: 12.0,
+                                                            color: Colors.black,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .w300),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Expanded(
+                                                    child: Align(
+                                                      alignment:
+                                                          Alignment.bottomLeft,
+                                                      child: Wrap(
+                                                        children: widgetList,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Positioned(
+                                              top: 0,
+                                              right: 2.0,
+                                              child: Visibility(
+                                                visible: longPressedNotesMap[
+                                                    filteredList[position].id],
+                                                maintainState: true,
+                                                maintainSize: true,
+                                                maintainAnimation: true,
+                                                child: Container(
+                                                    width: 15.0,
+                                                    height: 15.0,
+                                                    child: Icon(
+                                                      Icons.check_circle,
+                                                      color: Colors.black87,
+                                                    )),
+                                              ), //CircularAvatar
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  })),
+                            ],
+                          ),
+                        )
+                      ],
+                    ))
                   : Center(
                       child: Text(
                         "No Notes Added",
@@ -562,63 +718,63 @@ class _LandingPageState extends State<LandingPage> {
     return widgetList;
   }
 
-  // Future<List<Widget>> getLabelChips(int position) async {
-  //   print("inside getLabelChips()");
-  //   List<Widget> widgetList = [];
-  //   notesDB =
-  //       await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
-  //
-  //   String labelIdsStr = notesModelList[position].noteLabelIdsStr;
-  //   List<String> labelIdArr = labelIdsStr.split(",");
-  //   int totalLabelSize = labelIdArr.length;
-  //   int noOfLabelCounters = totalLabelSize > 2 ? (totalLabelSize - 2) : 0;
-  //   Widget trailingWidget = (noOfLabelCounters > 0
-  //       ? Container(child: Text("+" + noOfLabelCounters.toString()))
-  //       : null);
-  //   int finalSize =
-  //       (totalLabelSize > 2 ? (totalLabelSize - 2) : totalLabelSize);
-  //
-  //   for (int i = 0; i < finalSize; i++) {
-  //     List<String> columnsToSelect = ["labelTitle"];
-  //     String whereString = 'id = ?';
-  //     List<dynamic> whereArguments = [labelIdArr[i]];
-  //     List<Map> result = await notesDB.query("TblLabels",
-  //         columns: columnsToSelect,
-  //         where: whereString,
-  //         whereArgs: whereArguments);
-  //
-  //     result.forEach((row) {
-  //       String labelTitle = row
-  //           .toString()
-  //           .substring(0, row.toString().length - 1)
-  //           .split(":")[1]
-  //           .trim();
-  //       widgetList.add(Container(
-  //         child: Text(
-  //           labelTitle,
-  //           style: TextStyle(
-  //               fontSize: 12.0,
-  //               color: Colors.black45,
-  //               fontWeight: FontWeight.w800),
-  //         ),
-  //         decoration: BoxDecoration(
-  //           color: Colors.transparent,
-  //           border: Border.all(
-  //             color: Colors.transparent,
-  //             width: 2.0,
-  //           ),
-  //           borderRadius: BorderRadius.circular(15),
-  //         ),
-  //       ));
-  //     });
-  //
-  //     if (trailingWidget != null) {
-  //       widgetList.add(trailingWidget);
-  //     }
-  //   }
-  //
-  //   return widgetList;
-  // }
+// Future<List<Widget>> getLabelChips(int position) async {
+//   print("inside getLabelChips()");
+//   List<Widget> widgetList = [];
+//   notesDB =
+//       await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+//
+//   String labelIdsStr = notesModelList[position].noteLabelIdsStr;
+//   List<String> labelIdArr = labelIdsStr.split(",");
+//   int totalLabelSize = labelIdArr.length;
+//   int noOfLabelCounters = totalLabelSize > 2 ? (totalLabelSize - 2) : 0;
+//   Widget trailingWidget = (noOfLabelCounters > 0
+//       ? Container(child: Text("+" + noOfLabelCounters.toString()))
+//       : null);
+//   int finalSize =
+//       (totalLabelSize > 2 ? (totalLabelSize - 2) : totalLabelSize);
+//
+//   for (int i = 0; i < finalSize; i++) {
+//     List<String> columnsToSelect = ["labelTitle"];
+//     String whereString = 'id = ?';
+//     List<dynamic> whereArguments = [labelIdArr[i]];
+//     List<Map> result = await notesDB.query("TblLabels",
+//         columns: columnsToSelect,
+//         where: whereString,
+//         whereArgs: whereArguments);
+//
+//     result.forEach((row) {
+//       String labelTitle = row
+//           .toString()
+//           .substring(0, row.toString().length - 1)
+//           .split(":")[1]
+//           .trim();
+//       widgetList.add(Container(
+//         child: Text(
+//           labelTitle,
+//           style: TextStyle(
+//               fontSize: 12.0,
+//               color: Colors.black45,
+//               fontWeight: FontWeight.w800),
+//         ),
+//         decoration: BoxDecoration(
+//           color: Colors.transparent,
+//           border: Border.all(
+//             color: Colors.transparent,
+//             width: 2.0,
+//           ),
+//           borderRadius: BorderRadius.circular(15),
+//         ),
+//       ));
+//     });
+//
+//     if (trailingWidget != null) {
+//       widgetList.add(trailingWidget);
+//     }
+//   }
+//
+//   return widgetList;
+// }
 
   BoxDecoration myBoxDecoration() {
     return BoxDecoration(
@@ -627,6 +783,47 @@ class _LandingPageState extends State<LandingPage> {
           Radius.circular(3.0) //                 <--- border radius here
           ),
     );
+  }
+
+  showColorPaletteDialog(BuildContext context) {
+    AlertDialog alert;
+    String selectedBgHex = "";
+    alert = AlertDialog(
+        content: Wrap(
+      children: getPaletteWidgets(selectedBgHex, context),
+      alignment: WrapAlignment.spaceAround,
+    ));
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
+  List<Widget> getPaletteWidgets(String selectedBgHex, BuildContext context) {
+    List<Widget> widgetList = [];
+    for (int i = 0; i < Constants.bgArray.length; i++) {
+      widgetList.add(GestureDetector(
+        child: Container(
+          width: 50,
+          height: 50,
+          margin: EdgeInsets.all(2.0),
+          decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.black45, width: 0.5),
+              color: Constants.bgArray[i]),
+        ),
+        onTap: () {
+          selectedBgHex = '#${Constants.bgArray[i].value.toRadixString(16)}';
+          updateNotesBgColor(selectedBgHex, longPressedNotesMap)
+              .then((value) => Navigator.pop(context));
+        },
+      ));
+    }
+
+    return widgetList;
   }
 
   showLabelsDialog(BuildContext context) {
@@ -641,27 +838,15 @@ class _LandingPageState extends State<LandingPage> {
         var idString = labelIdsList.join(",");
         print("idString: $idString");
         if (idString != "") {
-          updateNotesIdList(idString, longPressedNotesList);
+          updateNotesIdList(idString, longPressedNotesMap);
         }
         Navigator.pop(context);
-
-        /*
-        * (1) Update noteLabelIdsStr column of corresponding note in first
-        * table with the above string.
-        * (2) UI of note to be updated with string labels of ids selected ,
-        * with first two notes shown wrap and more than 2 labels to be shown
-        * as +1 etc as third note.Detailed labels to be shown in detailed on
-        * click of note.
-        * (3)
-        *
-        *
-        * */
       },
     );
-    print("longPressedNotesList.length ${longPressedNotesList.length}");
+    print("longPressedNotesMap.length ${longPressedNotesMap.length}");
 
-    if (longPressedNotesList.length == 1) {
-      selectedLabelsStr = longPressedNotesList[0].noteLabelIdsStr;
+    if (longPressedNotesMap.length == 1) {
+      selectedLabelsStr = longPressedNotesMap[0].noteLabelIdsStr;
     }
 
     print("in showLabelsDialog selectedLabelsStr $selectedLabelsStr");
@@ -828,7 +1013,7 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-/*  void _showPopupMenu(BuildContext context, Offset offset) async {
+  void _showPopupMenu(BuildContext context, Offset offset) async {
     double left = offset.dx;
     double top = offset.dy;
     await showMenu(
@@ -840,7 +1025,7 @@ class _LandingPageState extends State<LandingPage> {
               child: const Text('Add Label'),
               onTapDown: (TapDownDetails details) {
                 Navigator.pop(context);
-                _showPopupLabels(context,offset);
+                _showPopupLabels(context, offset);
               },
             ),
             value: 'dd Label'),
@@ -850,7 +1035,6 @@ class _LandingPageState extends State<LandingPage> {
       elevation: 8.0,
     );
   }
-
 
   void _showPopupLabels(BuildContext context, Offset offset) async {
     double left = offset.dx;
@@ -862,8 +1046,7 @@ class _LandingPageState extends State<LandingPage> {
         PopupMenuItem<String>(
             child: GestureDetector(
               child: const Text('child 1'),
-              onTapDown: (TapDownDetails details) {
-              },
+              onTapDown: (TapDownDetails details) {},
             ),
             value: 'dd Label'),
         PopupMenuItem<String>(
@@ -871,8 +1054,7 @@ class _LandingPageState extends State<LandingPage> {
       ],
       elevation: 8.0,
     );
-
-  }*/
+  }
 
   void showAddLabelDialog(BuildContext context) {
     bool isNewNoteAdded = false;
@@ -953,7 +1135,7 @@ class _LandingPageState extends State<LandingPage> {
                                 onTap: () {
                                   print("close note clicked!");
                                   _setState(() {
-                                    longPressedNotesList = [];
+                                    longPressedNotesMap = Map();
                                     isNewNoteAdded = false;
                                   });
                                 },
@@ -1149,10 +1331,6 @@ class _LandingPageState extends State<LandingPage> {
                                                           onTap: () {
                                                             print(
                                                                 "check clicked!");
-                                                            /*
-                                                          * (1) Update row in DB
-                                                          * (2) refresh UI back to first type
-                                                          * */
 
                                                             if (controllerList[
                                                                     index]
@@ -1235,18 +1413,50 @@ class _LandingPageState extends State<LandingPage> {
   }
 
   Future<void> updateNotesIdList(
-      String labelIdsStr, List<NotesModel> longPressedNotesList) async {
-    print("inside updateNotesIdList() longPressedNotesList.length: "
-        "${longPressedNotesList.length} labelIdsStr :$labelIdsStr");
+      String labelIdsStr, Map longPressedNotesMap) async {
+    print("inside updateNotesIdList() longPressedNotesMap.length: "
+        "${longPressedNotesMap.length} labelIdsStr :$labelIdsStr");
     notesDB =
         await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
 
-    for (int i = 0; i < longPressedNotesList.length; i++) {
+    longPressedNotesMap.forEach((key, value) async {
       Map<String, dynamic> row = {'noteLabelIdsStr': labelIdsStr};
       int updateCount = await notesDB.update('notes', row,
-          where: 'id = ?', whereArgs: [longPressedNotesList[i].id]);
+          where: 'id = ?', whereArgs: [longPressedNotesMap[key].id]);
       print("inside updateNotesIdList updateCount: $updateCount");
-    }
+    });
+  }
+
+  Future<int> updateNotesBgColor(String bgColorStr, Map longPressedMap) async {
+    int updateCount = 0;
+    print("inside updateNotesBgColor() longPressedMap.length: "
+        "${longPressedMap.length} bgColorStr :$bgColorStr");
+    notesDB =
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+
+    longPressedMap.forEach((key, value) async {
+      Map<String, dynamic> row = {'noteBgColorHex': bgColorStr};
+      updateCount =
+          await notesDB.update('notes', row, where: 'id = ?', whereArgs: [key]);
+      print("inside updateNotesBgColor updateCount: $updateCount");
+    });
+    setState(() {});
+
+    return updateCount;
+  }
+
+  Future<int> updateRowPinnedState(int newState, NotesModel notesModel) async {
+    int updateCount = 0;
+    notesDB =
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+    await notesDB.update('notes', {'isNotePinned': newState},
+        where: 'id = '
+            '?',
+        whereArgs: [notesModel.id]);
+
+    setState(() {});
+
+    return updateCount;
   }
 
   Future<int> deleteLabel(LabelModel model) async {
@@ -1276,7 +1486,10 @@ class _LandingPageState extends State<LandingPage> {
         notesDB = db;
         // Run the CREATE TABLE statement on the database.
         db.execute(
-          "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT)",
+          "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
+          " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
+          "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT,"
+          "isNotePinned INTEGER)",
         );
         db.execute(
             "CREATE TABLE TblLabels(id INTEGER PRIMARY KEY AUTOINCREMENT, labelTitle TEXT)");
@@ -1291,11 +1504,16 @@ class _LandingPageState extends State<LandingPage> {
     labelModelList = await getAllLabels();
 
     if (!isListPopulated) {
-      longPressList =
-          List<bool>.generate(notesModelList.length, (int index) => false);
+      // longPressList =
+      //     List<bool>.generate(notesModelList.length, (int index) => false);
+      longPressedNotesMap = new Map();
+      notesModelList.forEach((notesModel) {
+        longPressedNotesMap[notesModel.id] = false;
+      });
 
       isListPopulated = true;
     }
+
     print("inside initDB() labelModelList.length ${labelModelList.length}");
     print("inside initDB() notesModelList.length ${notesModelList.length}");
 
@@ -1320,7 +1538,8 @@ class _LandingPageState extends State<LandingPage> {
           maps[i]['noteBgColorHex'],
           maps[i]['noteMediaPath'],
           maps[i]['noteImgBase64'],
-          maps[i]['noteLabelIdsStr']);
+          maps[i]['noteLabelIdsStr'],
+          maps[i]['isNotePinned']);
     });
   }
 
