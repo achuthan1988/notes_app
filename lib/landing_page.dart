@@ -19,13 +19,19 @@ class _LandingPageState extends State<LandingPage> {
   var notesDB;
   bool isToggleAppBar = false;
   bool isListPopulated = false;
-
+  bool isArchiveSection = false;
+  
   List<bool> labelsCheckedList = [];
   List<NotesModel> notesModelList = new List<NotesModel>();
   List<LabelModel> labelModelList = new List<LabelModel>();
   Map longPressedNotesMap = new Map();
-  var sliderTitleArray = ["Home", "Edit Labels", "Settings"];
-  var sliderIconsArray = [Icons.home_rounded, Icons.edit, Icons.settings];
+  var sliderTitleArray = ["Home", "Edit Labels", "Archive", "Settings"];
+  var sliderIconsArray = [
+    Icons.home_rounded,
+    Icons.edit,
+    Icons.archive_outlined,
+    Icons.settings
+  ];
   static int numOfNotesSelected = 0;
 
   @override
@@ -85,6 +91,32 @@ class _LandingPageState extends State<LandingPage> {
                   ),
                 ),
                 actions: [
+                  Flexible(
+                    child: GestureDetector(
+                      child: Icon(
+                        (isNotesUnpinned()
+                            ? Icons.push_pin
+                            : Icons.push_pin_outlined),
+                        color: Colors.blue,
+                        size: 30.0,
+                      ),
+                      onTap: () {
+                        print("pin icon clicked!!");
+
+                        List<String> idList = [];
+                        longPressedNotesMap.keys.forEach((keyVal) {
+                          if (longPressedNotesMap[keyVal])
+                            idList.add(keyVal.toString());
+                        });
+
+                        if (isNotesUnpinned()) {
+                          updatePinnedStateRows(1, idList);
+                        } else {
+                          updatePinnedStateRows(0, idList);
+                        }
+                      },
+                    ),
+                  ),
                   Flexible(
                     child: GestureDetector(
                       child: Icon(
@@ -165,9 +197,14 @@ class _LandingPageState extends State<LandingPage> {
                       crossAxisAlignment: CrossAxisAlignment.center),
                 ),
                 onTap: () {
+                  isArchiveSection = false;
                   if (index == 1) {
                     Navigator.pop(context);
                     showAddLabelDialog(context);
+                  } else if (index == 2) {
+                    isArchiveSection = true;
+                    setState(() {});
+
                   }
                 },
               );
@@ -177,14 +214,17 @@ class _LandingPageState extends State<LandingPage> {
             },
           ),
         )),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) {
-              return NewNotePage(null, null);
-            }));
-          },
-          child: Icon(Icons.add),
-          backgroundColor: Constants.bgMainColor,
+        floatingActionButton: Visibility(
+          visible: !isArchiveSection,
+          child: FloatingActionButton(
+            onPressed: () {
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) {
+                return NewNotePage(null, null);
+              }));
+            },
+            child: Icon(Icons.add),
+            backgroundColor: Constants.bgMainColor,
+          ),
         ),
         floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         body: FutureBuilder<List>(
@@ -211,7 +251,8 @@ class _LandingPageState extends State<LandingPage> {
                                   child: Text(
                                     "Pinned",
                                     style: TextStyle(
-                                        fontSize: 14.0, color: Colors.black87,
+                                        fontSize: 14.0,
+                                        color: Colors.black87,
                                         fontWeight: FontWeight.w600),
                                   ),
                                 ),
@@ -292,28 +333,28 @@ class _LandingPageState extends State<LandingPage> {
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  Align(
-                                                    alignment:
-                                                        Alignment.topRight,
-                                                    child: GestureDetector(
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(3.0),
-                                                        child: Icon(
-                                                          Icons.push_pin_sharp,
-                                                          color: Colors.black,
-                                                          size: 24.0,
-                                                        ),
-                                                      ),
-                                                      onTap: () {
-                                                        updateRowPinnedState(
-                                                            0,
-                                                            filteredList[
-                                                                position]);
-                                                      },
-                                                    ),
-                                                  ),
+                                                  // Align(
+                                                  //   alignment:
+                                                  //       Alignment.topRight,
+                                                  //   child: GestureDetector(
+                                                  //     child: Padding(
+                                                  //       padding:
+                                                  //           const EdgeInsets
+                                                  //               .all(3.0),
+                                                  //       child: Icon(
+                                                  //         Icons.push_pin_sharp,
+                                                  //         color: Colors.black,
+                                                  //         size: 24.0,
+                                                  //       ),
+                                                  //     ),
+                                                  //     onTap: () {
+                                                  //       updateRowPinnedState(
+                                                  //           0,
+                                                  //           filteredList[
+                                                  //               position]);
+                                                  //     },
+                                                  //   ),
+                                                  // ),
                                                   Flexible(
                                                     child: Container(
                                                       padding:
@@ -404,12 +445,12 @@ class _LandingPageState extends State<LandingPage> {
                                 child: Align(
                                   alignment: Alignment.topLeft,
                                   child: Padding(
-
                                     padding: const EdgeInsets.all(5.0),
                                     child: Text(
                                       "Others",
                                       style: TextStyle(
-                                          fontSize: 14.0, color: Colors.black87,
+                                          fontSize: 14.0,
+                                          color: Colors.black87,
                                           fontWeight: FontWeight.w600),
                                     ),
                                   ),
@@ -492,50 +533,50 @@ class _LandingPageState extends State<LandingPage> {
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  Align(
-                                                    alignment:
-                                                        Alignment.topRight,
-                                                    child: GestureDetector(
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(3.0),
-                                                        child: Icon(
-                                                          Icons
-                                                              .push_pin_outlined,
-                                                          color: Colors.black,
-                                                          size: 24.0,
-                                                        ),
-                                                      ),
-                                                      onTap: () {
-                                                        /*
-                                                          * (1) update pinned
-                                                          * state
-                                                          * of corresponding
-                                                          * row to 1.
-                                                          * (2) Call set
-                                                          * state to trigger
-                                                          * reordering of lists.
-                                                          * (3) Pinned
-                                                          * section and
-                                                          * others section
-                                                          * with headers to
-                                                          * be visible
-                                                          * (4) Pinned note
-                                                          * to have filled
-                                                          * pin icon
-                                                          *
-                                                          *
-                                                          *
-                                                          * */
-
-                                                        updateRowPinnedState(
-                                                            1,
-                                                            filteredList[
-                                                                position]);
-                                                      },
-                                                    ),
-                                                  ),
+                                                  // Align(
+                                                  //   alignment:
+                                                  //       Alignment.topRight,
+                                                  //   child: GestureDetector(
+                                                  //     child: Padding(
+                                                  //       padding:
+                                                  //           const EdgeInsets
+                                                  //               .all(3.0),
+                                                  //       child: Icon(
+                                                  //         Icons
+                                                  //             .push_pin_outlined,
+                                                  //         color: Colors.black,
+                                                  //         size: 24.0,
+                                                  //       ),
+                                                  //     ),
+                                                  //     onTap: () {
+                                                  //       /*
+                                                  //         * (1) update pinned
+                                                  //         * state
+                                                  //         * of corresponding
+                                                  //         * row to 1.
+                                                  //         * (2) Call set
+                                                  //         * state to trigger
+                                                  //         * reordering of lists.
+                                                  //         * (3) Pinned
+                                                  //         * section and
+                                                  //         * others section
+                                                  //         * with headers to
+                                                  //         * be visible
+                                                  //         * (4) Pinned note
+                                                  //         * to have filled
+                                                  //         * pin icon
+                                                  //         *
+                                                  //         *
+                                                  //         *
+                                                  //         * */
+                                                  //
+                                                  //       updateRowPinnedState(
+                                                  //           1,
+                                                  //           filteredList[
+                                                  //               position]);
+                                                  //     },
+                                                  //   ),
+                                                  // ),
                                                   Flexible(
                                                     child: Container(
                                                       padding:
@@ -824,6 +865,35 @@ class _LandingPageState extends State<LandingPage> {
     }
 
     return widgetList;
+  }
+
+  bool isNotesUnpinned() {
+    int unpinnedCount = 0;
+    int pinnedCount = 0;
+
+    longPressedNotesMap.keys.forEach((keyVal) {
+      if (longPressedNotesMap[keyVal]) {
+        notesModelList.forEach((notesModel) {
+          if (notesModel.id == keyVal) {
+            if (notesModel.isNotePinned == 1)
+              pinnedCount++;
+            else
+              unpinnedCount++;
+          }
+        });
+      }
+    });
+
+    print("inside isNotesUnpinned() pinnedCount $pinnedCount unpinnedCount "
+        "$unpinnedCount");
+
+    if (unpinnedCount > 0 && pinnedCount > 0)
+      return true;
+    else if (pinnedCount == 0)
+      return true;
+    else if (unpinnedCount == 0) return false;
+
+    return false;
   }
 
   showLabelsDialog(BuildContext context) {
@@ -1457,6 +1527,32 @@ class _LandingPageState extends State<LandingPage> {
     setState(() {});
 
     return updateCount;
+  }
+
+  Future<void> updatePinnedStateRows(int newState, List<String> idList) async {
+    int counter = 0;
+    notesDB =
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+
+    idList.forEach((noteId) async {
+      print("inside forEach id: $noteId");
+
+      await notesDB.update('notes', {'isNotePinned': newState},
+          where: 'id = '
+              '?',
+          whereArgs: [noteId]);
+      counter++;
+
+      if (counter == idList.length) {
+        setState(() {
+          isToggleAppBar = false;
+          numOfNotesSelected = 0;
+          notesModelList.forEach((notesModel) {
+            longPressedNotesMap[notesModel.id] = false;
+          });
+        });
+      }
+    });
   }
 
   Future<int> deleteLabel(LabelModel model) async {
