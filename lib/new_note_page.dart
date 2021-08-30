@@ -80,7 +80,7 @@ class _NewNotePageState extends State<NewNotePage> {
           "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
           " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
           "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT,"
-          "isNotePinned INTEGER)",
+          "isNotePinned INTEGER, isNoteArchived INTEGER)",
         );
         db.execute(
             "CREATE TABLE TblLabels(id INTEGER PRIMARY KEY AUTOINCREMENT, labelTitle TEXT)");
@@ -249,7 +249,7 @@ class _NewNotePageState extends State<NewNotePage> {
         "",
         "",
         "",
-        0);
+        0,0);
 
     return noteObject;
   }

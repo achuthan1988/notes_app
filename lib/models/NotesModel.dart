@@ -8,6 +8,7 @@ class NotesModel {
   String noteImgBase64;
   String noteLabelIdsStr;
   int isNotePinned;
+  int isNoteArchived;
 
   NotesModel(
       this.noteTitle,
@@ -17,7 +18,8 @@ class NotesModel {
       this.noteMediaPath,
       this.noteImgBase64,
       this.noteLabelIdsStr,
-      this.isNotePinned);
+      this.isNotePinned,
+      this.isNoteArchived);
 
   NotesModel.param(
       this.id,
@@ -28,7 +30,8 @@ class NotesModel {
       this.noteMediaPath,
       this.noteImgBase64,
       this.noteLabelIdsStr,
-      this.isNotePinned);
+      this.isNotePinned,
+      this.isNoteArchived);
 
   Map<String, dynamic> toMap() {
     return {
@@ -40,7 +43,8 @@ class NotesModel {
       'noteMediaPath': noteMediaPath,
       'noteImgBase64': noteImgBase64,
       'noteLabelIdsStr': noteLabelIdsStr,
-      'isNotePinned': isNotePinned
+      'isNotePinned': isNotePinned,
+      'isNoteArchived':isNoteArchived
     };
   }
 }
