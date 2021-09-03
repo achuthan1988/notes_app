@@ -320,14 +320,17 @@ class _LandingPageState extends State<LandingPage> {
                                       ),
                                       children: List.generate(
                                           notesModelList
-                                              .where((i) => i.isNotePinned == 1)
+                                              .where((i) =>
+                                                  (i.isNotePinned == 1 &&
+                                                      i.isNoteArchived == 0))
                                               .toList()
                                               .length, (position) {
                                         print("inside itemBuilder of GridView");
                                         List<NotesModel> filteredList =
                                             notesModelList
-                                                .where(
-                                                    (i) => i.isNotePinned == 1)
+                                                .where((i) =>
+                                                    (i.isNotePinned == 1 &&
+                                                        i.isNoteArchived == 0))
                                                 .toList();
                                         List<Widget> widgetList =
                                             getLabelTagWidgets(
@@ -500,7 +503,8 @@ class _LandingPageState extends State<LandingPage> {
                             ),
                             Visibility(
                               visible: (notesModelList.every((notesModel) =>
-                                      notesModel.isNotePinned == 1)
+                                      (notesModel.isNotePinned == 1 &&
+                                          notesModel.isNoteArchived == 0))
                                   ? false
                                   : true),
                               child: Column(
@@ -508,7 +512,8 @@ class _LandingPageState extends State<LandingPage> {
                                   Visibility(
                                     visible: (notesModelList.every(
                                             (notesModel) =>
-                                                notesModel.isNotePinned == 0)
+                                                notesModel.isNotePinned == 0 &&
+                                                notesModel.isNoteArchived == 0)
                                         ? false
                                         : true),
                                     child: Align(
@@ -537,14 +542,17 @@ class _LandingPageState extends State<LandingPage> {
                                       ),
                                       children: List.generate(
                                           notesModelList
-                                              .where((i) => i.isNotePinned == 0)
+                                              .where((i) =>
+                                                  i.isNotePinned == 0 &&
+                                                  i.isNoteArchived == 0)
                                               .toList()
                                               .length, (position) {
                                         print("inside itemBuilder of GridView");
                                         List<NotesModel> filteredList =
                                             notesModelList
-                                                .where(
-                                                    (i) => i.isNotePinned == 0)
+                                                .where((i) =>
+                                                    i.isNotePinned == 0 &&
+                                                    i.isNoteArchived == 0)
                                                 .toList();
 
                                         List<Widget> widgetList =
@@ -1655,13 +1663,11 @@ class _LandingPageState extends State<LandingPage> {
     });
   }
 
-
-  Future<void> updateArchivedStateRows(int newState, List<String> idList,
-      BuildContext context)
-  async {
+  Future<void> updateArchivedStateRows(
+      int newState, List<String> idList, BuildContext context) async {
     int counter = 0;
     notesDB =
-    await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
 
     idList.forEach((noteId) async {
       print("inside forEach id: $noteId");
@@ -1674,33 +1680,37 @@ class _LandingPageState extends State<LandingPage> {
 
       if (counter == idList.length) {
         setState(() {
-          isToggleAppBar = false;
-          numOfNotesSelected = 0;
-          /*
-          * (1) Display snackbar
-          * (2) once duration finished do below false setting
-          * (3) If undo clicked do restoration of state in DB.
-          *
-          *
-          * */
+          if (newState != 0) {
+            isToggleAppBar = false;
+          }
 
           final snackBar = SnackBar(
             content: Text('Notes Archived.'),
             action: SnackBarAction(
               label: 'UNDO',
               onPressed: () {
-
+                isToggleAppBar = true;
+                List<String> idList = [];
+                longPressedNotesMap.keys.forEach((keyVal) {
+                  if (longPressedNotesMap[keyVal])
+                    idList.add(keyVal.toString());
+                });
+                updateArchivedStateRows(0, idList, context);
               },
             ),
           );
 
-
-          ScaffoldMessenger.of(context).showSnackBar(snackBar);
-
-
-          /*notesModelList.forEach((notesModel) {
-            longPressedNotesMap[notesModel.id] = false;
-          });*/
+          if (newState != 0) {
+            ScaffoldMessenger.of(context)
+                .showSnackBar(snackBar)
+                .closed
+                .then((SnackBarClosedReason reason) {
+              numOfNotesSelected = 0;
+              notesModelList.forEach((notesModel) {
+                longPressedNotesMap[notesModel.id] = false;
+              });
+            });
+          }
         });
       }
     });

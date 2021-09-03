@@ -78,9 +78,9 @@ class _NewNotePageState extends State<NewNotePage> {
         // Run the CREATE TABLE statement on the database.
         db.execute(
           "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
-          " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
-          "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT,"
-          "isNotePinned INTEGER, isNoteArchived INTEGER)",
+              " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
+              "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT,"
+              "isNotePinned INTEGER, isNoteArchived INTEGER)",
         );
         db.execute(
             "CREATE TABLE TblLabels(id INTEGER PRIMARY KEY AUTOINCREMENT, labelTitle TEXT)");
@@ -123,6 +123,7 @@ class _NewNotePageState extends State<NewNotePage> {
 
   @override
   Widget build(BuildContext context) {
+    print("inside build(): scaffoldNoteTypePos:$scaffoldNoteTypePos");
     if (scaffoldNoteTypePos != 3)
       return Scaffold(
         key: key,
@@ -261,6 +262,7 @@ class _NewNotePageState extends State<NewNotePage> {
     } else if (position == 3) {
       return DrawingWidget(this.notesModel);
     }
+
   }
 }
 
@@ -342,12 +344,13 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
       noteTypePosition = 3;
     } else {}
 
-    setState(() {
+    parent.setState(() {
       print("onClickMenu setState() ");
       _NewNotePageState.scaffoldNoteTypePos = noteTypePosition;
       print(
           "onClickMenu setState() _NewNotePageState.scaffoldNoteTypePos: ${_NewNotePageState.scaffoldNoteTypePos}");
     });
+
   }
 
   void onDismiss() {
@@ -897,7 +900,10 @@ class _CustomListViewWidgetState extends State<CustomListViewWidget> {
                               print(
                                   "checkBoxStateList[index]: ${_CustomCheckItemsWidgetState.checkBoxStateList[index]}");
 
-                              setState(() {});
+
+                              customCheckState.setState(() {});
+
+
                             },
                           ),
                         ),
@@ -910,7 +916,7 @@ class _CustomListViewWidgetState extends State<CustomListViewWidget> {
                         print("Textfield onChanged String $txt");
                       }),
                       onTap: () {
-                        print("onTap()");
+                        print("onTap() index: $index");
                       },
                       autofocus: true,
                       maxLines: 1,
@@ -1117,6 +1123,7 @@ class _BottomListAdderWidgetState extends State<BottomListAdderWidget> {
 
         print(
             "rowWidgetArray.size:'${_CustomCheckItemsWidgetState.rowWidgetSize}'");
+
       },
       child: Container(
           margin: EdgeInsets.only(left: 35.0),
