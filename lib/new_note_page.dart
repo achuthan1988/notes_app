@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:notes_app/util/HexColor.dart';
 import 'package:painter/painter.dart';
 import 'package:path/path.dart';
@@ -31,6 +32,7 @@ class _NewNotePageState extends State<NewNotePage> {
 
   _NewNotePageState(this.notesModel, this.heroTagValue);
 
+  FlutterSound flutterSound;
   TextEditingController noteTitleController;
   TextEditingController noteContentController;
   static int scaffoldBackgroundColorPos = 0;
@@ -48,7 +50,7 @@ class _NewNotePageState extends State<NewNotePage> {
     noteContentVal = (notesModel != null) ? (notesModel.noteContent) : ("");
     noteTitleController = new TextEditingController(text: noteTitleVal);
     noteContentController = new TextEditingController(text: noteContentVal);
-
+    flutterSound = new FlutterSound();
     if (notesModel != null) {
       print("notesModel.noteBgColorHex ${notesModel.noteBgColorHex}");
       scaffoldBgHex = HexColor(notesModel.noteBgColorHex);
@@ -78,9 +80,9 @@ class _NewNotePageState extends State<NewNotePage> {
         // Run the CREATE TABLE statement on the database.
         db.execute(
           "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
-              " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
-              "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT,"
-              "isNotePinned INTEGER, isNoteArchived INTEGER)",
+          " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
+          "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT,"
+          "isNotePinned INTEGER, isNoteArchived INTEGER)",
         );
         db.execute(
             "CREATE TABLE TblLabels(id INTEGER PRIMARY KEY AUTOINCREMENT, labelTitle TEXT)");
@@ -250,7 +252,8 @@ class _NewNotePageState extends State<NewNotePage> {
         "",
         "",
         "",
-        0,0);
+        0,
+        0);
 
     return noteObject;
   }
@@ -262,7 +265,6 @@ class _NewNotePageState extends State<NewNotePage> {
     } else if (position == 3) {
       return DrawingWidget(this.notesModel);
     }
-
   }
 }
 
@@ -311,7 +313,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
               key: btnKey,
               icon: const Icon(Icons.add_box_outlined),
               onPressed: () {
-                showPopUpMenu();
+                showPopUpMenu(context);
               },
             ),
             new Spacer(),
@@ -342,7 +344,16 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
       noteTypePosition = 2;
     } else if (item.menuTitle.contains("Drawing")) {
       noteTypePosition = 3;
-    } else {}
+    } else if (item.menuTitle.contains("Recording")) {
+      noteTypePosition = 0;
+      /*
+      * (1) show alert dialog for recording audio
+      * (2) If cancelled , dismiss alert
+      * (3) If ticked, save to be initiated and redirect to landing page
+      *
+      * */
+      showRecorderDialog(PopupMenu.context);
+    }
 
     parent.setState(() {
       print("onClickMenu setState() ");
@@ -350,14 +361,55 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
       print(
           "onClickMenu setState() _NewNotePageState.scaffoldNoteTypePos: ${_NewNotePageState.scaffoldNoteTypePos}");
     });
+  }
 
+  void showRecorderDialog(BuildContext context) {
+    Dialog dialog = Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
+      //this right here
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child: Container(
+          height: 120.0,
+          width: 100.0,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                "00:00:00",
+                style: TextStyle(
+                    fontSize: 30.0,
+                    fontWeight: FontWeight.w600,
+                    color: Constants.bgMainColor),
+                textAlign: TextAlign.center,
+              ),
+              ElevatedButton(
+                onPressed: () {},
+                child: Icon(
+                  Icons.mic,
+                  color: Colors.white,
+                  size: 36.0,
+                ),
+                style: ElevatedButton.styleFrom(
+                  shape: CircleBorder(),
+                  padding: EdgeInsets.all(15),
+                  primary: Constants.bgMainColor,
+                  onPrimary: Constants.bgMainColor,
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+    showDialog(context: context, builder: (BuildContext context) => dialog);
   }
 
   void onDismiss() {
     print('Menu is dismiss');
   }
 
-  void showPopUpMenu() {
+  void showPopUpMenu(BuildContext context) {
     print('inside showPopUpMenu()');
     TextStyle menuTextStyle = TextStyle(
         color: Colors.white, fontWeight: FontWeight.w400, fontSize: 10.0);
@@ -857,109 +909,123 @@ class _CustomListViewWidgetState extends State<CustomListViewWidget> {
       itemCount: _CustomCheckItemsWidgetState.rowWidgetSize,
       shrinkWrap: true,
       itemBuilder: (BuildContext context, int index) {
-        print(
-            "inside itemBuilder of ReorderableListView.builder! index: $index");
+        print("inside itemBuilder ListView index: $index state: "
+            "${_CustomCheckItemsWidgetState.checkBoxStateList[index]}"
+            "");
+
         return Container(
-            key: Key('$index'),
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  GestureDetector(
-                    onTap: () {},
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        child: SizedBox(
-                          width: 24.0,
-                          height: 24.0,
-                          child: Icon(
-                            Icons.menu,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.center,
+          key: Key('$index'),
+          child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () {},
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
                     child: Container(
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 5.0),
-                        child: SizedBox(
-                          width: 24.0,
-                          height: 24.0,
-                          child: Checkbox(
-                            value: _CustomCheckItemsWidgetState
-                                .checkBoxStateList[index],
-                            onChanged: (newValue) {
-                              print(
-                                  "inside listview checkedValue  $newValue at $index");
-                              _CustomCheckItemsWidgetState
-                                  .checkBoxStateList[index] = newValue;
-                              print(
-                                  "checkBoxStateList[index]: ${_CustomCheckItemsWidgetState.checkBoxStateList[index]}");
-
-
-                              customCheckState.setState(() {});
-
-
-                            },
-                          ),
+                      child: SizedBox(
+                        width: 24.0,
+                        height: 24.0,
+                        child: Icon(
+                          Icons.menu,
+                          color: Colors.grey,
                         ),
                       ),
                     ),
                   ),
-                  Expanded(
-                    child: TextField(
-                      onChanged: ((String txt) {
-                        print("Textfield onChanged String $txt");
-                      }),
-                      onTap: () {
-                        print("onTap() index: $index");
-                      },
-                      autofocus: true,
-                      maxLines: 1,
-                      style: TextStyle(
-                          fontSize: 12.0,
-                          decorationColor: Colors.red,
-                          decorationStyle: TextDecorationStyle.solid,
-                          decoration: (_CustomCheckItemsWidgetState
-                                  .checkBoxStateList[index]
-                              ? TextDecoration.lineThrough
-                              : TextDecoration.none)),
-                      controller:
-                          _CustomCheckItemsWidgetState.controllersList[index],
-                      decoration: InputDecoration(
-                        contentPadding: EdgeInsets.zero,
-                        isDense: true,
-                        border: InputBorder.none,
+                ),
+                Align(
+                  alignment: Alignment.center,
+                  child: Container(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 5.0),
+                      child: SizedBox(
+                        width: 24.0,
+                        height: 24.0,
+                        child: Checkbox(
+                          value: _CustomCheckItemsWidgetState
+                              .checkBoxStateList[index],
+                          onChanged: (newValue) {
+                            print(
+                                "inside listview checkedValue  $newValue at $index");
+                            _CustomCheckItemsWidgetState
+                                .checkBoxStateList[index] = newValue;
+                            print(
+                                "checkBoxStateList[index]: ${_CustomCheckItemsWidgetState.checkBoxStateList[index]}");
+
+                            // _setState(() {});
+                            /* setState(() {
+                                    });*/
+                          },
+                        ),
                       ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
+                ),
+                Expanded(
+                  child: _CustomCheckItemsWidgetState.checkBoxStateList[index]
+                      ? TextField(
+                          onChanged: ((String txt) {
+                            print("Textfield onChanged String $txt");
+                          }),
+                          maxLines: 1,
+                          style: TextStyle(
+                              fontSize: 12.0,
+                              decorationColor: Colors.red,
+                              decorationStyle: TextDecorationStyle.solid,
+                              decoration: TextDecoration.lineThrough),
+                          controller: _CustomCheckItemsWidgetState
+                              .controllersList[index],
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.zero,
+                            isDense: true,
+                            border: InputBorder.none,
+                          ),
+                        )
+                      : TextField(
+                          onChanged: ((String txt) {
+                            print("Textfield onChanged String $txt");
+                          }),
+                          maxLines: 1,
+                          style: TextStyle(
+                              fontSize: 12.0,
+                              decorationColor: Colors.red,
+                              decorationStyle: TextDecorationStyle.solid,
+                              decoration: TextDecoration.none),
+                          controller: _CustomCheckItemsWidgetState
+                              .controllersList[index],
+                          decoration: InputDecoration(
+                            contentPadding: EdgeInsets.zero,
+                            isDense: true,
+                            border: InputBorder.none,
+                          ),
+                        ),
+                ),
+                GestureDetector(
+                  onTap: () {
 /*                      setState(() {
-                        Key key = Key('$index');
-                        int indexVal = int.parse(key.toString());
-                        print("indexVal: $indexVal");
-                      });*/
-                    },
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        child: SizedBox(
-                          width: 24.0,
-                          height: 24.0,
-                          child: Icon(
-                            Icons.close,
-                            color: Colors.grey,
-                          ),
+                          Key key = Key('$index');
+                          int indexVal = int.parse(key.toString());
+                          print("indexVal: $indexVal");
+                        });*/
+                  },
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      child: SizedBox(
+                        width: 24.0,
+                        height: 24.0,
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.grey,
                         ),
                       ),
                     ),
                   ),
-                ]));
+                ),
+              ]),
+        );
       },
       onReorder: (oldIdx, newIdx) {},
     );
@@ -1123,7 +1189,6 @@ class _BottomListAdderWidgetState extends State<BottomListAdderWidget> {
 
         print(
             "rowWidgetArray.size:'${_CustomCheckItemsWidgetState.rowWidgetSize}'");
-
       },
       child: Container(
           margin: EdgeInsets.only(left: 35.0),
