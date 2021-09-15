@@ -68,6 +68,7 @@ class _SplashScreenState extends State<SplashScreen>
       //invoke progress dialog
       // redirect after an interval to Login Page
     });
+
   }
 
   @override
