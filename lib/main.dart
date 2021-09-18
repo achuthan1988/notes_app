@@ -11,6 +11,7 @@ import 'util/constants.dart' as Constants;
 
 void main() {
   Stetho.initialize();
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }
 

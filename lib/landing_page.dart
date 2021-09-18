@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:notes_app/archive_page.dart';
@@ -382,95 +384,95 @@ class _LandingPageState extends State<LandingPage> {
                                                       color: HexColor(
                                                           filteredList[position]
                                                               .noteBgColorHex)),
-                                                  child: Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    mainAxisSize:
-                                                        MainAxisSize.max,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      // Align(
-                                                      //   alignment:
-                                                      //       Alignment.topRight,
-                                                      //   child: GestureDetector(
-                                                      //     child: Padding(
-                                                      //       padding:
-                                                      //           const EdgeInsets
-                                                      //               .all(3.0),
-                                                      //       child: Icon(
-                                                      //         Icons.push_pin_sharp,
-                                                      //         color: Colors.black,
-                                                      //         size: 24.0,
-                                                      //       ),
-                                                      //     ),
-                                                      //     onTap: () {
-                                                      //       updateRowPinnedState(
-                                                      //           0,
-                                                      //           filteredList[
-                                                      //               position]);
-                                                      //     },
-                                                      //   ),
-                                                      // ),
-                                                      Flexible(
-                                                        child: Container(
-                                                          padding:
-                                                              EdgeInsets.all(
-                                                                  2.0),
-                                                          child: Text(
-                                                            filteredList[
-                                                                    position]
-                                                                .noteTitle,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style: TextStyle(
-                                                                fontSize: 14.0,
+                                                  child: (filteredList[position]
+                                                              .noteType ==
+                                                          "0"
+                                                      ? Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          mainAxisSize:
+                                                              MainAxisSize.max,
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Container(
+                                                              decoration:
+                                                                  BoxDecoration(
                                                                 color: Colors
                                                                     .black,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Flexible(
-                                                        child: Container(
-                                                          padding:
-                                                              EdgeInsets.all(
-                                                                  2.0),
-                                                          child: Text(
-                                                            filteredList[
-                                                                    position]
-                                                                .noteContent,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            maxLines: 10,
-                                                            style: TextStyle(
-                                                                fontSize: 12.0,
+                                                                border:
+                                                                    Border.all(
+                                                                        width:
+                                                                            0),
+                                                              ),
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .all(2.0),
+                                                              child: Text(
+                                                                filteredList[
+                                                                        position]
+                                                                    .noteTitle,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14.0,
+                                                                    color: Colors
+                                                                        .black,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600),
+                                                              ),
+                                                            ),
+                                                            Container(
+                                                              decoration:
+                                                                  BoxDecoration(
                                                                 color: Colors
                                                                     .black,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w300),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Expanded(
-                                                        child: Align(
-                                                          alignment: Alignment
-                                                              .bottomLeft,
-                                                          child: Wrap(
-                                                            children:
-                                                                widgetList,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
+                                                                border:
+                                                                    Border.all(
+                                                                        width:
+                                                                            0),
+                                                              ),
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .all(2.0),
+                                                              child: Text(
+                                                                filteredList[
+                                                                        position]
+                                                                    .noteContent,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                maxLines: 10,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        12.0,
+                                                                    color: Colors
+                                                                        .black,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w300),
+                                                              ),
+                                                            ),
+                                                            Expanded(
+                                                              child: Align(
+                                                                alignment: Alignment
+                                                                    .bottomLeft,
+                                                                child: Wrap(
+                                                                  children:
+                                                                      widgetList,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        )
+                                                      : changeNoteCell(
+                                                          filteredList[
+                                                              position])),
                                                 ),
                                                 Positioned(
                                                   top: 0,
@@ -605,117 +607,95 @@ class _LandingPageState extends State<LandingPage> {
                                                       color: HexColor(
                                                           filteredList[position]
                                                               .noteBgColorHex)),
-                                                  child: Column(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    mainAxisSize:
-                                                        MainAxisSize.max,
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .start,
-                                                    children: [
-                                                      // Align(
-                                                      //   alignment:
-                                                      //       Alignment.topRight,
-                                                      //   child: GestureDetector(
-                                                      //     child: Padding(
-                                                      //       padding:
-                                                      //           const EdgeInsets
-                                                      //               .all(3.0),
-                                                      //       child: Icon(
-                                                      //         Icons
-                                                      //             .push_pin_outlined,
-                                                      //         color: Colors.black,
-                                                      //         size: 24.0,
-                                                      //       ),
-                                                      //     ),
-                                                      //     onTap: () {
-                                                      //       /*
-                                                      //         * (1) update pinned
-                                                      //         * state
-                                                      //         * of corresponding
-                                                      //         * row to 1.
-                                                      //         * (2) Call set
-                                                      //         * state to trigger
-                                                      //         * reordering of lists.
-                                                      //         * (3) Pinned
-                                                      //         * section and
-                                                      //         * others section
-                                                      //         * with headers to
-                                                      //         * be visible
-                                                      //         * (4) Pinned note
-                                                      //         * to have filled
-                                                      //         * pin icon
-                                                      //         *
-                                                      //         *
-                                                      //         *
-                                                      //         * */
-                                                      //
-                                                      //       updateRowPinnedState(
-                                                      //           1,
-                                                      //           filteredList[
-                                                      //               position]);
-                                                      //     },
-                                                      //   ),
-                                                      // ),
-                                                      Flexible(
-                                                        child: Container(
-                                                          padding:
-                                                              EdgeInsets.all(
-                                                                  2.0),
-                                                          child: Text(
-                                                            filteredList[
-                                                                    position]
-                                                                .noteTitle,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style: TextStyle(
-                                                                fontSize: 14.0,
+                                                  child: (filteredList[position]
+                                                              .noteType ==
+                                                          "0"
+                                                      ? Column(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                          mainAxisSize:
+                                                              MainAxisSize.max,
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Container(
+                                                              decoration:
+                                                                  BoxDecoration(
                                                                 color: Colors
-                                                                    .black,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Flexible(
-                                                        child: Container(
-                                                          padding:
-                                                              EdgeInsets.all(
-                                                                  2.0),
-                                                          child: Text(
-                                                            filteredList[
-                                                                    position]
-                                                                .noteContent,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            maxLines: 10,
-                                                            style: TextStyle(
-                                                                fontSize: 12.0,
+                                                                    .transparent,
+                                                                border: Border.all(
+                                                                    width: 0,
+                                                                    color: Colors
+                                                                        .transparent),
+                                                              ),
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .all(2.0),
+                                                              child: Text(
+                                                                filteredList[
+                                                                        position]
+                                                                    .noteTitle,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14.0,
+                                                                    color: Colors
+                                                                        .black,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600),
+                                                              ),
+                                                            ),
+                                                            Container(
+                                                              decoration:
+                                                                  BoxDecoration(
                                                                 color: Colors
-                                                                    .black,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w300),
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Expanded(
-                                                        child: Align(
-                                                          alignment: Alignment
-                                                              .bottomLeft,
-                                                          child: Wrap(
-                                                            children:
-                                                                widgetList,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
+                                                                    .transparent,
+                                                                border: Border.all(
+                                                                    width: 0,
+                                                                    color: Colors
+                                                                        .transparent),
+                                                              ),
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .all(2.0),
+                                                              child: Text(
+                                                                filteredList[
+                                                                        position]
+                                                                    .noteContent,
+                                                                overflow:
+                                                                    TextOverflow
+                                                                        .ellipsis,
+                                                                maxLines: 10,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        12.0,
+                                                                    color: Colors
+                                                                        .black,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w300),
+                                                              ),
+                                                            ),
+                                                            Expanded(
+                                                              child: Align(
+                                                                alignment: Alignment
+                                                                    .bottomLeft,
+                                                                child: Wrap(
+                                                                  children:
+                                                                      widgetList,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        )
+                                                      : changeNoteCell(
+                                                          filteredList[
+                                                              position])),
                                                 ),
                                                 Positioned(
                                                   top: 0,
@@ -759,7 +739,22 @@ class _LandingPageState extends State<LandingPage> {
                         );
                 }))
             : pageWidget));
+  }
 
+  Widget changeNoteCell(NotesModel notesModel) {
+    if (notesModel.noteType == "3") {
+      print(
+          "notesModel.noteImgBase64.intvalue: ${base64Decode(notesModel.noteImgBase64.toString())}");
+
+      return SizedBox.expand(
+        child: FittedBox(
+          child: Image.memory(base64Decode(notesModel.noteImgBase64)),
+          fit: BoxFit.fill,
+        ),
+      );
+    }
+
+    return SizedBox();
   }
 
   Widget switchDrawerWidget() {
@@ -1311,7 +1306,8 @@ class _LandingPageState extends State<LandingPage> {
                             child: Row(
                               children: [
                                 GestureDetector(
-                                  child: Icon(Icons.close, color: Colors.black26),
+                                  child:
+                                      Icon(Icons.close, color: Colors.black26),
                                   onTap: () {
                                     print("close note clicked!");
                                     _setState(() {
@@ -1361,7 +1357,8 @@ class _LandingPageState extends State<LandingPage> {
                                         .isNotEmpty) {
                                       insertNewLabel(createNewLabelObject());
                                       labelListCheckStateList.add(false);
-                                      controllerList.add(TextEditingController());
+                                      controllerList
+                                          .add(TextEditingController());
                                       labelTitleController.text = "";
                                       _setState(() {});
                                     } else
@@ -1392,11 +1389,12 @@ class _LandingPageState extends State<LandingPage> {
                                           itemCount: snapshot.data.length,
                                           scrollDirection: Axis.vertical,
                                           controller: _controller,
-                                          itemBuilder:
-                                              (BuildContext context, int index) {
+                                          itemBuilder: (BuildContext context,
+                                              int index) {
                                             print(
                                                 "inside itemBuilder of Labels LIST");
-                                            if (!labelListCheckStateList[index]) {
+                                            if (!labelListCheckStateList[
+                                                index]) {
                                               return Container(
                                                   key: UniqueKey(),
                                                   child: Row(
@@ -1408,10 +1406,12 @@ class _LandingPageState extends State<LandingPage> {
                                                         Expanded(
                                                           child: Center(
                                                             child: Text(
-                                                              snapshot.data[index]
+                                                              snapshot
+                                                                  .data[index]
                                                                   .labelTitle,
                                                               style: TextStyle(
-                                                                  fontSize: 12.0,
+                                                                  fontSize:
+                                                                      12.0,
                                                                   color: Colors
                                                                       .black54,
                                                                   fontWeight:
@@ -1421,9 +1421,10 @@ class _LandingPageState extends State<LandingPage> {
                                                           ),
                                                         ),
                                                         GestureDetector(
-                                                          child: Icon(Icons.edit,
-                                                              color:
-                                                                  Colors.black26),
+                                                          child: Icon(
+                                                              Icons.edit,
+                                                              color: Colors
+                                                                  .black26),
                                                           onTap: () {
                                                             print(
                                                                 "edit clicked!");
@@ -1442,32 +1443,35 @@ class _LandingPageState extends State<LandingPage> {
                                                         GestureDetector(
                                                           child: Icon(
                                                               Icons.delete,
-                                                              color:
-                                                                  Colors.black26),
+                                                              color: Colors
+                                                                  .black26),
                                                           onTap: () {
                                                             deleteLabel(snapshot
-                                                                    .data[index])
+                                                                        .data[
+                                                                    index])
                                                                 .then((val) {
                                                               if (val > 0) {
-                                                                _setState(() {});
+                                                                _setState(
+                                                                    () {});
                                                               }
                                                             });
                                                           },
                                                         ),
                                                         Expanded(
                                                           child: TextField(
-                                                            onChanged:
-                                                                ((String txt) {}),
+                                                            onChanged: ((String
+                                                                txt) {}),
                                                             autofocus: true,
                                                             maxLines: 1,
                                                             controller:
                                                                 controllerList[
                                                                     index]
                                                                   ..text = snapshot
-                                                                      .data[index]
+                                                                      .data[
+                                                                          index]
                                                                       .labelTitle,
-                                                            textAlign:
-                                                                TextAlign.center,
+                                                            textAlign: TextAlign
+                                                                .center,
                                                             style: TextStyle(
                                                                 fontSize: 12.0,
                                                                 decorationColor:
@@ -1483,13 +1487,13 @@ class _LandingPageState extends State<LandingPage> {
                                                                     contentPadding:
                                                                         EdgeInsets
                                                                             .zero,
-                                                                    isDense: true,
+                                                                    isDense:
+                                                                        true,
                                                                     border:
                                                                         UnderlineInputBorder(
                                                                       borderSide:
                                                                           BorderSide(
-                                                                              color:
-                                                                                  Colors.black),
+                                                                              color: Colors.black),
                                                                     ),
                                                                     hintText:
                                                                         "Enter Label",
@@ -1499,8 +1503,7 @@ class _LandingPageState extends State<LandingPage> {
                                                                         color: Colors
                                                                             .black26,
                                                                         fontWeight:
-                                                                            FontWeight
-                                                                                .w600)),
+                                                                            FontWeight.w600)),
                                                           ),
                                                         ),
                                                         GestureDetector(
@@ -1519,12 +1522,12 @@ class _LandingPageState extends State<LandingPage> {
                                                                   .trim()
                                                                   .isNotEmpty) {
                                                                 updateLabel(
-                                                                        controllerList[
-                                                                                index]
+                                                                        controllerList[index]
                                                                             .text,
                                                                         snapshot.data[
                                                                             index])
-                                                                    .then((val) {
+                                                                    .then(
+                                                                        (val) {
                                                                   print(
                                                                       "row updation status value : $val");
 
@@ -1539,9 +1542,8 @@ class _LandingPageState extends State<LandingPage> {
                                                                   }
                                                                 });
                                                               } else {
-                                                                ScaffoldMessenger
-                                                                        .of(
-                                                                            context)
+                                                                ScaffoldMessenger.of(
+                                                                        context)
                                                                     .showSnackBar(
                                                                         SnackBar(
                                                                   content: Text(

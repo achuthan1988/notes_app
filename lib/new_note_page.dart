@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:notes_app/util/HexColor.dart';
 import 'package:painter/painter.dart';
 import 'package:path/path.dart';
@@ -28,7 +32,10 @@ class NewNotePage extends StatefulWidget {
 
 class _NewNotePageState extends State<NewNotePage> {
   NotesModel notesModel;
-  String noteTitleVal = "", noteContentVal = "", heroTagValue = "";
+  String noteTitleVal = "",
+      noteContentVal = "",
+      heroTagValue = "",
+      base64DrawingStr = "";
 
   _NewNotePageState(this.notesModel, this.heroTagValue);
 
@@ -46,16 +53,21 @@ class _NewNotePageState extends State<NewNotePage> {
   void initState() {
     // TODO: implement initState
     super.initState();
+
     noteTitleVal = (notesModel != null) ? (notesModel.noteTitle) : ("");
     noteContentVal = (notesModel != null) ? (notesModel.noteContent) : ("");
     noteTitleController = new TextEditingController(text: noteTitleVal);
     noteContentController = new TextEditingController(text: noteContentVal);
+
     flutterSound = new FlutterSound();
     if (notesModel != null) {
       print("notesModel.noteBgColorHex ${notesModel.noteBgColorHex}");
       scaffoldBgHex = HexColor(notesModel.noteBgColorHex);
+      if (notesModel.noteType == "3") {
+        base64DrawingStr = notesModel.noteImgBase64;
+        scaffoldNoteTypePos = 3;
+      }
     }
-
     bgHexMain = (this.notesModel == null)
         ? (Constants.bgArray[scaffoldBackgroundColorPos])
         : (scaffoldBgHex);
@@ -126,7 +138,7 @@ class _NewNotePageState extends State<NewNotePage> {
   @override
   Widget build(BuildContext context) {
     print("inside build(): scaffoldNoteTypePos:$scaffoldNoteTypePos");
-    if (scaffoldNoteTypePos != 3)
+    if (scaffoldNoteTypePos == 0)
       return Scaffold(
         key: key,
         backgroundColor: bgHexMain,
@@ -239,8 +251,10 @@ class _NewNotePageState extends State<NewNotePage> {
         ),
         bottomNavigationBar: BottomMenuBar(this, this.notesModel),
       );
-    else
-      return DrawingWidget(this.notesModel);
+    else if (scaffoldNoteTypePos == 3)
+      return DrawingWidget(this.notesModel, this);
+    else if (scaffoldNoteTypePos == 5)
+      return SizedBox();
   }
 
   NotesModel createNoteObject() {
@@ -258,12 +272,27 @@ class _NewNotePageState extends State<NewNotePage> {
     return noteObject;
   }
 
+  /*NotesModel createDrawingNoteObject(){
+    final noteObject = NotesModel(
+        "",
+        "",
+        "0",
+        '#${bgHexMain.value.toRadixString(16)}',
+        "",
+        "",
+        "",
+        0,
+        0);
+
+    return noteObject;
+  }*/
+
   Widget toggleWidget(int position) {
     print("toggleWidget position: $position");
     if (position == 2) {
       return CustomCheckItemsWidget();
     } else if (position == 3) {
-      return DrawingWidget(this.notesModel);
+      return DrawingWidget(this.notesModel, this);
     }
   }
 }
@@ -336,7 +365,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
     print('menu is ${isShow ? 'showing' : 'closed'}');
   }
 
-  void onClickMenu(MenuItemProvider item) {
+  Future<void> onClickMenu(MenuItemProvider item) async {
     print('Click menu -> ${item.menuTitle}');
 
     if (item.menuTitle.contains("Tick boxes")) {
@@ -345,7 +374,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
     } else if (item.menuTitle.contains("Drawing")) {
       noteTypePosition = 3;
     } else if (item.menuTitle.contains("Recording")) {
-      noteTypePosition = 0;
+      noteTypePosition = 1;
       /*
       * (1) show alert dialog for recording audio
       * (2) If cancelled , dismiss alert
@@ -353,6 +382,11 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
       *
       * */
       showRecorderDialog(PopupMenu.context);
+    } else if (item.menuTitle.contains("Take Photo")) {
+      noteTypePosition = 5;
+      final cameras = await availableCameras();
+      final firstCamera = cameras.first;
+      _pickedImage(PopupMenu.context);
     }
 
     parent.setState(() {
@@ -361,6 +395,32 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
       print(
           "onClickMenu setState() _NewNotePageState.scaffoldNoteTypePos: ${_NewNotePageState.scaffoldNoteTypePos}");
     });
+  }
+
+  void _pickedImage(BuildContext context) {
+    File _pickedImage;
+    final picker = ImagePicker();
+    showDialog<ImageSource>(
+      context: context,
+      builder: (context) =>
+          AlertDialog(content: Text("Choose image source"), actions: [
+        FlatButton(
+          child: Text("Camera"),
+          onPressed: () => Navigator.pop(context, ImageSource.camera),
+        ),
+        FlatButton(
+          child: Text("Gallery"),
+          onPressed: () => Navigator.pop(context, ImageSource.gallery),
+        ),
+      ]),
+    ).then((ImageSource source) async {
+      if (source != null) {
+        final pickedFile = await ImagePicker().getImage(source: source);
+        print("image file path: ${pickedFile.path}");
+        parent.setState(() => _pickedImage = File(pickedFile.path));
+      }
+    });
+
   }
 
   void showRecorderDialog(BuildContext context) {
@@ -844,6 +904,50 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
   }
 }
 
+class TakePictureScreen extends StatefulWidget {
+  const TakePictureScreen({
+    Key key,
+    this.camera,
+  }) : super(key: key);
+
+  final CameraDescription camera;
+
+  @override
+  TakePictureScreenState createState() => TakePictureScreenState();
+}
+
+class TakePictureScreenState extends State<TakePictureScreen> {
+  CameraController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    // To display the current output from the Camera,
+    // create a CameraController.
+    _controller = CameraController(
+      // Get a specific camera from the list of available cameras.
+      widget.camera,
+      // Define the resolution to use.
+      ResolutionPreset.medium,
+    );
+
+    // Next, initialize the controller. This returns a Future.
+  }
+
+  @override
+  void dispose() {
+    // Dispose of the controller when the widget is disposed.
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Fill this out in the next steps.
+    return Container();
+  }
+}
+
 class CustomCheckItemsWidget extends StatefulWidget {
   @override
   _CustomCheckItemsWidgetState createState() => _CustomCheckItemsWidgetState();
@@ -1278,29 +1382,44 @@ class LandingPageRoute extends PageRouteBuilder {
 
 class DrawingWidget extends StatefulWidget {
   NotesModel notesModel;
+  State state;
 
-  DrawingWidget(this.notesModel);
+  DrawingWidget(this.notesModel, this.state);
 
   @override
-  _DrawingWidgetState createState() => new _DrawingWidgetState(this.notesModel);
+  _DrawingWidgetState createState() =>
+      new _DrawingWidgetState(this.notesModel, this.state);
 }
 
 class _DrawingWidgetState extends State<DrawingWidget> {
   bool _finished = false;
   NotesModel notesModel;
+  State state;
+  var notesDB;
   PainterController _controller = _newController();
+  Painter painter;
 
-  _DrawingWidgetState(this.notesModel);
+  _DrawingWidgetState(this.notesModel, this.state);
 
   @override
   void initState() {
     super.initState();
+
+    if (notesModel != null) {
+      if (notesModel?.noteImgBase64 != "") {
+        _controller = new PainterController();
+        _controller.thickness = 5.0;
+        _controller.backgroundColor = new HexColor(notesModel.noteBgColorHex);
+        painter = new Painter(_controller);
+      }
+    }
   }
 
   static PainterController _newController() {
     PainterController controller = new PainterController();
     controller.thickness = 5.0;
     controller.backgroundColor = _NewNotePageState.bgHexMain;
+
     return controller;
   }
 
@@ -1321,6 +1440,12 @@ class _DrawingWidgetState extends State<DrawingWidget> {
       ];
     } else {
       actions = <Widget>[
+        new IconButton(
+          icon: new Icon(Icons.save),
+          color: Colors.black,
+          onPressed: () => saveDrawingToDB(_controller.finish(), context,
+              '#${_controller.backgroundColor.value.toRadixString(16)}'),
+        ),
         new IconButton(
             icon: new Icon(
               Icons.undo,
@@ -1354,7 +1479,10 @@ class _DrawingWidgetState extends State<DrawingWidget> {
           backgroundColor: _NewNotePageState.bgHexMain,
           leading: IconButton(
             onPressed: () {
-              Navigator.pop(context);
+              // Navigator.pop(context);
+              state.setState(() {
+                _NewNotePageState.scaffoldNoteTypePos = 0;
+              });
             },
             icon: Icon(Icons.arrow_back),
             color: Colors.black,
@@ -1365,6 +1493,34 @@ class _DrawingWidgetState extends State<DrawingWidget> {
             preferredSize: new Size(MediaQuery.of(context).size.width, 30.0),
           )),
       body: new Center(child: new Painter(_controller)),
+    );
+  }
+
+  void saveDrawingToDB(
+      PictureDetails pictureDetails, BuildContext context, String bgHexStr) {
+    print("inside saveDrawingToDB()");
+
+    pictureDetails.toPNG().then((value) async {
+      String base64Str = base64.encode(value);
+      print("base64: $base64Str");
+      print("bgHexStr: $bgHexStr");
+      final noteDrawing =
+          NotesModel("", "", "3", bgHexStr, "", base64Str, "", 0, 0);
+      await insertDrawing(noteDrawing);
+      Navigator.push(context, ScaleRoute(page: LandingPage()));
+    });
+  }
+
+  Future<void> insertDrawing(NotesModel model) async {
+    print("inside insertDrawing()");
+
+    notesDB =
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+
+    await notesDB.insert(
+      'notes',
+      model.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
 
