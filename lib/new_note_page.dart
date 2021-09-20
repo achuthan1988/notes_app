@@ -44,7 +44,6 @@ class _NewNotePageState extends State<NewNotePage> {
   TextEditingController noteContentController;
   static int scaffoldBackgroundColorPos = 0;
   static int scaffoldNoteTypePos = 0;
-  GlobalKey key = new GlobalKey();
   var notesDB;
   static HexColor scaffoldBgHex;
   static HexColor bgHexMain;
@@ -138,56 +137,66 @@ class _NewNotePageState extends State<NewNotePage> {
   @override
   Widget build(BuildContext context) {
     print("inside build(): scaffoldNoteTypePos:$scaffoldNoteTypePos");
-    if (scaffoldNoteTypePos == 0)
+    if (scaffoldNoteTypePos == 0 || scaffoldNoteTypePos == 5)
       return Scaffold(
-        key: key,
         backgroundColor: bgHexMain,
         body: Stack(
           alignment: Alignment.topLeft,
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.all(12.0),
-              child: ListView(
-                children: <Widget>[
-                  Container(
-                    margin: EdgeInsets.only(top: 30),
-                    child: TextFormField(
-                      controller: noteTitleController,
-                      style: TextStyle(
-                          fontSize: 18.0,
-                          color: Colors.black,
-                          fontWeight: FontWeight.normal),
-                      decoration: InputDecoration(
-                          hintText: 'Title',
-                          border: InputBorder.none,
-                          hintStyle: TextStyle(
-                              fontSize: 18.0,
-                              color: Colors.black,
-                              fontWeight: FontWeight.normal)),
+              child: Container(
+                height: MediaQuery.of(context).size.height,
+                child: ListView(
+                  children: <Widget>[
+                    Visibility(
+                      child: Container(
+                        height: 50.0,
+                        width: 100.0,
+                         color: Colors.red,
+                      ),
+                      visible: (_BottomMenuBarState.galleryImagePath != null),
                     ),
-                  ),
-                  (scaffoldNoteTypePos != 0
-                      ? toggleWidget(scaffoldNoteTypePos)
-                      : Container(
-                          child: TextFormField(
-                            controller: noteContentController,
-                            keyboardType: TextInputType.multiline,
-                            maxLines: null,
-                            style: TextStyle(
-                                fontSize: 16.0,
+                    Container(
+                      margin: EdgeInsets.only(top: 30),
+                      child: TextFormField(
+                        controller: noteTitleController,
+                        style: TextStyle(
+                            fontSize: 18.0,
+                            color: Colors.black,
+                            fontWeight: FontWeight.normal),
+                        decoration: InputDecoration(
+                            hintText: 'Title',
+                            border: InputBorder.none,
+                            hintStyle: TextStyle(
+                                fontSize: 18.0,
                                 color: Colors.black,
-                                fontWeight: FontWeight.normal),
-                            decoration: InputDecoration(
-                              hintText: 'Note',
-                              hintStyle: TextStyle(
+                                fontWeight: FontWeight.normal)),
+                      ),
+                    ),
+                    (scaffoldNoteTypePos != 0
+                        ? toggleWidget(scaffoldNoteTypePos)
+                        : Container(
+                            child: TextFormField(
+                              controller: noteContentController,
+                              keyboardType: TextInputType.multiline,
+                              maxLines: null,
+                              style: TextStyle(
                                   fontSize: 16.0,
                                   color: Colors.black,
                                   fontWeight: FontWeight.normal),
-                              border: InputBorder.none,
+                              decoration: InputDecoration(
+                                hintText: 'Note',
+                                hintStyle: TextStyle(
+                                    fontSize: 16.0,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.normal),
+                                border: InputBorder.none,
+                              ),
                             ),
-                          ),
-                        ))
-                ],
+                          ))
+                  ],
+                ),
               ),
             ),
             GestureDetector(
@@ -253,8 +262,6 @@ class _NewNotePageState extends State<NewNotePage> {
       );
     else if (scaffoldNoteTypePos == 3)
       return DrawingWidget(this.notesModel, this);
-    else if (scaffoldNoteTypePos == 5)
-      return SizedBox();
   }
 
   NotesModel createNoteObject() {
@@ -319,6 +326,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
   int iconSelectedPosition = 0;
   int noteTypePosition = 0;
   NotesModel notesModel;
+  static String galleryImagePath=null;
 
   _BottomMenuBarState(NotesModel notesModel, State parentState) {
     parent = parentState;
@@ -386,7 +394,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
       noteTypePosition = 5;
       final cameras = await availableCameras();
       final firstCamera = cameras.first;
-      _pickedImage(PopupMenu.context);
+      _imgFromGallery();
     }
 
     parent.setState(() {
@@ -395,6 +403,18 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
       print(
           "onClickMenu setState() _NewNotePageState.scaffoldNoteTypePos: ${_NewNotePageState.scaffoldNoteTypePos}");
     });
+  }
+
+  _imgFromGallery() async {
+
+    var imageFile;
+    var image = await ImagePicker().getImage(source: ImageSource.gallery);
+    print("gallery file path: ${image.path}");
+    galleryImagePath = image.path;
+    parent.setState(() {
+      imageFile = image;
+    });
+
   }
 
   void _pickedImage(BuildContext context) {
@@ -420,7 +440,6 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
         parent.setState(() => _pickedImage = File(pickedFile.path));
       }
     });
-
   }
 
   void showRecorderDialog(BuildContext context) {
