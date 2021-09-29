@@ -1,7 +1,10 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:notes_app/landing_page.dart';
-import 'util/constants.dart' as Constants;
 import 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:notes_app/landing_page.dart';
+
+import 'util/constants.dart' as Constants;
 
 class LoginPage extends StatefulWidget {
   @override
@@ -106,7 +109,11 @@ class _State extends State<LoginPage> {
                     children: <Widget>[
                       SignInButton(
                         Buttons.Google,
-                        onPressed: () {},
+                        onPressed: () {
+                          signInWithGoogle()
+                              .then((value) => print("google sign in email id:"
+                                  " ${value.user.email} URL : ${value.user.photoUrl}"));
+                        },
                       ),
                       SignInButton(
                         Buttons.Facebook,
@@ -166,5 +173,20 @@ class _State extends State<LoginPage> {
   Future navigateToLandingPage(context) async {
     Route route = MaterialPageRoute(builder: (context) => LandingPage());
     Navigator.pushReplacement(context, route);
+  }
+
+  Future<AuthResult> signInWithGoogle() async {
+    // Trigger the authentication flow
+    final GoogleSignInAccount googleUser = await GoogleSignIn().signIn();
+    // Obtain the auth details from the request
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
+    // Create a new credential
+    final credential = GoogleAuthProvider.getCredential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    // Once signed in, return the UserCredential
+    return await FirebaseAuth.instance.signInWithCredential(credential);
   }
 }
