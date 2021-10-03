@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:notes_app/dao/notes_dao.dart';
 import 'package:notes_app/util/HexColor.dart';
 import 'package:painter/painter.dart';
 import 'package:path/path.dart';
@@ -24,7 +25,7 @@ class NewNotePage extends StatefulWidget {
   String heroTagValue;
 
   NewNotePage(this.notesModel, this.heroTagValue);
-
+ 
   @override
   _NewNotePageState createState() =>
       _NewNotePageState(notesModel, heroTagValue);
@@ -32,6 +33,7 @@ class NewNotePage extends StatefulWidget {
 
 class _NewNotePageState extends State<NewNotePage> {
   NotesModel notesModel;
+  final notesDao = NotesDao();
   String noteTitleVal = "",
       noteContentVal = "",
       heroTagValue = "",
@@ -153,7 +155,7 @@ class _NewNotePageState extends State<NewNotePage> {
                       child: Container(
                         height: 50.0,
                         width: 100.0,
-                         color: Colors.red,
+                        color: Colors.red,
                       ),
                       visible: (_BottomMenuBarState.galleryImagePath != null),
                     ),
@@ -224,6 +226,8 @@ class _NewNotePageState extends State<NewNotePage> {
                           print("inside else of  onTap()");
                           NotesModel model = createNoteObject();
                           await insertNote(model);
+                          notesDao.saveNote(model);
+
                         }
 
                         Navigator.push(
@@ -326,7 +330,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
   int iconSelectedPosition = 0;
   int noteTypePosition = 0;
   NotesModel notesModel;
-  static String galleryImagePath=null;
+  static String galleryImagePath = null;
 
   _BottomMenuBarState(NotesModel notesModel, State parentState) {
     parent = parentState;
@@ -406,7 +410,6 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
   }
 
   _imgFromGallery() async {
-
     var imageFile;
     var image = await ImagePicker().getImage(source: ImageSource.gallery);
     print("gallery file path: ${image.path}");
@@ -414,7 +417,6 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
     parent.setState(() {
       imageFile = image;
     });
-
   }
 
   void _pickedImage(BuildContext context) {

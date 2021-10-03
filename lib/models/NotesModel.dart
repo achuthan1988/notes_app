@@ -44,7 +44,35 @@ class NotesModel {
       'noteImgBase64': noteImgBase64,
       'noteLabelIdsStr': noteLabelIdsStr,
       'isNotePinned': isNotePinned,
-      'isNoteArchived':isNoteArchived
+      'isNoteArchived': isNoteArchived
     };
   }
+
+  NotesModel.fromJson(Map<String, dynamic> json)
+      : id = json['id'],
+        noteTitle = json['noteTitle'],
+        noteContent = json['noteContent'],
+        noteType = json['noteType'],
+        noteBgColorHex = json['noteBgColorHex'],
+        noteMediaPath = json['noteMediaPath'],
+        noteImgBase64 = json['noteImgBase64'],
+        noteLabelIdsStr = json['noteLabelIdsStr'],
+        isNotePinned = json['isNotePinned'],
+        isNoteArchived = json['isNoteArchived'];
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'noteTitle': noteTitle,
+        'noteContent': noteContent,
+        'noteType': noteType,
+        'noteBgColorHex': noteBgColorHex,
+        'noteMediaPath': noteMediaPath,
+        'noteImgBase64': noteImgBase64,
+        'noteLabelIdsStr': noteLabelIdsStr,
+        'isNotePinned': isNotePinned,
+        'isNoteArchived': isNoteArchived
+      };
+
+
+
 }
