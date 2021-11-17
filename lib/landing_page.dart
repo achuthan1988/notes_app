@@ -270,8 +270,8 @@ class _LandingPageState extends State<LandingPage> {
           child: FloatingActionButton(
             onPressed: () {
               Navigator.pushReplacement(context,
-                  MaterialPageRoute(builder: (_) {
-                return NewNotePage(null, null);
+                  MaterialPageRoute(builder: (BuildContext context) {
+                return NewNotePage(null);
               }));
             },
             child: Icon(Icons.add),
@@ -351,8 +351,7 @@ class _LandingPageState extends State<LandingPage> {
                                                 context,
                                                 ScaleRoute(
                                                     page: NewNotePage(
-                                                        notesModel,
-                                                        'heroTag $position')));
+                                                        notesModel)));
                                           },
                                           onLongPress: () {
                                             print(
@@ -562,9 +561,9 @@ class _LandingPageState extends State<LandingPage> {
                                                 filteredList[position],
                                                 filteredList[position]
                                                     .noteBgColorHex);
-                                        print(
-                                            "inside itemBuilder widgetList.length "
-                                            "${widgetList.length}");
+                                        // print(
+                                        //     "inside itemBuilder widgetList.length "
+                                        //     "${widgetList.length}");
 
                                         return GestureDetector(
                                           onTap: () {
@@ -574,8 +573,7 @@ class _LandingPageState extends State<LandingPage> {
                                                 context,
                                                 ScaleRoute(
                                                     page: NewNotePage(
-                                                        notesModel,
-                                                        'heroTag $position')));
+                                                        notesModel)));
                                           },
                                           onLongPress: () {
                                             print(
@@ -743,8 +741,8 @@ class _LandingPageState extends State<LandingPage> {
 
   Widget changeNoteCell(NotesModel notesModel) {
     if (notesModel.noteType == "3") {
-      print(
-          "notesModel.noteImgBase64.intvalue: ${base64Decode(notesModel.noteImgBase64.toString())}");
+      // print(
+      //     "notesModel.noteImgBase64.intvalue: ${base64Decode(notesModel.noteImgBase64.toString())}");
 
       return SizedBox.expand(
         child: FittedBox(
@@ -752,8 +750,17 @@ class _LandingPageState extends State<LandingPage> {
           fit: BoxFit.fill,
         ),
       );
-    }
+    }else if(notesModel.noteType == "5"){
+      // AUDIO PLAYER UI TO BE CREATED HERE!!!
 
+      
+
+
+
+
+
+
+    }
     return SizedBox();
   }
 
@@ -781,23 +788,69 @@ class _LandingPageState extends State<LandingPage> {
 
   List<Widget> getLabelTagWidgets(NotesModel notesModel, String bgHexStr) {
     print("inside getLabelTagWidgets()");
-    Color bgTagColor = darkerColorByPerc(HexColor(bgHexStr), 0.15);
-    String labelIdsStr = notesModel.noteLabelIdsStr;
-    print("in getLabelTagWidgets labelIdsStr: $labelIdsStr");
-    List<String> labelIdArr = labelIdsStr.split(",");
-    List<String> selectedLabelsStrArr = [];
-    List<Widget> widgetList = [];
-    int totalLabelSize = labelIdArr.length;
-    int noOfLabelCounters = totalLabelSize > 2 ? (totalLabelSize - 2) : 0;
-    Widget trailingWidget = (noOfLabelCounters > 0
-        ? Container(
+    if (bgHexStr != "") {
+      Color bgTagColor = darkerColorByPerc(HexColor(bgHexStr), 0.15);
+      String labelIdsStr = notesModel.noteLabelIdsStr;
+      print("in getLabelTagWidgets labelIdsStr: $labelIdsStr");
+      List<String> labelIdArr = labelIdsStr.split(",");
+      List<String> selectedLabelsStrArr = [];
+      List<Widget> widgetList = [];
+      int totalLabelSize = labelIdArr.length;
+      int noOfLabelCounters = totalLabelSize > 2 ? (totalLabelSize - 2) : 0;
+      Widget trailingWidget = (noOfLabelCounters > 0
+          ? Container(
+              margin: EdgeInsets.all(3.0),
+              child: Text(
+                "+" + noOfLabelCounters.toString(),
+                style: TextStyle(
+                    fontSize: 12.0,
+                    color: Colors.black45,
+                    fontWeight: FontWeight.w800),
+              ),
+              decoration: BoxDecoration(
+                color: bgTagColor,
+                border: Border.all(
+                  color: Colors.transparent,
+                  width: 2.0,
+                ),
+                borderRadius: BorderRadius.circular(5.0),
+              ),
+            )
+          : null);
+
+      print(
+          "inside getLabelTagWidgets labelModelList.length ${labelModelList.length}");
+      print("inside getLabelTagWidgets labelIdArr.length ${labelIdArr.length} "
+          "labelIdArr ${labelIdArr[0]}");
+
+      if (labelIdsStr != "") {
+        for (int i = 0; i < labelModelList.length; i++) {
+          for (int j = 0; j < labelIdArr.length; j++) {
+            if (labelModelList[i].id == int.parse(labelIdArr[j])) {
+              selectedLabelsStrArr.add(labelModelList[i].labelTitle);
+            }
+          }
+        }
+        int finalSize = (selectedLabelsStrArr.length > 2
+            ? (2)
+            : selectedLabelsStrArr.length);
+
+        for (int i = 0; i < finalSize; i++) {
+          print("labelTitle ${selectedLabelsStrArr[i]}");
+          String labelTitle = selectedLabelsStrArr[i].trim();
+
+          widgetList.add(Container(
             margin: EdgeInsets.all(3.0),
-            child: Text(
-              "+" + noOfLabelCounters.toString(),
-              style: TextStyle(
-                  fontSize: 12.0,
-                  color: Colors.black45,
-                  fontWeight: FontWeight.w800),
+            child: SizedBox(
+              width: 50.0,
+              child: Text(
+                labelTitle,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 12.0,
+                    color: Colors.black45,
+                    fontWeight: FontWeight.w800),
+              ),
             ),
             decoration: BoxDecoration(
               color: bgTagColor,
@@ -807,60 +860,18 @@ class _LandingPageState extends State<LandingPage> {
               ),
               borderRadius: BorderRadius.circular(5.0),
             ),
-          )
-        : null);
-
-    print(
-        "inside getLabelTagWidgets labelModelList.length ${labelModelList.length}");
-    print("inside getLabelTagWidgets labelIdArr.length ${labelIdArr.length} "
-        "labelIdArr ${labelIdArr[0]}");
-
-    if (labelIdsStr != "") {
-      for (int i = 0; i < labelModelList.length; i++) {
-        for (int j = 0; j < labelIdArr.length; j++) {
-          if (labelModelList[i].id == int.parse(labelIdArr[j])) {
-            selectedLabelsStrArr.add(labelModelList[i].labelTitle);
-          }
+          ));
         }
-      }
-      int finalSize =
-          (selectedLabelsStrArr.length > 2 ? (2) : selectedLabelsStrArr.length);
 
-      for (int i = 0; i < finalSize; i++) {
-        print("labelTitle ${selectedLabelsStrArr[i]}");
-        String labelTitle = selectedLabelsStrArr[i].trim();
-
-        widgetList.add(Container(
-          margin: EdgeInsets.all(3.0),
-          child: SizedBox(
-            width: 50.0,
-            child: Text(
-              labelTitle,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                  fontSize: 12.0,
-                  color: Colors.black45,
-                  fontWeight: FontWeight.w800),
-            ),
-          ),
-          decoration: BoxDecoration(
-            color: bgTagColor,
-            border: Border.all(
-              color: Colors.transparent,
-              width: 2.0,
-            ),
-            borderRadius: BorderRadius.circular(5.0),
-          ),
-        ));
+        if (trailingWidget != null) {
+          widgetList.add(trailingWidget);
+        }
+        print(
+            "inside getLabelTagWidgets() widgetList.length: ${widgetList.length}");
       }
-
-      if (trailingWidget != null) {
-        widgetList.add(trailingWidget);
-      }
-      print(
-          "inside getLabelTagWidgets() widgetList.length: ${widgetList.length}");
+      return widgetList;
     }
-    return widgetList;
+
   }
 
 // Future<List<Widget>> getLabelChips(int position) async {

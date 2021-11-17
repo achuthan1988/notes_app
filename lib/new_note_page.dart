@@ -8,11 +8,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:flutter_sound/public/flutter_sound_player.dart';
+import 'package:flutter_sound/public/flutter_sound_recorder.dart';
+import 'package:flutter_sound_platform_interface/flutter_sound_recorder_platform_interface.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:notes_app/dao/notes_dao.dart';
 import 'package:notes_app/util/HexColor.dart';
 import 'package:painter/painter.dart';
 import 'package:path/path.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:popup_menu/popup_menu.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -22,13 +26,13 @@ import 'util/constants.dart' as Constants;
 
 class NewNotePage extends StatefulWidget {
   NotesModel notesModel;
-  String heroTagValue;
 
-  NewNotePage(this.notesModel, this.heroTagValue);
- 
+  // String heroTagValue;
+
+  NewNotePage(this.notesModel);
+
   @override
-  _NewNotePageState createState() =>
-      _NewNotePageState(notesModel, heroTagValue);
+  _NewNotePageState createState() => _NewNotePageState(notesModel);
 }
 
 class _NewNotePageState extends State<NewNotePage> {
@@ -39,9 +43,8 @@ class _NewNotePageState extends State<NewNotePage> {
       heroTagValue = "",
       base64DrawingStr = "";
 
-  _NewNotePageState(this.notesModel, this.heroTagValue);
+  _NewNotePageState(this.notesModel);
 
-  FlutterSound flutterSound;
   TextEditingController noteTitleController;
   TextEditingController noteContentController;
   static int scaffoldBackgroundColorPos = 0;
@@ -60,7 +63,6 @@ class _NewNotePageState extends State<NewNotePage> {
     noteTitleController = new TextEditingController(text: noteTitleVal);
     noteContentController = new TextEditingController(text: noteContentVal);
 
-    flutterSound = new FlutterSound();
     if (notesModel != null) {
       print("notesModel.noteBgColorHex ${notesModel.noteBgColorHex}");
       scaffoldBgHex = HexColor(notesModel.noteBgColorHex);
@@ -227,7 +229,6 @@ class _NewNotePageState extends State<NewNotePage> {
                           NotesModel model = createNoteObject();
                           await insertNote(model);
                           notesDao.saveNote(model);
-
                         }
 
                         Navigator.push(
@@ -266,6 +267,8 @@ class _NewNotePageState extends State<NewNotePage> {
       );
     else if (scaffoldNoteTypePos == 3)
       return DrawingWidget(this.notesModel, this);
+    else
+      return Container(width: 0.0, height: 0.0);
   }
 
   NotesModel createNoteObject() {
@@ -308,6 +311,8 @@ class _NewNotePageState extends State<NewNotePage> {
   }
 }
 
+const theSource = AudioSource.microphone;
+
 class BottomMenuBar extends StatefulWidget {
   State parentState;
   NotesModel notesModel;
@@ -327,14 +332,141 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
   GlobalKey btnKey1 = GlobalKey();
 
   State parent;
+  String timerValue = "0:00:00";
   int iconSelectedPosition = 0;
   int noteTypePosition = 0;
   NotesModel notesModel;
   static String galleryImagePath = null;
 
+  Codec _codec = Codec.defaultCodec;
+  String _mPath = '${new DateTime.now().millisecondsSinceEpoch}.mp4';
+  String finalFilePath;
+  FlutterSoundPlayer _mPlayer = FlutterSoundPlayer();
+  FlutterSoundRecorder _mRecorder = FlutterSoundRecorder();
+  bool _mPlayerIsInited = false;
+  bool _mRecorderIsInited = false;
+  bool _mplaybackReady = false;
+  bool isRecordingFinished = false;
+  Timer _timer;
+  void Function(void Function()) _setStateText;
+
   _BottomMenuBarState(NotesModel notesModel, State parentState) {
     parent = parentState;
     this.notesModel = notesModel;
+  }
+
+  @override
+  void initState() {
+    _mPlayer.openAudioSession().then((value) {
+      setState(() {
+        _mPlayerIsInited = true;
+      });
+    });
+
+    openTheRecorder().then((value) {
+      setState(() {
+        _mRecorderIsInited = true;
+      });
+    });
+
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _mPlayer.closeAudioSession();
+    _mPlayer = null;
+
+    _mRecorder.closeAudioSession();
+    _mRecorder = null;
+    super.dispose();
+  }
+
+  Future<void> openTheRecorder() async {
+    if (!kIsWeb) {
+      Map<Permission, PermissionStatus> status = await [
+        Permission.microphone,
+        Permission.storage,
+      ].request();
+
+      if (status[Permission.microphone].isDenied &&
+          status[Permission.storage].isDenied) {
+        throw RecordingPermissionException('Microphone permission not granted');
+      }
+    }
+
+    await _mRecorder.openAudioSession();
+    if (!await _mRecorder.isEncoderSupported(_codec) && kIsWeb) {
+      _codec = Codec.opusWebM;
+      _mPath = 'tau_file.webm';
+      if (!await _mRecorder.isEncoderSupported(_codec) && kIsWeb) {
+        _mRecorderIsInited = true;
+        return;
+      }
+    }
+    _mRecorderIsInited = true;
+  }
+
+  // ----------------------  Here is the code for recording and playback -------
+
+  void record() {
+    print("inside record()!");
+    if (!_mRecorder.isRecording) {
+      _mRecorder.startRecorder(
+        toFile: _mPath,
+        codec: _codec,
+        audioSource: theSource,
+      );
+    }
+
+    _mRecorder.onProgress.listen((event) {
+      print("recorder event ticker: ${event.duration.toString()}");
+      _setStateText(() {
+        timerValue = event.duration.toString().split('.')[0];
+      });
+
+      // _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      //   print("inside timer periodic!");
+      //   setState(() {
+      //     timerValue = event.duration.toString().split('.')[0];
+      //   });
+      // });
+    });
+  }
+
+  void stopRecorder() async {
+    await _mRecorder.stopRecorder().then((value) {
+      print("stopRecorder(): ${value.toString()}");
+      finalFilePath = value.toString();
+      // _timer.cancel();
+      setState(() {
+        //var url = value;
+        _mplaybackReady = true;
+      });
+    });
+  }
+
+  void play() {
+    assert(_mPlayerIsInited &&
+        _mplaybackReady &&
+        _mRecorder.isStopped &&
+        _mPlayer.isStopped);
+    _mPlayer
+        .startPlayer(
+            fromURI: _mPath,
+            // codec: kIsWeb ? Codec.opusWebM : Codec.aacADTS,
+            whenFinished: () {
+              setState(() {});
+            })
+        .then((value) {
+      setState(() {});
+    });
+  }
+
+  void stopPlayer() {
+    _mPlayer.stopPlayer().then((value) {
+      setState(() {});
+    });
   }
 
   @override
@@ -393,6 +525,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
       * (3) If ticked, save to be initiated and redirect to landing page
       *
       * */
+
       showRecorderDialog(PopupMenu.context);
     } else if (item.menuTitle.contains("Take Photo")) {
       noteTypePosition = 5;
@@ -444,50 +577,211 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
     });
   }
 
-  void showRecorderDialog(BuildContext context) {
-    Dialog dialog = Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5.0)),
-      //this right here
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Container(
-          height: 120.0,
-          width: 100.0,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                "00:00:00",
-                style: TextStyle(
-                    fontSize: 30.0,
-                    fontWeight: FontWeight.w600,
-                    color: Constants.bgMainColor),
-                textAlign: TextAlign.center,
+  Future<void> showRecorderDialog(BuildContext context) async {
+    print("in showRecorderDialog");
+    bool isRecording = false;
+
+    bool result = await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(builder: (context, _setState) {
+            _setStateText = _setState;
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5.0)),
+              //this right here
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                  height: 120.0,
+                  width: double.infinity,
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Spacer(),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            buildTimerWidget(),
+                            Container(
+                              width: 100.0,
+                              height: 80.0,
+                              child: ElevatedButton(
+                                onPressed: !isRecordingFinished
+                                    ? () {
+                                        print("onPressed of ElevatedButton");
+                                        !isRecording
+                                            ? record()
+                                            : initiateStopRecording();
+
+                                        _setState(() {
+                                          isRecording = !isRecording;
+                                        });
+
+                                        /*
+                                  * (1) Flutter sound plugin , start recording and
+                                  * display in timer text
+                                  * (2) Once stopped display save and Cancel icon
+                                  * buttons
+                                  * (3) Save to db / cancel the dialog
+                                  * (4) Display the audio note in main list of notes
+                                  * (5) start/stop is based on state
+                                  * */
+                                      }
+                                    : null,
+                                child: isRecording
+                                    ? Icon(
+                                        Icons.stop,
+                                        color: Colors.white,
+                                        size: 48.0,
+                                      )
+                                    : Icon(
+                                        Icons.mic,
+                                        color: Colors.white,
+                                        size: 48.0,
+                                      ),
+                                style: ElevatedButton.styleFrom(
+                                  shape: CircleBorder(),
+                                  padding: EdgeInsets.all(5),
+                                  primary: Constants.bgMainColor,
+                                  onPrimary: Constants.bgMainColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Expanded(
+                          child: Visibility(
+                            visible: isRecordingFinished,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: <Widget>[
+                                ElevatedButton(
+                                  onPressed: () {
+                                    print("onPressed of ElevatedButton");
+                                    // close dialog ,create db entry,redirect
+                                    // to
+                                    // landing page
+                                    // and audio note with player to be
+                                    // displayed in the grid.
+
+                                    NotesModel notesModel = new NotesModel(
+                                        "",
+                                        "",
+                                        "5",
+                                        "#FFFFFF",
+                                        finalFilePath,
+                                        "",
+                                        "",
+                                        0,
+                                        0);
+
+                                    insertAudioNote(notesModel);
+                                    Navigator.pushReplacement(context,
+                                        ScaleRoute(page: LandingPage()));
+                                    Navigator.pop(context);
+
+                                  },
+                                  child: Icon(
+                                    Icons.save_rounded,
+                                    color: Colors.white,
+                                    size: 36.0,
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    shape: CircleBorder(),
+                                    padding: EdgeInsets.all(5),
+                                    primary: Constants.bgMainColor,
+                                    onPrimary: Constants.bgMainColor,
+                                  ),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    print("onPressed of ElevatedButton");
+                                    _setState(() {
+                                      isRecordingFinished = false;
+                                      timerValue = "0:00:00";
+                                      deleteFile(File(finalFilePath));
+                                      // delete file , and
+                                      //reset timer and respective boolean
+                                      // flags
+                                    });
+                                  },
+                                  child: Icon(
+                                    Icons.undo,
+                                    color: Colors.white,
+                                    size: 36.0,
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    shape: CircleBorder(),
+                                    padding: EdgeInsets.all(5),
+                                    primary: Constants.bgMainColor,
+                                    onPrimary: Constants.bgMainColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              ElevatedButton(
-                onPressed: () {},
-                child: Icon(
-                  Icons.mic,
-                  color: Colors.white,
-                  size: 36.0,
-                ),
-                style: ElevatedButton.styleFrom(
-                  shape: CircleBorder(),
-                  padding: EdgeInsets.all(15),
-                  primary: Constants.bgMainColor,
-                  onPrimary: Constants.bgMainColor,
-                ),
-              )
-            ],
-          ),
-        ),
-      ),
+            );
+          });
+        });
+
+    if (result == null) {
+      print("inside dismiss dialog!");
+      isRecordingFinished = false;
+      timerValue = "0:00:00";
+    }
+  }
+
+  void initiateStopRecording() {
+    isRecordingFinished = true;
+    stopRecorder();
+  }
+
+  Future<void> deleteFile(File file) async {
+    try {
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (e) {
+      print("deleteFile Error ${e.toString()}");
+    }
+  }
+
+  Widget buildTimerWidget() {
+    return new Text(
+      timerValue,
+      style: TextStyle(
+          fontSize: 30.0,
+          fontWeight: FontWeight.w600,
+          color: Constants.bgMainColor),
+      textAlign: TextAlign.center,
     );
-    showDialog(context: context, builder: (BuildContext context) => dialog);
+  }
+
+  Future<void> insertAudioNote(NotesModel model) async {
+    print("inside insertAudioNote()");
+    var notesDB =
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+    await notesDB.insert(
+      'notes',
+      model.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   void onDismiss() {
     print('Menu is dismiss');
+    setState(() {
+      _NewNotePageState.scaffoldNoteTypePos = 0;
+    });
   }
 
   void showPopUpMenu(BuildContext context) {
@@ -1526,7 +1820,7 @@ class _DrawingWidgetState extends State<DrawingWidget> {
       print("base64: $base64Str");
       print("bgHexStr: $bgHexStr");
       final noteDrawing =
-          NotesModel("", "", "3", bgHexStr, "", base64Str, "", 0, 0);
+          NotesModel("", "", "4", bgHexStr, "", base64Str, "", 0, 0);
       await insertDrawing(noteDrawing);
       Navigator.push(context, ScaleRoute(page: LandingPage()));
     });
