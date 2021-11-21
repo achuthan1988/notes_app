@@ -18,6 +18,7 @@ import 'package:painter/painter.dart';
 import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:popup_menu/popup_menu.dart';
+import 'package:speech_recognition/speech_recognition.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'landing_page.dart';
@@ -327,6 +328,21 @@ class BottomMenuBar extends StatefulWidget {
       _BottomMenuBarState(notesModel, parentState);
 }
 
+const languages = const [
+  const Language('English', 'en_US'),
+  const Language('Francais', 'fr_FR'),
+  const Language('Pусский', 'ru_RU'),
+  const Language('Italiano', 'it_IT'),
+  const Language('Español', 'es_ES'),
+];
+
+class Language {
+  final String name;
+  final String code;
+
+  const Language(this.name, this.code);
+}
+
 class _BottomMenuBarState extends State<BottomMenuBar> {
   GlobalKey btnKey = GlobalKey();
   GlobalKey btnKey1 = GlobalKey();
@@ -349,6 +365,17 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
   bool isRecordingFinished = false;
   Timer _timer;
   void Function(void Function()) _setStateText;
+  SpeechRecognition _speech;
+
+  bool _speechEnabled = false;
+  String _lastWords = '';
+  bool _speechRecognitionAvailable = false;
+  bool _isListening = false;
+
+  String transcription = '';
+
+  String _currentLocale = 'en_US';
+  Language selectedLang = languages.first;
 
   _BottomMenuBarState(NotesModel notesModel, State parentState) {
     parent = parentState;
@@ -357,6 +384,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
 
   @override
   void initState() {
+    // _initSpeech();
     _mPlayer.openAudioSession().then((value) {
       setState(() {
         _mPlayerIsInited = true;
@@ -372,6 +400,85 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
     super.initState();
   }
 
+  void activateSpeechRecognizer() {
+    print('_MyAppState.activateSpeechRecognizer... ');
+    _speech = new SpeechRecognition();
+    _speech.setAvailabilityHandler(onSpeechAvailability);
+    _speech.setCurrentLocaleHandler(onCurrentLocale);
+    _speech.setRecognitionStartedHandler(onRecognitionStarted);
+    _speech.setRecognitionResultHandler(onRecognitionResult);
+    _speech.setRecognitionCompleteHandler(onRecognitionComplete);
+    _speech
+        .activate()
+        .then((res) => setState(() => _speechRecognitionAvailable = res));
+  }
+
+  void start() => _speech
+      .listen(locale: selectedLang.code)
+      .then((result) => print('_MyAppState.start => result ${result}'));
+
+  void cancel() =>
+      _speech.cancel().then((result) => setState(() => _isListening = result));
+
+  void stop() =>
+      _speech.stop().then((result) => setState(() => _isListening = result));
+
+  void onSpeechAvailability(bool result) =>
+      setState(() => _speechRecognitionAvailable = result);
+
+  void onCurrentLocale(String locale) {
+    print('_MyAppState.onCurrentLocale... $locale');
+    setState(
+        () => selectedLang = languages.firstWhere((l) => l.code == locale));
+  }
+
+  void onRecognitionStarted() {
+    print("in onRecognitionStarted");
+    setState(() {
+      _isListening = true;
+    });
+  }
+
+  void onRecognitionResult(String text) {
+    print("in onRecognitionResult $text");
+    setState(() {
+      transcription = text;
+    });
+  }
+
+  void onRecognitionComplete() {
+    print("in onRecognitionComplete");
+    setState(() {
+      _isListening = false;
+    });
+  }
+
+/*  void _initSpeech() async {
+    print("in _initSpeech()");
+    _speechEnabled = await _speechToText.initialize();
+    setState(() {});
+  }
+
+  void _startListening() async {
+    print("in _startListening()");
+    await _speechToText.listen(onResult: _onSpeechResult);
+    setState(() {});
+  }
+
+  void _stopListening() async {
+    print("in _stopListening()");
+    await _speechToText.stop();
+    setState(() {});
+  }
+
+  void _onSpeechResult(SpeechRecognitionResult result) {
+    print("in _onSpeechResult()");
+    setState(() {
+      _lastWords = result.recognizedWords;
+      print("in _onSpeechResult() $_lastWords");
+    });
+  }*/
+
   @override
   void dispose() {
     _mPlayer.closeAudioSession();
@@ -384,15 +491,8 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
 
   Future<void> openTheRecorder() async {
     if (!kIsWeb) {
-      Map<Permission, PermissionStatus> status = await [
-        Permission.microphone,
-        Permission.storage,
-      ].request();
-
-      if (status[Permission.microphone].isDenied &&
-          status[Permission.storage].isDenied) {
-        throw RecordingPermissionException('Microphone permission not granted');
-      }
+      var status = await Permission.storage.request();
+      var statusM = await Permission.microphone.request();
     }
 
     await _mRecorder.openAudioSession();
@@ -407,11 +507,12 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
     _mRecorderIsInited = true;
   }
 
-  // ----------------------  Here is the code for recording and playback -------
+// ----------------------  Here is the code for recording and playback -------
 
   void record() {
     print("inside record()!");
     if (!_mRecorder.isRecording) {
+      activateSpeechRecognizer();
       _mRecorder.startRecorder(
         toFile: _mPath,
         codec: _codec,
@@ -612,6 +713,10 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
                                 onPressed: !isRecordingFinished
                                     ? () {
                                         print("onPressed of ElevatedButton");
+                                        /*_speechToText.isNotListening
+                                            ? _startListening()
+                                            : _stopListening();*/
+
                                         !isRecording
                                             ? record()
                                             : initiateStopRecording();
@@ -650,6 +755,23 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
                                 ),
                               ),
                             ),
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.all(16),
+                                child: Text(""
+                                  // If listening is active show the recognized words
+                                  // _speechToText.isListening
+                                  //     ? '$_lastWords'
+                                  //     // If listening sn't active but could be tell the user
+                                  //     // how to start it, otherwise indicate that speech
+                                  //     // recognition is not yet ready or not supported on
+                                  //     // the target device
+                                  //     : _speechEnabled
+                                  //         ? ''
+                                  //         : '',
+                                ),
+                              ),
+                            )
                           ],
                         ),
                         Expanded(
@@ -682,7 +804,6 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
                                     Navigator.pushReplacement(context,
                                         ScaleRoute(page: LandingPage()));
                                     Navigator.pop(context);
-
                                   },
                                   child: Icon(
                                     Icons.save_rounded,

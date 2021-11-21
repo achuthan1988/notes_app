@@ -110,9 +110,9 @@ class _State extends State<LoginPage> {
                       SignInButton(
                         Buttons.Google,
                         onPressed: () {
-                          signInWithGoogle()
+                         /* signInWithGoogle()
                               .then((value) => print("google sign in email id:"
-                                  " ${value.user.email} URL : ${value.user.photoUrl}"));
+                                  " ${value.user.email} URL : ${value.user.photoUrl}"));*/
                         },
                       ),
                       SignInButton(
@@ -175,7 +175,7 @@ class _State extends State<LoginPage> {
     Navigator.pushReplacement(context, route);
   }
 
-  Future<AuthResult> signInWithGoogle() async {
+ /* Future<AuthResult> signInWithGoogle() async {
     // Trigger the authentication flow
     final GoogleSignInAccount googleUser = await GoogleSignIn().signIn();
     // Obtain the auth details from the request
@@ -188,5 +188,5 @@ class _State extends State<LoginPage> {
     );
     // Once signed in, return the UserCredential
     return await FirebaseAuth.instance.signInWithCredential(credential);
-  }
+  }*/
 }

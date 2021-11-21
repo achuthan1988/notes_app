@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_stetho/flutter_stetho.dart';
 import 'package:notes_app/landing_page.dart';
 import 'package:notes_app/login.dart';
 import 'package:notes_app/new_note_page.dart';
@@ -10,7 +9,6 @@ import 'package:progress_dialog/progress_dialog.dart';
 import 'util/constants.dart' as Constants;
 
 void main() {
-  Stetho.initialize();
   WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }

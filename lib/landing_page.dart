@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:notes_app/archive_page.dart';
 import 'package:notes_app/models/LabelModel.dart';
 import 'package:notes_app/models/NotesModel.dart';
@@ -10,6 +12,7 @@ import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'new_note_page.dart';
+import 'util/PositionSeekWidget.dart';
 import 'util/constants.dart' as Constants;
 
 class LandingPage extends StatefulWidget {
@@ -750,16 +753,115 @@ class _LandingPageState extends State<LandingPage> {
           fit: BoxFit.fill,
         ),
       );
-    }else if(notesModel.noteType == "5"){
-      // AUDIO PLAYER UI TO BE CREATED HERE!!!
+    } else if (notesModel.noteType == "5") {
+      AssetsAudioPlayer _assetsAudioPlayer = new AssetsAudioPlayer();
+      Duration totalDuration;
+      print("audio file path: ${notesModel.noteMediaPath}");
+      _assetsAudioPlayer.open(
+        Audio.file(notesModel.noteMediaPath),
+        autoStart: false,
+      );
 
-      
+      _assetsAudioPlayer.current.listen((Playing current) {
+        if (current != null) {
+          totalDuration = current.audio.duration;
+        }
+      });
 
+      void _playPause() {
+        _assetsAudioPlayer.playOrPause();
+      }
 
+      @override
+      void dispose() {
+        _assetsAudioPlayer.stop();
+        super.dispose();
+      }
 
+      /// Returns a formatted string for the given Duration [d] to be DD:HH:mm:ss
+      /// and ignore if 0.
+      String formatDuration(Duration duration) {
+        if (duration != null) {
+          String twoDigits(int n) => n.toString().padLeft(2, "0");
+          String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+          String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
 
+          if (duration.inHours != 0)
+            return "${twoDigits(duration.inHours)}:$twoDigitMinutes:$twoDigitSeconds";
+          else
+            return "$twoDigitMinutes:$twoDigitSeconds";
+        }
+        return "";
+      }
 
+// /data/user/0/com.example.notes_app/cache/1637281071741.mp4
+      Duration currentDuration = null;
+      return Padding(
+        padding: const EdgeInsets.all(2.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: <Widget>[
+                StreamBuilder(
+                    stream: _assetsAudioPlayer.isPlaying,
+                    initialData: false,
+                    builder:
+                        (BuildContext context, AsyncSnapshot<bool> snapshot) {
+                      return Container(
+                        width: 36.0,
+                        height: 36.0,
+                        child: NeumorphicButton(
+                            style: NeumorphicStyle(
+                              boxShape: NeumorphicBoxShape.circle(),
+                              color: Constants.bgMainColor,
+                            ),
+                            padding: EdgeInsets.all(3),
+                            margin: EdgeInsets.all(3),
+                            onPressed: _playPause,
+                            child: (snapshot.data
+                                ? Icon(
+                                    Icons.pause,
+                                    color: Colors.white,
+                                  )
+                                : Icon(Icons.play_arrow, color: Colors.white))),
+                      );
+                    })
 
+                /* IconButton(
+                  icon: Icon(AssetAudioPlayerIcons.to_end),
+                  onPressed: _next,
+                ),*/
+              ],
+            ),
+            _assetsAudioPlayer.builderRealtimePlayingInfos(
+                builder: (context, RealtimePlayingInfos infos) {
+              Duration duration;
+              if (infos == null) {
+                return SizedBox();
+              } else {
+                duration = totalDuration;
+                print("total duration : ${formatDuration(duration)}");
+              }
+
+              //print('infos: $infos');
+              return Column(
+                children: [
+                  PositionSeekWidget(
+                    currentPosition: infos.currentPosition,
+                    duration: duration,
+                    seekTo: (to) {
+                      _assetsAudioPlayer.seek(to);
+                    },
+                  ),
+                ],
+              );
+            }),
+          ],
+        ),
+      );
     }
     return SizedBox();
   }
@@ -871,7 +973,6 @@ class _LandingPageState extends State<LandingPage> {
       }
       return widgetList;
     }
-
   }
 
 // Future<List<Widget>> getLabelChips(int position) async {
