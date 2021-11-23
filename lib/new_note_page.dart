@@ -8,9 +8,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
-import 'package:flutter_sound/public/flutter_sound_player.dart';
-import 'package:flutter_sound/public/flutter_sound_recorder.dart';
-import 'package:flutter_sound_platform_interface/flutter_sound_recorder_platform_interface.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:notes_app/dao/notes_dao.dart';
 import 'package:notes_app/util/HexColor.dart';
@@ -55,7 +52,7 @@ class _NewNotePageState extends State<NewNotePage> {
   static HexColor bgHexMain;
 
   @override
-  void initState() {
+  Future<void> initState() {
     // TODO: implement initState
     super.initState();
 
@@ -81,6 +78,11 @@ class _NewNotePageState extends State<NewNotePage> {
 
   void initDB() async {
     print("enter  init()");
+
+    if (!kIsWeb) {
+      var status = await Permission.storage.request();
+      var statusM = await Permission.microphone.request();
+    }
     WidgetsFlutterBinding.ensureInitialized();
 // Open the database and store the reference.
     final Future<Database> database = openDatabase(
@@ -159,7 +161,8 @@ class _NewNotePageState extends State<NewNotePage> {
                         height: 50.0,
                         width: 100.0,
                         color: Colors.red,
-                      ),
+                      ),       //THIS IS WHERE THE DYNAMIC IMAGE GRIDVIEW
+                      // NEEDS TO BE CREATED!!.
                       visible: (_BottomMenuBarState.galleryImagePath != null),
                     ),
                     Container(
@@ -312,7 +315,7 @@ class _NewNotePageState extends State<NewNotePage> {
   }
 }
 
-const theSource = AudioSource.microphone;
+// const theSource = AudioSource.
 
 class BottomMenuBar extends StatefulWidget {
   State parentState;
@@ -354,7 +357,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
   NotesModel notesModel;
   static String galleryImagePath = null;
 
-  Codec _codec = Codec.defaultCodec;
+  Codec _codec = Codec.aacMP4;
   String _mPath = '${new DateTime.now().millisecondsSinceEpoch}.mp4';
   String finalFilePath;
   FlutterSoundPlayer _mPlayer = FlutterSoundPlayer();
@@ -490,33 +493,31 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
   }
 
   Future<void> openTheRecorder() async {
-    if (!kIsWeb) {
-      var status = await Permission.storage.request();
-      var statusM = await Permission.microphone.request();
-    }
-
+    print("in openTheRecorder()");
     await _mRecorder.openAudioSession();
     if (!await _mRecorder.isEncoderSupported(_codec) && kIsWeb) {
+      print("in openTheRecorder() first if clause!");
       _codec = Codec.opusWebM;
       _mPath = 'tau_file.webm';
       if (!await _mRecorder.isEncoderSupported(_codec) && kIsWeb) {
         _mRecorderIsInited = true;
+        print("in openTheRecorder() second if clause!");
         return;
       }
     }
+    print("in openTheRecorder() end line!");
     _mRecorderIsInited = true;
   }
 
 // ----------------------  Here is the code for recording and playback -------
 
-  void record() {
+  Future<void> record() async {
     print("inside record()!");
     if (!_mRecorder.isRecording) {
-      activateSpeechRecognizer();
-      _mRecorder.startRecorder(
+      // activateSpeechRecognizer();
+      await _mRecorder.startRecorder(
         toFile: _mPath,
         codec: _codec,
-        audioSource: theSource,
       );
     }
 
@@ -525,13 +526,6 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
       _setStateText(() {
         timerValue = event.duration.toString().split('.')[0];
       });
-
-      // _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      //   print("inside timer periodic!");
-      //   setState(() {
-      //     timerValue = event.duration.toString().split('.')[0];
-      //   });
-      // });
     });
   }
 
@@ -626,8 +620,10 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
       * (3) If ticked, save to be initiated and redirect to landing page
       *
       * */
-
       showRecorderDialog(PopupMenu.context);
+    } else if (item.menuTitle.contains("Add Image")) {
+      noteTypePosition = 4;
+
     } else if (item.menuTitle.contains("Take Photo")) {
       noteTypePosition = 5;
       final cameras = await availableCameras();
@@ -713,10 +709,6 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
                                 onPressed: !isRecordingFinished
                                     ? () {
                                         print("onPressed of ElevatedButton");
-                                        /*_speechToText.isNotListening
-                                            ? _startListening()
-                                            : _stopListening();*/
-
                                         !isRecording
                                             ? record()
                                             : initiateStopRecording();
@@ -759,17 +751,17 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
                               child: Container(
                                 padding: EdgeInsets.all(16),
                                 child: Text(""
-                                  // If listening is active show the recognized words
-                                  // _speechToText.isListening
-                                  //     ? '$_lastWords'
-                                  //     // If listening sn't active but could be tell the user
-                                  //     // how to start it, otherwise indicate that speech
-                                  //     // recognition is not yet ready or not supported on
-                                  //     // the target device
-                                  //     : _speechEnabled
-                                  //         ? ''
-                                  //         : '',
-                                ),
+                                    // If listening is active show the recognized words
+                                    // _speechToText.isListening
+                                    //     ? '$_lastWords'
+                                    //     // If listening sn't active but could be tell the user
+                                    //     // how to start it, otherwise indicate that speech
+                                    //     // recognition is not yet ready or not supported on
+                                    //     // the target device
+                                    //     : _speechEnabled
+                                    //         ? ''
+                                    //         : '',
+                                    ),
                               ),
                             )
                           ],
@@ -964,9 +956,8 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
     showModalBottomSheet(
         context: ctx,
         builder: (BuildContext context) {
-          return StatefulBuilder(
-              builder: (BuildContext context, StateSetter setState
-                  /*You can rename this!*/) {
+          return StatefulBuilder(builder: (BuildContext context,
+              StateSetter setState /*You can rename this!*/) {
             return Padding(
               padding: EdgeInsets.all(0.0),
               child: Container(
