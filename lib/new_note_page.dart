@@ -10,6 +10,7 @@ import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:notes_app/dao/notes_dao.dart';
+import 'package:notes_app/note_detailed_page.dart';
 import 'package:notes_app/util/HexColor.dart';
 import 'package:painter/painter.dart';
 import 'package:path/path.dart';
@@ -39,7 +40,8 @@ class _NewNotePageState extends State<NewNotePage> {
   String noteTitleVal = "",
       noteContentVal = "",
       heroTagValue = "",
-      base64DrawingStr = "";
+      base64DrawingStr = "",
+      mediaStr = "";
 
   _NewNotePageState(this.notesModel);
 
@@ -58,6 +60,10 @@ class _NewNotePageState extends State<NewNotePage> {
 
     noteTitleVal = (notesModel != null) ? (notesModel.noteTitle) : ("");
     noteContentVal = (notesModel != null) ? (notesModel.noteContent) : ("");
+    mediaStr = (notesModel != null) ? (notesModel.noteMediaPath) : ("");
+    if (mediaStr != "") {
+      _BottomMenuBarState.galleryPathArr = mediaStr.split(",");
+    }
     noteTitleController = new TextEditingController(text: noteTitleVal);
     noteContentController = new TextEditingController(text: noteContentVal);
 
@@ -144,6 +150,9 @@ class _NewNotePageState extends State<NewNotePage> {
   @override
   Widget build(BuildContext context) {
     print("inside build(): scaffoldNoteTypePos:$scaffoldNoteTypePos");
+    print("inside build(): _BottomMenuBarState.galleryPathArr "
+        "${_BottomMenuBarState.galleryPathArr.length}");
+
     if (scaffoldNoteTypePos == 0 || scaffoldNoteTypePos == 5)
       return Scaffold(
         backgroundColor: bgHexMain,
@@ -157,13 +166,87 @@ class _NewNotePageState extends State<NewNotePage> {
                 child: ListView(
                   children: <Widget>[
                     Visibility(
-                      child: Container(
-                        height: 50.0,
-                        width: 100.0,
-                        color: Colors.red,
-                      ),       //THIS IS WHERE THE DYNAMIC IMAGE GRIDVIEW
-                      // NEEDS TO BE CREATED!!.
-                      visible: (_BottomMenuBarState.galleryImagePath != null),
+                      child: ((_BottomMenuBarState.galleryPathArr.isEmpty)
+                          ? Container()
+                          : Container(
+                              height: 250.0,
+                              width: MediaQuery.of(context).size.width,
+                              child: Padding(
+                                  padding: const EdgeInsets.all(2),
+                                  child: GridView.builder(
+                                    itemCount: _BottomMenuBarState
+                                        .galleryPathArr.length,
+                                    gridDelegate:
+                                        SliverGridDelegateWithFixedCrossAxisCount(
+                                            crossAxisCount: 3),
+                                    shrinkWrap: true,
+                                    itemBuilder:
+                                        (BuildContext context, int index) {
+                                      return Padding(
+                                        padding: const EdgeInsets.all(1.0),
+                                        child: Stack(
+                                          children: <Widget>[
+                                            GestureDetector(
+                                              child: Container(
+                                                color: Constants.bgMainColor
+                                                    .withOpacity(0.2),
+                                                child: Center(
+                                                  child: Image.file(
+                                                    File(
+                                                      _BottomMenuBarState
+                                                              .galleryPathArr[
+                                                          index],
+                                                    ),
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                              ),
+                                              onTap: () {
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          NoteDetailedPage(
+                                                        imagePath:
+                                                            _BottomMenuBarState
+                                                                    .galleryPathArr[
+                                                                index],
+                                                      ),
+                                                    ));
+                                              },
+                                            ),
+                                            Positioned(
+                                              right: 1.0,
+                                              top: 1.0,
+                                              child: GestureDetector(
+                                                child: Container(
+                                                  child: Icon(
+                                                    Icons.delete,
+                                                    color: Colors.white,
+                                                    size: 18.0,
+                                                  ),
+                                                  color: Colors.black87
+                                                      .withOpacity(0.6),
+                                                ),
+                                                onTap: () {
+                                                  print("delete button "
+                                                      "clicked at $index");
+
+                                                  _BottomMenuBarState
+                                                      .galleryPathArr
+                                                      .removeAt(index);
+
+                                                  setState(() {});
+                                                },
+                                              ),
+                                            )
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  )),
+                            )),
+                      visible: (_BottomMenuBarState.galleryPathArr.isNotEmpty),
                     ),
                     Container(
                       margin: EdgeInsets.only(top: 30),
@@ -226,7 +309,11 @@ class _NewNotePageState extends State<NewNotePage> {
                           Color color = bgHexMain;
                           notesModel.noteBgColorHex =
                               '#${color.value.toRadixString(16)}';
-
+                          notesModel.noteMediaPath =
+                              (_BottomMenuBarState.galleryPathArr.length > 0
+                                  ? (_BottomMenuBarState.galleryPathArr
+                                      .join(','))
+                                  : "");
                           updateNote(originalTitle, notesModel);
                         } else {
                           print("inside else of  onTap()");
@@ -281,7 +368,9 @@ class _NewNotePageState extends State<NewNotePage> {
         noteContentController.text.trim(),
         "0",
         '#${bgHexMain.value.toRadixString(16)}',
-        "",
+        (_BottomMenuBarState.galleryPathArr.length > 0
+            ? (_BottomMenuBarState.galleryPathArr.join(','))
+            : ""),
         "",
         "",
         0,
@@ -355,7 +444,9 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
   int iconSelectedPosition = 0;
   int noteTypePosition = 0;
   NotesModel notesModel;
-  static String galleryImagePath = null;
+
+  // static String galleryImagePath = "";
+  static List<String> galleryPathArr = [];
 
   Codec _codec = Codec.aacMP4;
   String _mPath = '${new DateTime.now().millisecondsSinceEpoch}.mp4';
@@ -623,12 +714,11 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
       showRecorderDialog(PopupMenu.context);
     } else if (item.menuTitle.contains("Add Image")) {
       noteTypePosition = 4;
-
+      _imgFromGallery();
     } else if (item.menuTitle.contains("Take Photo")) {
       noteTypePosition = 5;
       final cameras = await availableCameras();
       final firstCamera = cameras.first;
-      _imgFromGallery();
     }
 
     parent.setState(() {
@@ -640,12 +730,15 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
   }
 
   _imgFromGallery() async {
-    var imageFile;
-    var image = await ImagePicker().getImage(source: ImageSource.gallery);
-    print("gallery file path: ${image.path}");
-    galleryImagePath = image.path;
-    parent.setState(() {
-      imageFile = image;
+    var image = await ImagePicker().pickImage(source: ImageSource.gallery);
+    setState(() {
+      if (image != null) {
+        print("image path: ${image.path}");
+        galleryPathArr.add(image.path);
+        print("array size ${galleryPathArr.length}");
+
+        parent.setState(() {});
+      }
     });
   }
 

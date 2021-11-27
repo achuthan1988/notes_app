@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/cupertino.dart';
@@ -621,6 +622,87 @@ class _LandingPageState extends State<LandingPage> {
                                                               CrossAxisAlignment
                                                                   .start,
                                                           children: [
+                                                            Visibility(
+                                                              child: (filteredList[
+                                                                          position]
+                                                                      .noteMediaPath
+                                                                      .isEmpty
+                                                                  ? Container()
+                                                                  : Container(
+                                                                      height:
+                                                                          70.0,
+                                                                      width: MediaQuery.of(
+                                                                              context)
+                                                                          .size
+                                                                          .width,
+                                                                      child: Padding(
+                                                                          padding: const EdgeInsets.all(2),
+                                                                          child: GridView.builder(
+                                                                            itemCount:
+                                                                                filteredList[position].noteMediaPath.split(",").length,
+                                                                            gridDelegate:
+                                                                                SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+                                                                            shrinkWrap:
+                                                                                true,
+                                                                            itemBuilder:
+                                                                                (BuildContext context, int index) {
+                                                                              return Padding(
+                                                                                padding: const EdgeInsets.all(1.0),
+                                                                                child: Stack(
+                                                                                  children: <Widget>[
+                                                                                    GestureDetector(
+                                                                                      child: Container(
+                                                                                        color: Constants.bgWhiteColor.withOpacity(0.3),
+                                                                                        child: Center(
+                                                                                          child: Image.file(
+                                                                                            File(
+                                                                                              filteredList[position].noteMediaPath.split(",")[index],
+                                                                                            ),
+                                                                                            fit: BoxFit.cover,
+                                                                                          ),
+                                                                                        ),
+                                                                                      ),
+                                                                                      onTap: () {
+                                                                                        Navigator.push(
+                                                                                            context,
+                                                                                            MaterialPageRoute(
+                                                                                              builder: (context) => NewNotePage(
+                                                                                                filteredList[position],
+                                                                                              ),
+                                                                                            ));
+                                                                                      },
+                                                                                    ),
+                                                                                    /*Positioned(
+                                                                                      right: 1.0,
+                                                                                      top: 1.0,
+                                                                                      child: GestureDetector(
+                                                                                        child: Container(
+                                                                                          child: Icon(
+                                                                                            Icons.delete,
+                                                                                            color: Colors.white,
+                                                                                            size: 12.0,
+                                                                                          ),
+                                                                                          color: Colors.black87.withOpacity(0.6),
+                                                                                        ),
+                                                                                        onTap: () {
+                                                                                          print("delete button "
+                                                                                              "clicked at $index");
+                                                                                          filteredList[position].noteMediaPath.split(",").removeAt(index);
+                                                                                          setState(() {});
+                                                                                        },
+                                                                                      ),
+                                                                                    )*/
+                                                                                  ],
+                                                                                ),
+                                                                              );
+                                                                            },
+                                                                          )),
+                                                                    )),
+                                                              visible: (filteredList[
+                                                                      position]
+                                                                  .noteMediaPath
+                                                                  .isNotEmpty),
+                                                            ),
                                                             Container(
                                                               decoration:
                                                                   BoxDecoration(
@@ -1342,9 +1424,10 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-  void showAddLabelDialog(BuildContext context) {
+  Future<void> showAddLabelDialog(BuildContext context) async {
     bool isNewNoteAdded = false;
     TextEditingController labelTitleController = new TextEditingController();
+    labelModelList = await getAllLabels();
     List<bool> labelListCheckStateList =
         List<bool>.generate(labelModelList.length, (index) => false);
 
@@ -1367,309 +1450,315 @@ class _LandingPageState extends State<LandingPage> {
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(2.0)),
               //this right here
-              child: Container(
-                height: 200,
-                child: Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Edit Labels",
-                          style: TextStyle(
-                              fontSize: 14.0,
-                              color: Colors.black,
-                              fontWeight: FontWeight.w800),
-                        ),
-                        if (!isNewNoteAdded)
-                          Container(
-                            margin: EdgeInsets.only(top: 10.0),
-                            child: Row(
-                              children: [
-                                GestureDetector(
-                                  child: Icon(Icons.add, color: Colors.black26),
-                                  onTap: () {
-                                    print("Add new note clicked!");
-                                    _setState(() {
-                                      isNewNoteAdded = true;
-                                    });
-                                  },
-                                ),
-                                Expanded(
-                                  child: Center(
-                                    child: Text(
-                                      "Add Label",
-                                      style: TextStyle(
-                                          fontSize: 12.0,
-                                          color: Colors.black26,
-                                          fontWeight: FontWeight.w800),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        else
-                          Container(
-                            margin: EdgeInsets.only(top: 10.0),
-                            child: Row(
-                              children: [
-                                GestureDetector(
-                                  child:
-                                      Icon(Icons.close, color: Colors.black26),
-                                  onTap: () {
-                                    print("close note clicked!");
-                                    _setState(() {
-                                      longPressedNotesMap = Map();
-                                      isNewNoteAdded = false;
-                                    });
-                                  },
-                                ),
-                                Expanded(
-                                  child: TextField(
-                                    onChanged: ((String txt) {
-                                      print("Textfield onChanged String $txt");
-                                    }),
+              child: Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(10.0),
+                  child: IntrinsicHeight(
+                    child: SingleChildScrollView(
+                      physics: ClampingScrollPhysics(),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Edit Labels",
+                            style: TextStyle(
+                                fontSize: 14.0,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w800),
+                          ),
+                          if (!isNewNoteAdded)
+                            Container(
+                              margin: EdgeInsets.only(top: 10.0),
+                              child: Row(
+                                children: [
+                                  GestureDetector(
+                                    child:
+                                        Icon(Icons.add, color: Colors.black26),
                                     onTap: () {
-                                      print("onTap()");
+                                      print("Add new note clicked!");
+                                      _setState(() {
+                                        isNewNoteAdded = true;
+                                      });
                                     },
-                                    autofocus: true,
-                                    maxLines: 1,
-                                    controller: labelTitleController,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                        fontSize: 12.0,
-                                        decorationColor: Colors.red,
-                                        decorationStyle:
-                                            TextDecorationStyle.solid,
-                                        decoration: TextDecoration.none),
-                                    decoration: InputDecoration(
-                                        contentPadding: EdgeInsets.zero,
-                                        isDense: true,
-                                        border: UnderlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.black),
-                                        ),
-                                        hintText: "Enter Label",
-                                        hintStyle: TextStyle(
+                                  ),
+                                  Expanded(
+                                    child: Center(
+                                      child: Text(
+                                        "Add Label",
+                                        style: TextStyle(
                                             fontSize: 12.0,
                                             color: Colors.black26,
-                                            fontWeight: FontWeight.w600)),
+                                            fontWeight: FontWeight.w800),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                                GestureDetector(
-                                  child: Icon(Icons.add, color: Colors.black26),
-                                  onTap: () {
-                                    if (labelTitleController.text
-                                        .toString()
-                                        .trim()
-                                        .isNotEmpty) {
-                                      insertNewLabel(createNewLabelObject());
-                                      labelListCheckStateList.add(false);
-                                      controllerList
-                                          .add(TextEditingController());
-                                      labelTitleController.text = "";
-                                      _setState(() {});
-                                    } else
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(SnackBar(
-                                        content: Text("Enter a label title"),
-                                      ));
-                                  },
-                                ),
-                              ],
-                              mainAxisAlignment: MainAxisAlignment.start,
+                                ],
+                              ),
+                            )
+                          else
+                            Container(
+                              margin: EdgeInsets.only(top: 10.0),
+                              child: Row(
+                                children: [
+                                  GestureDetector(
+                                    child: Icon(Icons.close,
+                                        color: Colors.black26),
+                                    onTap: () {
+                                      print("close note clicked!");
+                                      _setState(() {
+                                        longPressedNotesMap = Map();
+                                        isNewNoteAdded = false;
+                                      });
+                                    },
+                                  ),
+                                  Expanded(
+                                    child: TextField(
+                                      onChanged: ((String txt) {
+                                        print(
+                                            "Textfield onChanged String $txt");
+                                      }),
+                                      onTap: () {
+                                        print("onTap()");
+                                      },
+                                      autofocus: true,
+                                      maxLines: 1,
+                                      controller: labelTitleController,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                          fontSize: 12.0,
+                                          decorationColor: Colors.red,
+                                          decorationStyle:
+                                              TextDecorationStyle.solid,
+                                          decoration: TextDecoration.none),
+                                      decoration: InputDecoration(
+                                          contentPadding: EdgeInsets.zero,
+                                          isDense: true,
+                                          border: UnderlineInputBorder(
+                                            borderSide:
+                                                BorderSide(color: Colors.black),
+                                          ),
+                                          hintText: "Enter Label",
+                                          hintStyle: TextStyle(
+                                              fontSize: 12.0,
+                                              color: Colors.black26,
+                                              fontWeight: FontWeight.w600)),
+                                    ),
+                                  ),
+                                  GestureDetector(
+                                    child:
+                                        Icon(Icons.add, color: Colors.black26),
+                                    onTap: () {
+                                      if (labelTitleController.text
+                                          .toString()
+                                          .trim()
+                                          .isNotEmpty) {
+                                        insertNewLabel(createNewLabelObject());
+                                        labelListCheckStateList.add(false);
+                                        controllerList
+                                            .add(TextEditingController());
+                                        labelTitleController.text = "";
+                                        _setState(() {});
+                                      } else
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(SnackBar(
+                                          content: Text("Enter a label title"),
+                                        ));
+                                    },
+                                  ),
+                                ],
+                                mainAxisAlignment: MainAxisAlignment.start,
+                              ),
                             ),
-                          ),
-                        Container(
-                            height: 250.0,
-                            margin: EdgeInsets.only(top: 10.0),
-                            child: FutureBuilder(
-                                future: getAllLabels(),
-                                builder: (context, AsyncSnapshot snapshot) {
-                                  if (!snapshot.hasData) {
-                                    return Center(child: Text(""));
-                                  } else {
-                                    return Container(
-                                      key: UniqueKey(),
-                                      child: ListView.builder(
-                                          physics:
-                                              const AlwaysScrollableScrollPhysics(),
-                                          itemCount: snapshot.data.length,
-                                          scrollDirection: Axis.vertical,
-                                          controller: _controller,
-                                          itemBuilder: (BuildContext context,
-                                              int index) {
-                                            print(
-                                                "inside itemBuilder of Labels LIST");
-                                            if (!labelListCheckStateList[
-                                                index]) {
-                                              return Container(
-                                                  key: UniqueKey(),
-                                                  child: Row(
-                                                      key: UniqueKey(),
-                                                      children: [
-                                                        Icon(Icons.label,
-                                                            color:
-                                                                Colors.black26),
-                                                        Expanded(
-                                                          child: Center(
-                                                            child: Text(
-                                                              snapshot
-                                                                  .data[index]
-                                                                  .labelTitle,
-                                                              style: TextStyle(
-                                                                  fontSize:
-                                                                      12.0,
-                                                                  color: Colors
-                                                                      .black54,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w800),
+                          Container(
+                              height: 250.0,
+                              margin: EdgeInsets.only(top: 10.0),
+                              child: FutureBuilder(
+                                  future: getAllLabels(),
+                                  builder: (context, AsyncSnapshot snapshot) {
+                                    if (!snapshot.hasData) {
+                                      return Center(child: Text(""));
+                                    } else {
+                                      return Container(
+                                        key: UniqueKey(),
+                                        child: ListView.builder(
+                                            physics:
+                                                const AlwaysScrollableScrollPhysics(),
+                                            itemCount: snapshot.data.length,
+                                            scrollDirection: Axis.vertical,
+                                            controller: _controller,
+                                            itemBuilder: (BuildContext context,
+                                                int index) {
+                                              print(
+                                                  "inside itemBuilder of Labels LIST");
+                                              if (!labelListCheckStateList[
+                                                  index]) {
+                                                return Container(
+                                                    key: UniqueKey(),
+                                                    child: Row(
+                                                        key: UniqueKey(),
+                                                        children: [
+                                                          Icon(Icons.label,
+                                                              color: Colors
+                                                                  .black26),
+                                                          Expanded(
+                                                            child: Center(
+                                                              child: Text(
+                                                                snapshot
+                                                                    .data[index]
+                                                                    .labelTitle,
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        12.0,
+                                                                    color: Colors
+                                                                        .black54,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w800),
+                                                              ),
                                                             ),
                                                           ),
-                                                        ),
-                                                        GestureDetector(
-                                                          child: Icon(
-                                                              Icons.edit,
-                                                              color: Colors
-                                                                  .black26),
-                                                          onTap: () {
-                                                            print(
-                                                                "edit clicked!");
-                                                            labelListCheckStateList[
-                                                                index] = true;
-                                                            _setState(() {});
-                                                          },
-                                                        ),
-                                                      ]));
-                                            } else {
-                                              return Container(
-                                                  key: UniqueKey(),
-                                                  child: Row(
-                                                      key: UniqueKey(),
-                                                      children: [
-                                                        GestureDetector(
-                                                          child: Icon(
-                                                              Icons.delete,
-                                                              color: Colors
-                                                                  .black26),
-                                                          onTap: () {
-                                                            deleteLabel(snapshot
-                                                                        .data[
-                                                                    index])
-                                                                .then((val) {
-                                                              if (val > 0) {
-                                                                _setState(
-                                                                    () {});
-                                                              }
-                                                            });
-                                                          },
-                                                        ),
-                                                        Expanded(
-                                                          child: TextField(
-                                                            onChanged: ((String
-                                                                txt) {}),
-                                                            autofocus: true,
-                                                            maxLines: 1,
-                                                            controller:
-                                                                controllerList[
-                                                                    index]
-                                                                  ..text = snapshot
-                                                                      .data[
-                                                                          index]
-                                                                      .labelTitle,
-                                                            textAlign: TextAlign
-                                                                .center,
-                                                            style: TextStyle(
-                                                                fontSize: 12.0,
-                                                                decorationColor:
-                                                                    Colors.red,
-                                                                decorationStyle:
-                                                                    TextDecorationStyle
-                                                                        .solid,
-                                                                decoration:
-                                                                    TextDecoration
-                                                                        .none),
-                                                            decoration:
-                                                                InputDecoration(
-                                                                    contentPadding:
-                                                                        EdgeInsets
-                                                                            .zero,
-                                                                    isDense:
-                                                                        true,
-                                                                    border:
-                                                                        UnderlineInputBorder(
-                                                                      borderSide:
-                                                                          BorderSide(
-                                                                              color: Colors.black),
-                                                                    ),
-                                                                    hintText:
-                                                                        "Enter Label",
-                                                                    hintStyle: TextStyle(
-                                                                        fontSize:
-                                                                            12.0,
-                                                                        color: Colors
-                                                                            .black26,
-                                                                        fontWeight:
-                                                                            FontWeight.w600)),
-                                                          ),
-                                                        ),
-                                                        GestureDetector(
+                                                          GestureDetector(
                                                             child: Icon(
-                                                                Icons.check,
+                                                                Icons.edit,
                                                                 color: Colors
                                                                     .black26),
                                                             onTap: () {
                                                               print(
-                                                                  "check clicked!");
+                                                                  "edit clicked!");
+                                                              labelListCheckStateList[
+                                                                  index] = true;
+                                                              _setState(() {});
+                                                            },
+                                                          ),
+                                                        ]));
+                                              } else {
+                                                return Container(
+                                                    key: UniqueKey(),
+                                                    child: Row(
+                                                        key: UniqueKey(),
+                                                        children: [
+                                                          GestureDetector(
+                                                            child: Icon(
+                                                                Icons.delete,
+                                                                color: Colors
+                                                                    .black26),
+                                                            onTap: () {
+                                                              deleteLabel(snapshot
+                                                                          .data[
+                                                                      index])
+                                                                  .then((val) {
+                                                                if (val > 0) {
+                                                                  _setState(
+                                                                      () {});
+                                                                }
+                                                              });
+                                                            },
+                                                          ),
+                                                          Expanded(
+                                                            child: TextField(
+                                                              onChanged:
+                                                                  ((String
+                                                                      txt) {}),
+                                                              autofocus: true,
+                                                              maxLines: 1,
+                                                              controller: controllerList[
+                                                                  index]
+                                                                ..text = snapshot
+                                                                    .data[index]
+                                                                    .labelTitle,
+                                                              textAlign:
+                                                                  TextAlign
+                                                                      .center,
+                                                              style: TextStyle(
+                                                                  fontSize:
+                                                                      12.0,
+                                                                  decorationColor:
+                                                                      Colors
+                                                                          .red,
+                                                                  decorationStyle:
+                                                                      TextDecorationStyle
+                                                                          .solid,
+                                                                  decoration:
+                                                                      TextDecoration
+                                                                          .none),
+                                                              decoration:
+                                                                  InputDecoration(
+                                                                      contentPadding:
+                                                                          EdgeInsets
+                                                                              .zero,
+                                                                      isDense:
+                                                                          true,
+                                                                      border:
+                                                                          UnderlineInputBorder(
+                                                                        borderSide:
+                                                                            BorderSide(color: Colors.black),
+                                                                      ),
+                                                                      hintText:
+                                                                          "Enter Label",
+                                                                      hintStyle: TextStyle(
+                                                                          fontSize:
+                                                                              12.0,
+                                                                          color: Colors
+                                                                              .black26,
+                                                                          fontWeight:
+                                                                              FontWeight.w600)),
+                                                            ),
+                                                          ),
+                                                          GestureDetector(
+                                                              child: Icon(
+                                                                  Icons.check,
+                                                                  color: Colors
+                                                                      .black26),
+                                                              onTap: () {
+                                                                print(
+                                                                    "check clicked!");
 
-                                                              if (controllerList[
-                                                                      index]
-                                                                  .text
-                                                                  .toString()
-                                                                  .trim()
-                                                                  .isNotEmpty) {
-                                                                updateLabel(
-                                                                        controllerList[index]
-                                                                            .text,
-                                                                        snapshot.data[
-                                                                            index])
-                                                                    .then(
-                                                                        (val) {
-                                                                  print(
-                                                                      "row updation status value : $val");
+                                                                if (controllerList[
+                                                                        index]
+                                                                    .text
+                                                                    .toString()
+                                                                    .trim()
+                                                                    .isNotEmpty) {
+                                                                  updateLabel(
+                                                                          controllerList[index]
+                                                                              .text,
+                                                                          snapshot.data[
+                                                                              index])
+                                                                      .then(
+                                                                          (val) {
+                                                                    print(
+                                                                        "row updation status value : $val");
 
-                                                                  if (val > 0) {
-                                                                    labelListCheckStateList[
-                                                                            index] =
-                                                                        false;
-                                                                    _setState(
-                                                                        () {});
-                                                                  } else {
-                                                                    //updation of row failed !
-                                                                  }
-                                                                });
-                                                              } else {
-                                                                ScaffoldMessenger.of(
-                                                                        context)
-                                                                    .showSnackBar(
-                                                                        SnackBar(
-                                                                  content: Text(
-                                                                      "Enter a label title"),
-                                                                ));
-                                                              }
-                                                            }),
-                                                      ]));
-                                            }
-                                          }),
-                                    );
-                                  }
-                                }))
-                      ],
+                                                                    if (val >
+                                                                        0) {
+                                                                      labelListCheckStateList[
+                                                                              index] =
+                                                                          false;
+                                                                      _setState(
+                                                                          () {});
+                                                                    } else {
+                                                                      //updation of row failed !
+                                                                    }
+                                                                  });
+                                                                } else {
+                                                                  ScaffoldMessenger.of(
+                                                                          context)
+                                                                      .showSnackBar(
+                                                                          SnackBar(
+                                                                    content: Text(
+                                                                        "Enter a label title"),
+                                                                  ));
+                                                                }
+                                                              }),
+                                                        ]));
+                                              }
+                                            }),
+                                      );
+                                    }
+                                  }))
+                        ],
+                      ),
                     ),
                   ),
                 ),
