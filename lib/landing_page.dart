@@ -5,6 +5,7 @@ import 'package:assets_audio_player/assets_audio_player.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:jiffy/jiffy.dart';
 import 'package:notes_app/archive_page.dart';
 import 'package:notes_app/models/LabelModel.dart';
 import 'package:notes_app/models/NotesModel.dart';
@@ -28,22 +29,24 @@ class _LandingPageState extends State<LandingPage> {
   bool isListPopulated = false;
   bool isArchiveSection = false;
   Widget pageWidget;
+  TextEditingController _controller = new TextEditingController();
 
   List<bool> labelsCheckedList = [];
   List<Widget> sliderLabelWidgetList = [];
   List<NotesModel> notesModelList = new List<NotesModel>();
   List<LabelModel> labelModelList = new List<LabelModel>();
   Map longPressedNotesMap = new Map();
-  var sliderTitleArray = ["Home", "", "Edit Labels", "Archive", "Settings"];
+  var sliderTitleArray = ["Home", "Edit Labels", "Archive", "Settings", ""];
   var sliderIconsArray = [
     Icons.home_rounded,
-    Icons.label_outline,
     Icons.edit,
     Icons.archive_outlined,
     Icons.settings
   ];
   static int numOfNotesSelected = 0;
   int drawerPosition = 0;
+  int drawerLabelId = -1;
+  String drawerLabelTitle = "";
 
   @override
   void initState() {
@@ -60,16 +63,19 @@ class _LandingPageState extends State<LandingPage> {
     return Scaffold(
         resizeToAvoidBottomInset: false,
         onDrawerChanged: (isOpened) async {
+          if (isOpened) {
+            labelModelList = await getAllLabels();
+            notesModelList = await getAllNotes();
+            sliderLabelWidgetList = getLabelSliderWidgets();
 
-        if(isOpened){
-          labelModelList = await getAllLabels();
-          sliderLabelWidgetList  = getLabelSliderWidgets();
-        }
-
+            setState(() {});
+          }
         },
         appBar: (!isToggleAppBar
             ? AppBar(
-                title: Text(sliderTitleArray[drawerPosition]),
+                title: (drawerLabelId == -1)
+                    ? Text(sliderTitleArray[drawerPosition])
+                    : Text(drawerLabelTitle),
               )
             : AppBar(
                 backgroundColor: Colors.white,
@@ -85,7 +91,7 @@ class _LandingPageState extends State<LandingPage> {
                             child: Icon(
                               Icons.close,
                               color: Colors.blue,
-                              size: 30.0,
+                              size: 25.0,
                             ),
                           ),
                         ),
@@ -143,6 +149,87 @@ class _LandingPageState extends State<LandingPage> {
                       },
                     ),
                   ),
+                  Visibility(
+                    child: Flexible(
+                      child: GestureDetector(
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Icon(
+                            Icons.notification_add,
+                            color: Colors.blue,
+                            size: 25.0,
+                          ),
+                        ),
+                        onTap: () {
+                          /* => Alert for reminders display
+                          *   (1) get current time
+                          *   (2) grey out duration values in dropdown based
+                          * on above value.
+                          *   (3)
+                          *
+                          * */
+                          int currentTimeInMillis =
+                              DateTime.now().millisecondsSinceEpoch;
+                          print("currentTimeInMillis: $currentTimeInMillis");
+
+                          Widget okButton = TextButton(
+                            child: Text("OK"),
+                            onPressed: () {},
+                          );
+
+                          // set up the AlertDialog
+                          AlertDialog alert = AlertDialog(
+                            content: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: StatefulBuilder(
+                                  builder: (context, _mainSetState) {
+                                return Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text("Set Reminder"),
+                                    SizedBox(
+                                      height: 10,
+                                    ),
+                                    GestureDetector(
+                                        child: AbsorbPointer(
+                                            child: TextField(
+                                          textAlign: TextAlign.center,
+                                          enabled: false,
+                                          decoration: InputDecoration(
+                                            contentPadding: EdgeInsets.all(0),
+                                            prefixIcon: Icon(Icons
+                                                .calendar_today_rounded,size:
+                                            24.0,),
+                                            prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
+                                            isDense: true,
+                                          ),
+                                          controller: _controller,
+                                        )),
+                                        onTap: () {
+                                          _selectDate(context);
+                                        }),
+
+
+                                  ],
+                                );
+                              }),
+                            ),
+                            actions: [okButton],
+                          );
+                          // show the dialog
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (BuildContext context) {
+                              return alert;
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    visible: (numOfNotesSelected <= 1),
+                  ),
                   Flexible(
                     child: GestureDetector(
                       child: Padding(
@@ -150,7 +237,7 @@ class _LandingPageState extends State<LandingPage> {
                         child: Icon(
                           Icons.archive_outlined,
                           color: Colors.blue,
-                          size: 30.0,
+                          size: 25.0,
                         ),
                       ),
                       onTap: () {
@@ -178,7 +265,7 @@ class _LandingPageState extends State<LandingPage> {
                         child: Icon(
                           Icons.label_outline,
                           color: Colors.blue,
-                          size: 30.0,
+                          size: 25.0,
                         ),
                       ),
                       onTap: () {
@@ -209,7 +296,7 @@ class _LandingPageState extends State<LandingPage> {
                         child: Icon(
                           Icons.color_lens_outlined,
                           color: Colors.blue,
-                          size: 30.0,
+                          size: 25.0,
                         ),
                       ),
                       onTap: () {
@@ -236,7 +323,7 @@ class _LandingPageState extends State<LandingPage> {
                         child: Icon(
                           Icons.delete,
                           color: Colors.blue,
-                          size: 30.0,
+                          size: 25.0,
                         ),
                       ),
                       onTap: () {
@@ -255,41 +342,68 @@ class _LandingPageState extends State<LandingPage> {
               return InkWell(
                 child: Container(
                   padding: EdgeInsets.all(3.0),
-                  height: (index != 1
+                  height: (index != 4
                       ? 25.0
                       : (sliderLabelWidgetList.length > 0
                           ? sliderLabelWidgetList.length * 30.0
                           : 0.0)),
-                  child: (index != 1
+                  child: (index != 4
                       ? Row(
                           children: [
                               Icon(sliderIconsArray[index]),
-                              Text('${sliderTitleArray[index]}'),
+                              SizedBox(
+                                  child: Text('${sliderTitleArray[index]}',
+                                      overflow: TextOverflow.ellipsis),
+                                  width: 150),
                             ],
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.center)
                       : Visibility(
-                          child: SizedBox(
+                          child: Container(
                             height: (sliderLabelWidgetList.length > 0
-                                ? sliderLabelWidgetList.length * 30.0
+                                ? sliderLabelWidgetList.length * 40.0
                                 : 0.0),
-                            child: ListView.builder(
-                                shrinkWrap: true,
-                                physics: NeverScrollableScrollPhysics(),
-                                itemCount: sliderLabelWidgetList.length,
-                                itemBuilder: (context, position) {
-                                  return sliderLabelWidgetList[position];
-                                }),
+                            child: Wrap(
+                              children: [
+                                Divider(
+                                  color: Colors.grey[600],
+                                ),
+                                ListView.builder(
+                                    shrinkWrap: true,
+                                    physics: NeverScrollableScrollPhysics(),
+                                    itemCount: sliderLabelWidgetList.length,
+                                    itemBuilder: (context, position) {
+                                      return GestureDetector(
+                                        child: sliderLabelWidgetList[position],
+                                        onTap: () {
+                                          print("inside onTap() of ListView!!"
+                                              " $position");
+                                          drawerLabelId =
+                                              labelModelList[position].id;
+                                          drawerLabelTitle =
+                                              labelModelList[position]
+                                                  .labelTitle;
+                                          print("inside label click "
+                                              "drawerLabelId: $drawerLabelId");
+                                          Navigator.pop(context);
+
+                                          setState(() {});
+                                        },
+                                      );
+                                    }),
+                              ],
+                            ),
                           ),
-                          visible: (sliderLabelWidgetList.length > 0),
+                          visible: sliderLabelWidgetList.length > 0,
                         )),
                 ),
                 onTap: () {
                   drawerPosition = index;
                   Navigator.pop(context);
-                  if (drawerPosition == 2) {
+                  if (drawerPosition == 1) {
                     showAddLabelDialog(context, this);
                   } else {
+                    if (drawerPosition == 0) drawerLabelId = -1;
                     setState(() {
                       pageWidget = switchDrawerWidget();
                     });
@@ -859,6 +973,20 @@ class _LandingPageState extends State<LandingPage> {
             : pageWidget));
   }
 
+  Future<Null> _selectDate(BuildContext context) async {
+    DateTime selectedDate = DateTime.now();
+    final DateTime picked = await showDatePicker(
+        context: context,
+        initialDate: selectedDate,
+        firstDate: DateTime(1901, 1),
+        lastDate: DateTime(2100));
+    if (picked != null && picked != selectedDate)
+      setState(() {
+        selectedDate = picked;
+        _controller.value = TextEditingValue(text: Jiffy(picked).yMMMd);
+      });
+  }
+
   List<Widget> getLabelSliderWidgets() {
     print("inside getLabelSliderWidgets()");
     List<Widget> widgetList = [];
@@ -872,7 +1000,13 @@ class _LandingPageState extends State<LandingPage> {
               child: Row(
                   children: [
                     Icon(Icons.label_rounded),
-                    Text('${label.labelTitle}'),
+                    SizedBox(
+                      child: Text(
+                        '${label.labelTitle}',
+                        overflow: TextOverflow.fade,
+                      ),
+                      width: 250.0,
+                    ),
                   ],
                   mainAxisAlignment: MainAxisAlignment.start,
                   crossAxisAlignment: CrossAxisAlignment.center),
@@ -882,6 +1016,7 @@ class _LandingPageState extends State<LandingPage> {
       ));
     }
     print(" getLabelSliderWidgets() size ${widgetList.length}");
+
     return widgetList;
   }
 
@@ -1264,6 +1399,7 @@ class _LandingPageState extends State<LandingPage> {
     List<String> labelIdsList = <String>[];
     String selectedLabelsStr = "";
     AlertDialog alert;
+    int totalPressedCount = 0;
     // set up the button
     Widget okButton = TextButton(
       child: Text("OK"),
@@ -1275,20 +1411,25 @@ class _LandingPageState extends State<LandingPage> {
       },
     );
     print("longPressedNotesMap.length ${longPressedNotesMap.length}");
+    for (var keyVal in longPressedNotesMap.keys) {
+      if (longPressedNotesMap[keyVal]) totalPressedCount++;
+    }
 
-    if (longPressedNotesMap.length == 1) {
+    if (totalPressedCount == 1) {
       for (var keyVal in longPressedNotesMap.keys) {
         notesModelList.forEach((notesModel) {
-          if (notesModel.id == keyVal) {
-            selectedLabelsStr = notesModel.noteLabelIdsStr;
+          print("## notesModel.id ${notesModel.id} keyVal $keyVal");
+          if (notesModel.id == keyVal && longPressedNotesMap[keyVal]) {
+            if (selectedLabelsStr.length == 0)
+              selectedLabelsStr = notesModel.noteLabelIdsStr;
           }
         });
       }
+    }
 
-      if (selectedLabelsStr.isNotEmpty) {
-        labelIdsList = selectedLabelsStr.split(",").toList();
-        print("labelIdsList ${labelIdsList.toString()}");
-      }
+    if (selectedLabelsStr.isNotEmpty) {
+      labelIdsList = selectedLabelsStr.split(",").toList();
+      print("labelIdsList ${labelIdsList.toString()}");
     }
 
     print("in showLabelsDialog selectedLabelsStr $selectedLabelsStr");
@@ -1912,16 +2053,20 @@ class _LandingPageState extends State<LandingPage> {
 
   Future<void> updateNotesIdList(
       String labelIdsStr, Map longPressedNotesMap) async {
-    print("inside updateNotesIdList() longPressedNotesMap.length: "
+    print("()inside updateNotesIdList longPressedNotesMap.length: "
         "${longPressedNotesMap.length} labelIdsStr :$labelIdsStr");
     notesDB =
         await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
 
     longPressedNotesMap.forEach((key, value) async {
       Map<String, dynamic> row = {'noteLabelIdsStr': labelIdsStr};
-      int updateCount =
-          await notesDB.update('notes', row, where: 'id = ?', whereArgs: [key]);
-      print("inside updateNotesIdList updateCount: $updateCount");
+      print("inside foreach noteID ${key.toString()}");
+      print("inside foreach noteID value $value");
+      if (value) {
+        int updateCount = await notesDB
+            .update('notes', row, where: 'id = ?', whereArgs: [key.toString()]);
+        print("inside updateNotesIdList updateCount: $updateCount");
+      }
     });
   }
 
@@ -2093,6 +2238,25 @@ class _LandingPageState extends State<LandingPage> {
 
     sliderLabelWidgetList = getLabelSliderWidgets();
 
+    if (sliderLabelWidgetList.length > 0) {
+      sliderTitleArray = ["Home", "Edit Labels", "Archive", "Settings", ""];
+      sliderIconsArray = [
+        Icons.home_rounded,
+        Icons.edit,
+        Icons.archive_outlined,
+        Icons.settings,
+        Icons.label_outline
+      ];
+    } else {
+      sliderTitleArray = ["Home", "Edit Labels", "Archive", "Settings"];
+      sliderIconsArray = [
+        Icons.home_rounded,
+        Icons.edit,
+        Icons.archive_outlined,
+        Icons.settings
+      ];
+    }
+
     print("inside initDB() labelModelList.length ${labelModelList.length}");
     print("inside initDB() notesModelList.length ${notesModelList.length}");
 
@@ -2102,13 +2266,15 @@ class _LandingPageState extends State<LandingPage> {
   Future<List<NotesModel>> getAllNotes() async {
     print("inside getAllNotes()");
     // Get a reference to the database.
+    List<NotesModel> filteredList = [];
     final Database db = await notesDB;
 
     // Query the table for all The Notes.
     final List<Map<String, dynamic>> maps = await db.query('notes');
     print("length of notes map: ${maps.length}");
+    print("inside getAllNotes drawerLabelId: $drawerLabelId");
     // Convert the List<Map<String, dynamic> into a List<NotesModel>.
-    return List.generate(maps.length, (i) {
+    List<NotesModel> mainList = List.generate(maps.length, (i) {
       return NotesModel.param(
         maps[i]['id'],
         maps[i]['noteTitle'],
@@ -2122,6 +2288,17 @@ class _LandingPageState extends State<LandingPage> {
         maps[i]['isNoteArchived'],
       );
     });
+
+    if (drawerLabelId == -1)
+      return mainList;
+    else {
+      filteredList = mainList
+          .where((element) => element.noteLabelIdsStr
+              .split(",")
+              .contains(drawerLabelId.toString()))
+          .toList();
+      return filteredList;
+    }
   }
 
   Future<List<LabelModel>> getAllLabels() async {
