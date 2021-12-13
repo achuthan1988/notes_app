@@ -9,6 +9,7 @@ import 'package:jiffy/jiffy.dart';
 import 'package:notes_app/archive_page.dart';
 import 'package:notes_app/models/LabelModel.dart';
 import 'package:notes_app/models/NotesModel.dart';
+import 'package:notes_app/trash_page.dart';
 import 'package:notes_app/util/HexColor.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
@@ -18,6 +19,8 @@ import 'util/PositionSeekWidget.dart';
 import 'util/constants.dart' as Constants;
 
 class LandingPage extends StatefulWidget {
+  setTrashState() => createState().setTrashState();
+
   @override
   _LandingPageState createState() => _LandingPageState();
 }
@@ -28,6 +31,7 @@ class _LandingPageState extends State<LandingPage> {
   bool isToggleAppBar = false;
   bool isListPopulated = false;
   bool isArchiveSection = false;
+  bool isTrashActive = false;
   Widget pageWidget;
   TextEditingController _controller = new TextEditingController();
 
@@ -36,11 +40,21 @@ class _LandingPageState extends State<LandingPage> {
   List<NotesModel> notesModelList = new List<NotesModel>();
   List<LabelModel> labelModelList = new List<LabelModel>();
   Map longPressedNotesMap = new Map();
-  var sliderTitleArray = ["Home", "Edit Labels", "Archive", "Settings", ""];
+  var sliderTitleArray = [
+    "Home",
+    "Edit Labels",
+    "Archive",
+    "Trash"
+        "Sett"
+        "ing"
+        "s",
+    ""
+  ];
   var sliderIconsArray = [
     Icons.home_rounded,
     Icons.edit,
     Icons.archive_outlined,
+    Icons.delete,
     Icons.settings
   ];
   static int numOfNotesSelected = 0;
@@ -57,9 +71,22 @@ class _LandingPageState extends State<LandingPage> {
     drawerPosition = 0;
   }
 
+  void setTrashState() {
+    print("inside setTrashState()");
+    isTrashActive = true;
+    setState(() {
+
+    });
+  }
+
+  bool getTrashState() {
+    print("inside getTrashState()");
+    return isTrashActive;
+  }
+
   @override
   Widget build(BuildContext context) {
-    print("inside build!");
+    print("inside build! landing page");
     return Scaffold(
         resizeToAvoidBottomInset: false,
         onDrawerChanged: (isOpened) async {
@@ -77,171 +104,178 @@ class _LandingPageState extends State<LandingPage> {
                     ? Text(sliderTitleArray[drawerPosition])
                     : Text(drawerLabelTitle),
               )
-            : AppBar(
-                backgroundColor: Colors.white,
-                leading: Padding(
-                  padding: const EdgeInsets.all(5.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    // set your alignment
-                    children: [
-                      GestureDetector(
-                        child: Flexible(
-                          child: GestureDetector(
-                            child: Icon(
-                              Icons.close,
-                              color: Colors.blue,
-                              size: 25.0,
+            : (!getTrashState()
+                ? AppBar(
+                    backgroundColor: Colors.white,
+                    leading: Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        // set your alignment
+                        children: [
+                          GestureDetector(
+                            child: Flexible(
+                              child: GestureDetector(
+                                child: Icon(
+                                  Icons.close,
+                                  color: Colors.blue,
+                                  size: 25.0,
+                                ),
+                              ),
+                            ),
+                            onTap: () {
+                              print("onTap of X button!");
+                              setState(() {
+                                isToggleAppBar = false;
+                                numOfNotesSelected = 0;
+                                notesModelList.forEach((notesModel) {
+                                  longPressedNotesMap[notesModel.id] = false;
+                                });
+                              });
+                            },
+                          ),
+                          Spacer(),
+                          Flexible(
+                            child: Text(
+                              numOfNotesSelected.toString(),
+                              style: TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 20.0,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
-                        ),
-                        onTap: () {
-                          print("onTap of X button!");
-                          setState(() {
-                            isToggleAppBar = false;
-                            numOfNotesSelected = 0;
-                            notesModelList.forEach((notesModel) {
-                              longPressedNotesMap[notesModel.id] = false;
-                            });
-                          });
-                        },
+                        ],
                       ),
-                      Spacer(),
-                      Flexible(
-                        child: Text(
-                          numOfNotesSelected.toString(),
-                          style: TextStyle(
-                              color: Colors.blue,
-                              fontSize: 20.0,
-                              fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  Flexible(
-                    child: GestureDetector(
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Icon(
-                          (isNotesUnpinned()
-                              ? Icons.push_pin
-                              : Icons.push_pin_outlined),
-                          color: Colors.blue,
-                          size: 30.0,
-                        ),
-                      ),
-                      onTap: () {
-                        print("pin icon clicked!!");
-
-                        List<String> idList = [];
-                        longPressedNotesMap.keys.forEach((keyVal) {
-                          if (longPressedNotesMap[keyVal])
-                            idList.add(keyVal.toString());
-                        });
-
-                        if (isNotesUnpinned()) {
-                          updatePinnedStateRows(1, idList);
-                        } else {
-                          updatePinnedStateRows(0, idList);
-                        }
-                      },
                     ),
-                  ),
-                  Visibility(
-                    child: Flexible(
-                      child: GestureDetector(
-                        child: Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Icon(
-                            Icons.notification_add,
-                            color: Colors.blue,
-                            size: 25.0,
+                    actions: [
+                      Flexible(
+                        child: GestureDetector(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Icon(
+                              (isNotesUnpinned()
+                                  ? Icons.push_pin
+                                  : Icons.push_pin_outlined),
+                              color: Colors.blue,
+                              size: 30.0,
+                            ),
                           ),
+                          onTap: () {
+                            print("pin icon clicked!!");
+
+                            List<String> idList = [];
+                            longPressedNotesMap.keys.forEach((keyVal) {
+                              if (longPressedNotesMap[keyVal])
+                                idList.add(keyVal.toString());
+                            });
+
+                            if (isNotesUnpinned()) {
+                              updatePinnedStateRows(1, idList);
+                            } else {
+                              updatePinnedStateRows(0, idList);
+                            }
+                          },
                         ),
-                        onTap: () {
-                          /* => Alert for reminders display
+                      ),
+                      Visibility(
+                        child: Flexible(
+                          child: GestureDetector(
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Icon(
+                                Icons.notification_add,
+                                color: Colors.blue,
+                                size: 25.0,
+                              ),
+                            ),
+                            onTap: () {
+                              /* => Alert for reminders display
                           *   (1) get current time
                           *   (2) grey out duration values in dropdown based
                           * on above value.
                           *   (3)
                           *
                           * */
-                          int currentTimeInMillis =
-                              DateTime.now().millisecondsSinceEpoch;
-                          print("currentTimeInMillis: $currentTimeInMillis");
+                              int currentTimeInMillis =
+                                  DateTime.now().millisecondsSinceEpoch;
+                              print(
+                                  "currentTimeInMillis: $currentTimeInMillis");
 
-                          Widget okButton = TextButton(
-                            child: Text("OK"),
-                            onPressed: () {},
-                          );
+                              Widget okButton = TextButton(
+                                child: Text("OK"),
+                                onPressed: () {},
+                              );
 
-                          // set up the AlertDialog
-                          AlertDialog alert = AlertDialog(
-                            content: SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              child: StatefulBuilder(
-                                  builder: (context, _mainSetState) {
-                                return Column(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text("Set Reminder"),
-                                    SizedBox(
-                                      height: 10,
-                                    ),
-                                    GestureDetector(
-                                        child: AbsorbPointer(
-                                            child: TextField(
-                                          textAlign: TextAlign.center,
-                                          enabled: false,
-                                          decoration: InputDecoration(
-                                            contentPadding: EdgeInsets.all(0),
-                                            prefixIcon: Icon(Icons
-                                                .calendar_today_rounded,size:
-                                            24.0,),
-                                            prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
-                                            isDense: true,
-                                          ),
-                                          controller: _controller,
-                                        )),
-                                        onTap: () {
-                                          _selectDate(context);
-                                        }),
-
-
-                                  ],
-                                );
-                              }),
-                            ),
-                            actions: [okButton],
-                          );
-                          // show the dialog
-                          showDialog(
-                            context: context,
-                            barrierDismissible: false,
-                            builder: (BuildContext context) {
-                              return alert;
+                              // set up the AlertDialog
+                              AlertDialog alert = AlertDialog(
+                                content: SingleChildScrollView(
+                                  scrollDirection: Axis.vertical,
+                                  child: StatefulBuilder(
+                                      builder: (context, _mainSetState) {
+                                    return Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Set Reminder"),
+                                        SizedBox(
+                                          height: 10,
+                                        ),
+                                        GestureDetector(
+                                            child: AbsorbPointer(
+                                                child: TextField(
+                                              textAlign: TextAlign.center,
+                                              enabled: false,
+                                              decoration: InputDecoration(
+                                                contentPadding:
+                                                    EdgeInsets.all(0),
+                                                prefixIcon: Icon(
+                                                  Icons.calendar_today_rounded,
+                                                  size: 24.0,
+                                                ),
+                                                prefixIconConstraints:
+                                                    BoxConstraints(
+                                                        minWidth: 0,
+                                                        minHeight: 0),
+                                                isDense: true,
+                                              ),
+                                              controller: _controller,
+                                            )),
+                                            onTap: () {
+                                              _selectDate(context);
+                                            }),
+                                      ],
+                                    );
+                                  }),
+                                ),
+                                actions: [okButton],
+                              );
+                              // show the dialog
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (BuildContext context) {
+                                  return alert;
+                                },
+                              );
                             },
-                          );
-                        },
-                      ),
-                    ),
-                    visible: (numOfNotesSelected <= 1),
-                  ),
-                  Flexible(
-                    child: GestureDetector(
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Icon(
-                          Icons.archive_outlined,
-                          color: Colors.blue,
-                          size: 25.0,
+                          ),
                         ),
+                        visible: (numOfNotesSelected <= 1),
                       ),
-                      onTap: () {
-                        /*
+                      Flexible(
+                        child: GestureDetector(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Icon(
+                              Icons.archive_outlined,
+                              color: Colors.blue,
+                              size: 25.0,
+                            ),
+                          ),
+                          onTap: () {
+                            /*
                       * (1) Get all note objects long pressed and change flag
                       *  state to 1 in DB.
                       * (2) refresh ui state
@@ -249,28 +283,28 @@ class _LandingPageState extends State<LandingPage> {
                       * (4) If UNDO pressed restoration of those notes
                       * archived in step (1) by change of state in DB and UI.
                       * */
-                        List<String> idList = [];
-                        longPressedNotesMap.keys.forEach((keyVal) {
-                          if (longPressedNotesMap[keyVal])
-                            idList.add(keyVal.toString());
-                        });
-                        updateArchivedStateRows(1, idList, context);
-                      },
-                    ),
-                  ),
-                  Flexible(
-                    child: GestureDetector(
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Icon(
-                          Icons.label_outline,
-                          color: Colors.blue,
-                          size: 25.0,
+                            List<String> idList = [];
+                            longPressedNotesMap.keys.forEach((keyVal) {
+                              if (longPressedNotesMap[keyVal])
+                                idList.add(keyVal.toString());
+                            });
+                            updateArchivedStateRows(1, idList, context);
+                          },
                         ),
                       ),
-                      onTap: () {
-                        print("label onTap pressed");
-                        /*
+                      Flexible(
+                        child: GestureDetector(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Icon(
+                              Icons.label_outline,
+                              color: Colors.blue,
+                              size: 25.0,
+                            ),
+                          ),
+                          onTap: () {
+                            print("label onTap pressed");
+                            /*
                         * (1) show a dialog with UI as per set requirement
                         * (done)
                         * (2) Populate based on entries in Labels table (done)
@@ -285,24 +319,24 @@ class _LandingPageState extends State<LandingPage> {
                         *
                         * */
 
-                        showLabelsDialog(context);
-                      },
-                    ),
-                  ),
-                  Flexible(
-                    child: GestureDetector(
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Icon(
-                          Icons.color_lens_outlined,
-                          color: Colors.blue,
-                          size: 25.0,
+                            showLabelsDialog(context);
+                          },
                         ),
                       ),
-                      onTap: () {
-                        print("pallette icon clicked!!");
+                      Flexible(
+                        child: GestureDetector(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Icon(
+                              Icons.color_lens_outlined,
+                              color: Colors.blue,
+                              size: 25.0,
+                            ),
+                          ),
+                          onTap: () {
+                            print("pallette icon clicked!!");
 
-                        /*
+                            /*
                         * (1) Show all constant 8 colors as circles , inside
                         * an alert dialog, with no button
                         * (2) All long pressed notes to be updated with the
@@ -312,27 +346,139 @@ class _LandingPageState extends State<LandingPage> {
                         *
                         * */
 
-                        showColorPaletteDialog(context);
-                      },
-                    ),
-                  ),
-                  Flexible(
-                    child: GestureDetector(
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: Icon(
-                          Icons.delete,
-                          color: Colors.blue,
-                          size: 25.0,
+                            showColorPaletteDialog(context);
+                          },
                         ),
                       ),
-                      onTap: () {
-                        print("delete icon clicked!!");
-                      },
-                    ),
+                      Flexible(
+                        child: GestureDetector(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Icon(
+                              Icons.delete,
+                              color: Colors.blue,
+                              size: 25.0,
+                            ),
+                          ),
+                          onTap: () {
+                            print("delete icon clicked!!");
+
+                            List<String> idList = [];
+                            longPressedNotesMap.keys.forEach((keyVal) {
+                              if (longPressedNotesMap[keyVal])
+                                idList.add(keyVal.toString());
+
+                              sendToTrash(context, 1, idList);
+
+                              /* String msgTxt = "";
+                          if (idList.length == 1) {
+                            msgTxt = "Note trashed.";
+                          } else if (idList.length > 1) {
+                            msgTxt = "${idList.length} notes trashed.";
+                          }
+
+                          final snackBar = SnackBar(
+                            content: Text(msgTxt),
+                            action: SnackBarAction(
+                              label: 'Undo',
+                              onPressed: () {
+                                sendToTrash(0, idList);
+                              },
+                            ),
+                          );
+
+                          ScaffoldMessenger.of(context).showSnackBar(snackBar);*/
+                              /*
+                          * (1) Show snack bar with number of notes from size
+                          *  of idList above
+                          *
+                          * (2) before duration click reverts the state by
+                          * calling sendToTrash with 0 flag
+                          *
+                          * (3)
+                          *
+                          *
+                          * */
+                            });
+                          },
+                        ),
+                      )
+                    ],
                   )
-                ],
-              )),
+                : AppBar(
+                    backgroundColor: Colors.white,
+                    leading: Padding(
+                      padding: const EdgeInsets.all(5.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        // set your alignment
+                        children: [
+                          GestureDetector(
+                            child: Flexible(
+                              child: GestureDetector(
+                                child: Icon(
+                                  Icons.close,
+                                  color: Colors.blue,
+                                  size: 25.0,
+                                ),
+                              ),
+                            ),
+                            onTap: () {
+                              print("onTap of X button!");
+                              setState(() {
+                                isToggleAppBar = false;
+                                numOfNotesSelected = 0;
+                                notesModelList.forEach((notesModel) {
+                                  longPressedNotesMap[notesModel.id] = false;
+                                });
+                              });
+                            },
+                          ),
+                          Spacer(),
+                          Flexible(
+                            child: Text(
+                              numOfNotesSelected.toString(),
+                              style: TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 20.0,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    actions: [
+                      Flexible(
+                        child: GestureDetector(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Icon(
+                              Icons.restore_from_trash,
+                              color: Colors.blue,
+                              size: 25.0,
+                            ),
+                          ),
+                          onTap: () {
+                            print("restore icon clicked!!");
+                          },
+                        ),
+                      ),
+                      Flexible(
+                        child: GestureDetector(
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Icon(
+                                Icons.delete_forever,
+                                color: Colors.blue,
+                                size: 25.0,
+                              ),
+                            ),
+                            onTap: () {
+                              print("delete forever icon clicked!!");
+                            }),
+                      ),
+                    ],
+                  ))),
         drawer: Drawer(
             child: Container(
           child: ListView.separated(
@@ -1151,6 +1297,9 @@ class _LandingPageState extends State<LandingPage> {
         break;
       case 2:
         return ArchivePage();
+        break;
+      case 3:
+        return TrashPage();
         break;
     }
 
@@ -2128,6 +2277,54 @@ class _LandingPageState extends State<LandingPage> {
     });
   }
 
+  Future<void> sendToTrash(
+      BuildContext context, int newState, List<String> idList) async {
+    int counter = 0;
+    notesDB =
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+
+    idList.forEach((noteId) async {
+      print("inside forEach id: $noteId");
+
+      await notesDB.update('notes', {'isNoteTrashed': newState},
+          where: 'id = '
+              '?',
+          whereArgs: [noteId]);
+      counter++;
+
+      if (counter == idList.length) {
+        setState(() {
+          String msgTxt = "";
+          if (idList.length == 1) {
+            msgTxt = "Note trashed.";
+          } else if (idList.length > 1) {
+            msgTxt = "${idList.length} notes trashed.";
+          }
+          if (newState == 1) {
+            var snackBar = SnackBar(
+              content: Text(msgTxt),
+              action: SnackBarAction(
+                label: 'Undo',
+                onPressed: () {
+                  sendToTrash(context, 0, idList);
+                },
+              ),
+            );
+            ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          } else if (newState == 0) {
+            ScaffoldMessenger.of(context).clearSnackBars();
+          }
+
+          isToggleAppBar = false;
+          numOfNotesSelected = 0;
+          notesModelList.forEach((notesModel) {
+            longPressedNotesMap[notesModel.id] = false;
+          });
+        });
+      }
+    });
+  }
+
   Future<void> updateArchivedStateRows(
       int newState, List<String> idList, BuildContext context) async {
     int counter = 0;
@@ -2211,7 +2408,8 @@ class _LandingPageState extends State<LandingPage> {
           "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
           " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
           "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT,"
-          "isNotePinned INTEGER, isNoteArchived INTEGER)",
+          "isNotePinned INTEGER, isNoteArchived INTEGER, isNoteTrashed "
+          "INTEGER)",
         );
         db.execute(
             "CREATE TABLE TblLabels(id INTEGER PRIMARY KEY AUTOINCREMENT, labelTitle TEXT)");
@@ -2239,20 +2437,35 @@ class _LandingPageState extends State<LandingPage> {
     sliderLabelWidgetList = getLabelSliderWidgets();
 
     if (sliderLabelWidgetList.length > 0) {
-      sliderTitleArray = ["Home", "Edit Labels", "Archive", "Settings", ""];
+      sliderTitleArray = [
+        "Home",
+        "Edit Labels",
+        "Archive",
+        "Trash",
+        "Settings",
+        ""
+      ];
       sliderIconsArray = [
         Icons.home_rounded,
         Icons.edit,
         Icons.archive_outlined,
+        Icons.delete,
         Icons.settings,
         Icons.label_outline
       ];
     } else {
-      sliderTitleArray = ["Home", "Edit Labels", "Archive", "Settings"];
+      sliderTitleArray = [
+        "Home",
+        "Edit Labels",
+        "Archive",
+        "Trash",
+        "Settings"
+      ];
       sliderIconsArray = [
         Icons.home_rounded,
         Icons.edit,
         Icons.archive_outlined,
+        Icons.delete,
         Icons.settings
       ];
     }
@@ -2270,23 +2483,27 @@ class _LandingPageState extends State<LandingPage> {
     final Database db = await notesDB;
 
     // Query the table for all The Notes.
-    final List<Map<String, dynamic>> maps = await db.query('notes');
+    final List<Map<String, dynamic>> maps = await db.query('notes',
+        where: 'is'
+            'NoteTrashed '
+            '= ?',
+        whereArgs: ["0"]);
     print("length of notes map: ${maps.length}");
     print("inside getAllNotes drawerLabelId: $drawerLabelId");
     // Convert the List<Map<String, dynamic> into a List<NotesModel>.
     List<NotesModel> mainList = List.generate(maps.length, (i) {
       return NotesModel.param(
-        maps[i]['id'],
-        maps[i]['noteTitle'],
-        maps[i]['noteContent'],
-        maps[i]['noteType'],
-        maps[i]['noteBgColorHex'],
-        maps[i]['noteMediaPath'],
-        maps[i]['noteImgBase64'],
-        maps[i]['noteLabelIdsStr'],
-        maps[i]['isNotePinned'],
-        maps[i]['isNoteArchived'],
-      );
+          maps[i]['id'],
+          maps[i]['noteTitle'],
+          maps[i]['noteContent'],
+          maps[i]['noteType'],
+          maps[i]['noteBgColorHex'],
+          maps[i]['noteMediaPath'],
+          maps[i]['noteImgBase64'],
+          maps[i]['noteLabelIdsStr'],
+          maps[i]['isNotePinned'],
+          maps[i]['isNoteArchived'],
+          maps[i]['isNoteTrashed']);
     });
 
     if (drawerLabelId == -1)

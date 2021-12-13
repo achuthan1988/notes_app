@@ -106,7 +106,7 @@ class _NewNotePageState extends State<NewNotePage> {
           "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
           " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
           "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT,"
-          "isNotePinned INTEGER, isNoteArchived INTEGER)",
+          "isNotePinned INTEGER, isNoteArchived INTEGER,isNoteTrashed INTEGER)",
         );
         db.execute(
             "CREATE TABLE TblLabels(id INTEGER PRIMARY KEY AUTOINCREMENT, labelTitle TEXT)");
@@ -374,7 +374,7 @@ class _NewNotePageState extends State<NewNotePage> {
         "",
         "",
         0,
-        0);
+        0,0);
 
     return noteObject;
   }
@@ -883,7 +883,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
                                         "",
                                         "",
                                         0,
-                                        0);
+                                        0,0);
 
                                     insertAudioNote(notesModel);
                                     Navigator.pushReplacement(context,
@@ -2025,7 +2025,7 @@ class _DrawingWidgetState extends State<DrawingWidget> {
       print("base64: $base64Str");
       print("bgHexStr: $bgHexStr");
       final noteDrawing =
-          NotesModel("", "", "4", bgHexStr, "", base64Str, "", 0, 0);
+          NotesModel("", "", "4", bgHexStr, "", base64Str, "", 0, 0,0);
       await insertDrawing(noteDrawing);
       Navigator.push(context, ScaleRoute(page: LandingPage()));
     });

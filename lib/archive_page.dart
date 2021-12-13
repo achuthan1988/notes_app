@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ArchivePage extends StatefulWidget {
-  const ArchivePage({key}) : super(key: key);
+  const ArchivePage({Key key}) : super(key: key);
 
   @override
   _ArchivePageState createState() => _ArchivePageState();

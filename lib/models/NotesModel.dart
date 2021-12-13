@@ -9,6 +9,7 @@ class NotesModel {
   String noteLabelIdsStr;
   int isNotePinned;
   int isNoteArchived;
+  int isNoteTrashed;
 
   NotesModel(
       this.noteTitle,
@@ -19,7 +20,8 @@ class NotesModel {
       this.noteImgBase64,
       this.noteLabelIdsStr,
       this.isNotePinned,
-      this.isNoteArchived);
+      this.isNoteArchived,
+      this.isNoteTrashed);
 
   NotesModel.param(
       this.id,
@@ -31,7 +33,8 @@ class NotesModel {
       this.noteImgBase64,
       this.noteLabelIdsStr,
       this.isNotePinned,
-      this.isNoteArchived);
+      this.isNoteArchived,
+      this.isNoteTrashed);
 
   Map<String, dynamic> toMap() {
     return {
@@ -44,7 +47,8 @@ class NotesModel {
       'noteImgBase64': noteImgBase64,
       'noteLabelIdsStr': noteLabelIdsStr,
       'isNotePinned': isNotePinned,
-      'isNoteArchived': isNoteArchived
+      'isNoteArchived': isNoteArchived,
+      'isNoteTrashed': isNoteTrashed
     };
   }
 
@@ -58,7 +62,8 @@ class NotesModel {
         noteImgBase64 = json['noteImgBase64'],
         noteLabelIdsStr = json['noteLabelIdsStr'],
         isNotePinned = json['isNotePinned'],
-        isNoteArchived = json['isNoteArchived'];
+        isNoteArchived = json['isNoteArchived'],
+        isNoteTrashed = json['isNoteTrashed'];
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -70,9 +75,7 @@ class NotesModel {
         'noteImgBase64': noteImgBase64,
         'noteLabelIdsStr': noteLabelIdsStr,
         'isNotePinned': isNotePinned,
-        'isNoteArchived': isNoteArchived
+        'isNoteArchived': isNoteArchived,
+        'isNoteTrashed': isNoteTrashed
       };
-
-
-
 }
