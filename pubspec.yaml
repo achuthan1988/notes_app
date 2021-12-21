@@ -48,7 +48,7 @@ dependencies:
   firebase_database: ^8.1.0
   just_audio: ^0.9.18
   permission_handler: ^8.3.0
-  assets_audio_player:  ^3.0.3+6
+  assets_audio_player: ^3.0.3+6
   flutter_neumorphic: ^3.2.0
   speech_recognition: ^0.3.0+1
   flutter_sound: ^8.4.2
@@ -56,9 +56,14 @@ dependencies:
   intl: ^0.17.0
   jiffy: ^4.1.0
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+
+
+
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

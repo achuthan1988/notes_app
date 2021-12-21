@@ -90,7 +90,7 @@ class _LandingPageState extends State<LandingPage> {
     return Scaffold(
         resizeToAvoidBottomInset: false,
         onDrawerChanged: (isOpened) async {
-          if (isOpened) {
+          if (isOpened) { 
             labelModelList = await getAllLabels();
             notesModelList = await getAllNotes();
             sliderLabelWidgetList = getLabelSliderWidgets();
@@ -1510,7 +1510,7 @@ class _LandingPageState extends State<LandingPage> {
         },
       ));
     }
-
+  
     return widgetList;
   }
 
