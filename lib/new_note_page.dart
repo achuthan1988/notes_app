@@ -322,8 +322,13 @@ class _NewNotePageState extends State<NewNotePage> {
                           notesDao.saveNote(model);
                         }
 
-                        Navigator.push(
-                            context, ScaleRoute(page: LandingPage()));
+
+                        Route route = MaterialPageRoute(builder: (context) => LandingPage());
+                        Navigator.pushReplacement(context, route);
+
+                        // Navigator.pushReplacement(
+                        //     context, ScaleRoute(page: LandingPage()));
+
                       }),
                 ),
               ),
@@ -2027,7 +2032,11 @@ class _DrawingWidgetState extends State<DrawingWidget> {
       final noteDrawing =
           NotesModel("", "", "4", bgHexStr, "", base64Str, "", 0, 0,0);
       await insertDrawing(noteDrawing);
-      Navigator.push(context, ScaleRoute(page: LandingPage()));
+
+      Route route = MaterialPageRoute(builder: (context) => LandingPage());
+      Navigator.pushReplacement(context, route);
+
+      // Navigator.push(context, ScaleRoute(page: LandingPage()));
     });
   }
 

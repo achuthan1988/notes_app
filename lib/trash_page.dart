@@ -8,19 +8,19 @@ import 'package:notes_app/util/PositionSeekWidget.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'landing_page.dart';
 import 'models/LabelModel.dart';
 import 'models/NotesModel.dart';
 import 'util/constants.dart' as Constants;
 
 class TrashPage extends StatefulWidget {
-  const TrashPage({Key key}) : super(key: key);
+  const TrashPage({Key key, @required this.notifyLanding}) : super(key: key);
+  final Function() notifyLanding;
 
   @override
-  _TrashPageState createState() => _TrashPageState();
+  TrashPageState createState() => TrashPageState();
 }
 
-class _TrashPageState extends State<TrashPage> {
+class TrashPageState extends State<TrashPage> {
   Future<Database> database;
   var notesDB;
   bool isToggleAppBar = false;
@@ -36,14 +36,97 @@ class _TrashPageState extends State<TrashPage> {
   int numOfNotesSelected = 0;
   Map longPressedNotesMap = new Map();
 
-
-
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
     initDB();
     numOfNotesSelected = 0;
+  }
+
+  refresh() {
+    setState(() {
+      notesModelList.forEach((notesModel) {
+        longPressedNotesMap[notesModel.id] = false;
+      });
+      isToggleAppBar = false;
+      numOfNotesSelected = 0;
+    });
+  }
+
+  setup(BuildContext context, int flag) {
+    List<String> idList = [];
+    longPressedNotesMap.keys.forEach((keyVal) {
+      if (longPressedNotesMap[keyVal]) idList.add(keyVal.toString());
+    });
+    print("inside restoreNotesToLanding() id list size: ${idList.length}");
+    if (flag == 0)
+      restoreNotesToLanding(context, 0, idList);
+    else {
+      deleteRowsForever(idList);
+      setState(() {
+        isToggleAppBar = false;
+        numOfNotesSelected = 0;
+        notesModelList.forEach((notesModel) {
+          longPressedNotesMap[notesModel.id] = false;
+        });
+      });
+    }
+  }
+
+  Future<void> deleteRowsForever(List<String> idList) async {
+    print("inside deleteRowsForever() size:${idList.length}");
+    notesDB =
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+    await notesDB.delete('notes',
+        where: 'id IN (${List.filled(idList.length, '?').join(',')})',
+        whereArgs: idList);
+  }
+
+  Future<void> restoreNotesToLanding(
+      BuildContext context, int newState, List<String> idList) async {
+    int counter = 0;
+    notesDB =
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+
+    while (counter < idList.length) {
+      notesDB.update('notes', {'isNoteTrashed': newState},
+          where: 'id = ?', whereArgs: [idList[counter]]);
+      counter++;
+    }
+
+    if (counter == idList.length) {
+      print("inside snackbar if clause!");
+      setState(() {
+        String msgTxt = "";
+        if (idList.length == 1) {
+          msgTxt = "Note restored.";
+        } else if (idList.length > 1) {
+          msgTxt = "${idList.length} notes restored.";
+        }
+        if (newState == 0) {
+          var snackBar = SnackBar(
+            content: Text(msgTxt),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                print("Snackbar Undo onPressed!");
+                restoreNotesToLanding(context, 1, idList);
+              },
+            ),
+          );
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        } else if (newState == 1) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+        }
+
+        isToggleAppBar = false;
+        numOfNotesSelected = 0;
+        notesModelList.forEach((notesModel) {
+          longPressedNotesMap[notesModel.id] = false;
+        });
+      });
+    }
   }
 
   Future<List> initDB() async {
@@ -98,122 +181,117 @@ class _TrashPageState extends State<TrashPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.max,
                     children: <Widget>[
-                      GridView.builder(
-                        scrollDirection: Axis.vertical,
-                        shrinkWrap: true,
-                        gridDelegate:
-                            SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 2.0,
-                                mainAxisSpacing: 2.0),
+                      Flexible(
+                        child: GridView.builder(
+                          scrollDirection: Axis.vertical,
+                          shrinkWrap: true,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 2.0,
+                                  mainAxisSpacing: 2.0),
+                          itemBuilder: (_, position) => GestureDetector(
+                            onTap: () {},
+                            onLongPress: () {
+                              print(
+                                  "inside onLongPress longPressList[position]");
 
-                        itemBuilder: (_, position) => GestureDetector(
-                          onTap: () {},
-                          onLongPress: () {
-                            print(
-                                "inside onLongPress longPressList[position]");
-                            LandingPage().setTrashState();
-
-                            if (!longPressedNotesMap[
-                                notesModelList[position].id]) {
-                              setState(() {
-                                longPressedNotesMap[
-                                    notesModelList[position].id] = true;
-                                isToggleAppBar = true;
-                                numOfNotesSelected += 1;
-                              });
-                            }
-                          },
-                          child: Stack(
-                            children: [
-                              Container(
-                                width: double.infinity,
-                                margin: EdgeInsets.all(3.0),
-                                padding: EdgeInsets.all(1.0),
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.all(
-                                        Radius.circular(7.0)),
-                                    color: HexColor(
-                                        notesModelList[position]
-                                            .noteBgColorHex)),
-                                child: (notesModelList[position]
-                                            .noteType ==
-                                        "0"
-                                    ? Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.max,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Container(
-                                            // decoration: BoxDecoration(
-                                            //   color: Colors.black,
-                                            //   border: Border.all(
-                                            //       width: 0),
-                                            // ),
-                                            padding:
-                                                EdgeInsets.all(2.0),
-                                            child: Text(
-                                              notesModelList[position]
-                                                  .noteTitle,
-                                              overflow:
-                                                  TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                  fontSize: 14.0,
-                                                  color: Colors.black,
-                                                  fontWeight:
-                                                      FontWeight.w600),
+                              widget.notifyLanding();
+                              if (!longPressedNotesMap[
+                                  notesModelList[position].id]) {
+                                setState(() {
+                                  longPressedNotesMap[
+                                      notesModelList[position].id] = true;
+                                  isToggleAppBar = true;
+                                  numOfNotesSelected += 1;
+                                });
+                              }
+                            },
+                            child: Stack(
+                              children: [
+                                Container(
+                                  width: double.infinity,
+                                  margin: EdgeInsets.all(3.0),
+                                  padding: EdgeInsets.all(1.0),
+                                  decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(7.0)),
+                                      color: HexColor(notesModelList[position]
+                                          .noteBgColorHex)),
+                                  child: (notesModelList[position].noteType ==
+                                          "0"
+                                      ? Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.max,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Container(
+                                              // decoration: BoxDecoration(
+                                              //   color: Colors.black,
+                                              //   border: Border.all(
+                                              //       width: 0),
+                                              // ),
+                                              padding: EdgeInsets.all(2.0),
+                                              child: Text(
+                                                notesModelList[position]
+                                                    .noteTitle,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                    fontSize: 14.0,
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                              ),
                                             ),
-                                          ),
-                                          Container(
-                                            // decoration: BoxDecoration(
-                                            //   color: Colors.black,
-                                            //   border: Border.all(
-                                            //       width: 0),
-                                            // ),
-                                            padding:
-                                                EdgeInsets.all(2.0),
-                                            child: Text(
-                                              notesModelList[position]
-                                                  .noteContent,
-                                              overflow:
-                                                  TextOverflow.ellipsis,
-                                              maxLines: 10,
-                                              style: TextStyle(
-                                                  fontSize: 12.0,
-                                                  color: Colors.black,
-                                                  fontWeight:
-                                                      FontWeight.w300),
+                                            Container(
+                                              // decoration: BoxDecoration(
+                                              //   color: Colors.black,
+                                              //   border: Border.all(
+                                              //       width: 0),
+                                              // ),
+                                              padding: EdgeInsets.all(2.0),
+                                              child: Text(
+                                                notesModelList[position]
+                                                    .noteContent,
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 10,
+                                                style: TextStyle(
+                                                    fontSize: 12.0,
+                                                    color: Colors.black,
+                                                    fontWeight:
+                                                        FontWeight.w300),
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      )
-                                    : changeNoteCell(
-                                        notesModelList[position])),
-                              ),
-                              Positioned(
-                                top: 0,
-                                right: 2.0,
-                                child: Visibility(
-                                  visible: longPressedNotesMap[
-                                      notesModelList[position].id],
-                                  maintainState: true,
-                                  maintainSize: true,
-                                  maintainAnimation: true,
-                                  child: Container(
-                                      width: 15.0,
-                                      height: 15.0,
-                                      child: Icon(
-                                        Icons.check_circle,
-                                        color: Colors.black87,
-                                      )),
-                                ), //CircularAvatar
-                              ),
-                            ],
+                                          ],
+                                        )
+                                      : changeNoteCell(
+                                          notesModelList[position])),
+                                ),
+                                Positioned(
+                                  top: 0,
+                                  right: 2.0,
+                                  child: Visibility(
+                                    visible: longPressedNotesMap[
+                                        notesModelList[position].id],
+                                    maintainState: true,
+                                    maintainSize: true,
+                                    maintainAnimation: true,
+                                    child: Container(
+                                        width: 15.0,
+                                        height: 15.0,
+                                        child: Icon(
+                                          Icons.check_circle,
+                                          color: Colors.black87,
+                                        )),
+                                  ), //CircularAvatar
+                                ),
+                              ],
+                            ),
                           ),
+                          itemCount: notesModelList.length,
                         ),
-                        itemCount:notesModelList.length,
                       ),
                     ],
                   )

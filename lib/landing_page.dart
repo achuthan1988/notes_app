@@ -19,7 +19,7 @@ import 'util/PositionSeekWidget.dart';
 import 'util/constants.dart' as Constants;
 
 class LandingPage extends StatefulWidget {
-  setTrashState() => createState().setTrashState();
+  // setTrashState() => createState().setTrashState();
 
   @override
   _LandingPageState createState() => _LandingPageState();
@@ -34,7 +34,7 @@ class _LandingPageState extends State<LandingPage> {
   bool isTrashActive = false;
   Widget pageWidget;
   TextEditingController _controller = new TextEditingController();
-
+  final GlobalKey<TrashPageState> _key = GlobalKey();
   List<bool> labelsCheckedList = [];
   List<Widget> sliderLabelWidgetList = [];
   List<NotesModel> notesModelList = new List<NotesModel>();
@@ -71,18 +71,26 @@ class _LandingPageState extends State<LandingPage> {
     drawerPosition = 0;
   }
 
-  void setTrashState() {
+  refresh() {
+    print("inside refersh landing!");
+    isTrashActive = true;
+    isToggleAppBar = true;
+    numOfNotesSelected++;
+    setState(() {});
+  }
+
+  /* void setTrashState() {
     print("inside setTrashState()");
     isTrashActive = true;
     setState(() {
-
+      getTrashState();
     });
   }
 
   bool getTrashState() {
     print("inside getTrashState()");
     return isTrashActive;
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +98,7 @@ class _LandingPageState extends State<LandingPage> {
     return Scaffold(
         resizeToAvoidBottomInset: false,
         onDrawerChanged: (isOpened) async {
-          if (isOpened) { 
+          if (isOpened) {
             labelModelList = await getAllLabels();
             notesModelList = await getAllNotes();
             sliderLabelWidgetList = getLabelSliderWidgets();
@@ -98,13 +106,13 @@ class _LandingPageState extends State<LandingPage> {
             setState(() {});
           }
         },
-        appBar: (!isToggleAppBar
+        appBar: ((!isToggleAppBar && !isTrashActive)
             ? AppBar(
                 title: (drawerLabelId == -1)
                     ? Text(sliderTitleArray[drawerPosition])
                     : Text(drawerLabelTitle),
               )
-            : (!getTrashState()
+            : ((isToggleAppBar && !isTrashActive)
                 ? AppBar(
                     backgroundColor: Colors.white,
                     leading: Padding(
@@ -362,13 +370,10 @@ class _LandingPageState extends State<LandingPage> {
                           ),
                           onTap: () {
                             print("delete icon clicked!!");
-
                             List<String> idList = [];
                             longPressedNotesMap.keys.forEach((keyVal) {
                               if (longPressedNotesMap[keyVal])
                                 idList.add(keyVal.toString());
-
-                              sendToTrash(context, 1, idList);
 
                               /* String msgTxt = "";
                           if (idList.length == 1) {
@@ -400,85 +405,105 @@ class _LandingPageState extends State<LandingPage> {
                           *
                           * */
                             });
+                            sendToTrash(context, 1, idList);
                           },
                         ),
                       )
                     ],
                   )
-                : AppBar(
-                    backgroundColor: Colors.white,
-                    leading: Padding(
-                      padding: const EdgeInsets.all(5.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        // set your alignment
-                        children: [
-                          GestureDetector(
-                            child: Flexible(
-                              child: GestureDetector(
+                : ((isToggleAppBar && isTrashActive))
+                    ? AppBar(
+                        backgroundColor: Colors.white,
+                        leading: Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            // set your alignment
+                            children: [
+                              GestureDetector(
+                                child: Flexible(
+                                  child: GestureDetector(
+                                    child: Icon(
+                                      Icons.close,
+                                      color: Colors.blue,
+                                      size: 25.0,
+                                    ),
+                                  ),
+                                ),
+                                onTap: () {
+                                  print("onTap of X button!");
+                                  setState(() {
+                                    _key.currentState.refresh();
+                                    isTrashActive = false;
+                                    isToggleAppBar = false;
+                                    numOfNotesSelected = 0;
+                                    notesModelList.forEach((notesModel) {
+                                      longPressedNotesMap[notesModel.id] =
+                                          false;
+                                    });
+                                  });
+                                },
+                              ),
+                              Spacer(),
+                              Flexible(
+                                child: Text(
+                                  numOfNotesSelected.toString(),
+                                  style: TextStyle(
+                                      color: Colors.blue,
+                                      fontSize: 20.0,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        actions: [
+                          Flexible(
+                            child: GestureDetector(
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
                                 child: Icon(
-                                  Icons.close,
+                                  Icons.restore_from_trash,
                                   color: Colors.blue,
                                   size: 25.0,
                                 ),
                               ),
-                            ),
-                            onTap: () {
-                              print("onTap of X button!");
-                              setState(() {
-                                isToggleAppBar = false;
-                                numOfNotesSelected = 0;
-                                notesModelList.forEach((notesModel) {
-                                  longPressedNotesMap[notesModel.id] = false;
+                              onTap: () {
+                                print("restore icon clicked!!");
+                                _key.currentState.setup(context, 0);
+                                setState(() {
+                                  isToggleAppBar = false;
+                                  isTrashActive = false;
+                                  numOfNotesSelected = 0;
+                                  notesModelList.forEach((notesModel) {
+                                    longPressedNotesMap[notesModel.id] = false;
+                                  });
                                 });
-                              });
-                            },
-                          ),
-                          Spacer(),
-                          Flexible(
-                            child: Text(
-                              numOfNotesSelected.toString(),
-                              style: TextStyle(
-                                  color: Colors.blue,
-                                  fontSize: 20.0,
-                                  fontWeight: FontWeight.bold),
+                              },
                             ),
+                          ),
+                          Flexible(
+                            child: GestureDetector(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: Icon(
+                                    Icons.delete_forever,
+                                    color: Colors.blue,
+                                    size: 25.0,
+                                  ),
+                                ),
+                                onTap: () {
+                                  print("delete forever icon clicked!!");
+                                  showDeleteForever(context);
+                                }),
                           ),
                         ],
-                      ),
-                    ),
-                    actions: [
-                      Flexible(
-                        child: GestureDetector(
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Icon(
-                              Icons.restore_from_trash,
-                              color: Colors.blue,
-                              size: 25.0,
-                            ),
-                          ),
-                          onTap: () {
-                            print("restore icon clicked!!");
-                          },
-                        ),
-                      ),
-                      Flexible(
-                        child: GestureDetector(
-                            child: Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: Icon(
-                                Icons.delete_forever,
-                                color: Colors.blue,
-                                size: 25.0,
-                              ),
-                            ),
-                            onTap: () {
-                              print("delete forever icon clicked!!");
-                            }),
-                      ),
-                    ],
-                  ))),
+                      )
+                    : AppBar(
+                        title: (drawerLabelId == -1)
+                            ? Text(sliderTitleArray[drawerPosition])
+                            : Text(drawerLabelTitle),
+                      ))),
         drawer: Drawer(
             child: Container(
           child: ListView.separated(
@@ -565,7 +590,7 @@ class _LandingPageState extends State<LandingPage> {
           ),
         )),
         floatingActionButton: Visibility(
-          visible: !isArchiveSection,
+          visible: !isArchiveSection && (drawerPosition != 3),
           child: FloatingActionButton(
             onPressed: () {
               Navigator.pushReplacement(context,
@@ -1119,6 +1144,47 @@ class _LandingPageState extends State<LandingPage> {
             : pageWidget));
   }
 
+  showDeleteForever(BuildContext context) {
+    // set up the buttons
+    Widget noButton = TextButton(
+      child: Text("No"),
+      onPressed: () {},
+    );
+    Widget yesButton = TextButton(
+      child: Text("Yes"),
+      onPressed: () {
+        _key.currentState.setup(context, 1);
+        Navigator.pop(context);
+        setState(() {
+          isToggleAppBar = false;
+          isTrashActive = false;
+          numOfNotesSelected = 0;
+          notesModelList.forEach((notesModel) {
+            longPressedNotesMap[notesModel.id] = false;
+          });
+        });
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text("Delete?"),
+      content: Text("Do you want to permenantly delete these note(s)?."),
+      actions: [
+        noButton,
+        yesButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
   Future<Null> _selectDate(BuildContext context) async {
     DateTime selectedDate = DateTime.now();
     final DateTime picked = await showDatePicker(
@@ -1299,7 +1365,7 @@ class _LandingPageState extends State<LandingPage> {
         return ArchivePage();
         break;
       case 3:
-        return TrashPage();
+        return TrashPage(key: _key, notifyLanding: refresh);
         break;
     }
 
@@ -1510,7 +1576,7 @@ class _LandingPageState extends State<LandingPage> {
         },
       ));
     }
-  
+
     return widgetList;
   }
 
@@ -2279,50 +2345,49 @@ class _LandingPageState extends State<LandingPage> {
 
   Future<void> sendToTrash(
       BuildContext context, int newState, List<String> idList) async {
+    print("inside sendToTrash() id list size: ${idList.length}");
     int counter = 0;
     notesDB =
         await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
 
-    idList.forEach((noteId) async {
-      print("inside forEach id: $noteId");
-
-      await notesDB.update('notes', {'isNoteTrashed': newState},
-          where: 'id = '
-              '?',
-          whereArgs: [noteId]);
+    while (counter < idList.length) {
+      notesDB.update('notes', {'isNoteTrashed': newState},
+          where: 'id = ?', whereArgs: [idList[counter]]);
       counter++;
+    }
 
-      if (counter == idList.length) {
-        setState(() {
-          String msgTxt = "";
-          if (idList.length == 1) {
-            msgTxt = "Note trashed.";
-          } else if (idList.length > 1) {
-            msgTxt = "${idList.length} notes trashed.";
-          }
-          if (newState == 1) {
-            var snackBar = SnackBar(
-              content: Text(msgTxt),
-              action: SnackBarAction(
-                label: 'Undo',
-                onPressed: () {
-                  sendToTrash(context, 0, idList);
-                },
-              ),
-            );
-            ScaffoldMessenger.of(context).showSnackBar(snackBar);
-          } else if (newState == 0) {
-            ScaffoldMessenger.of(context).clearSnackBars();
-          }
+    if (counter == idList.length) {
+      print("inside snackbar if clause!");
+      setState(() {
+        String msgTxt = "";
+        if (idList.length == 1) {
+          msgTxt = "Note trashed.";
+        } else if (idList.length > 1) {
+          msgTxt = "${idList.length} notes trashed.";
+        }
+        if (newState == 1) {
+          var snackBar = SnackBar(
+            content: Text(msgTxt),
+            action: SnackBarAction(
+              label: 'Undo',
+              onPressed: () {
+                print("Snackbar Undo onPressed!");
+                sendToTrash(context, 0, idList);
+              },
+            ),
+          );
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        } else if (newState == 0) {
+          ScaffoldMessenger.of(context).clearSnackBars();
+        }
 
-          isToggleAppBar = false;
-          numOfNotesSelected = 0;
-          notesModelList.forEach((notesModel) {
-            longPressedNotesMap[notesModel.id] = false;
-          });
+        isToggleAppBar = false;
+        numOfNotesSelected = 0;
+        notesModelList.forEach((notesModel) {
+          longPressedNotesMap[notesModel.id] = false;
         });
-      }
-    });
+      });
+    }
   }
 
   Future<void> updateArchivedStateRows(
