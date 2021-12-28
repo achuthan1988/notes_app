@@ -7,6 +7,7 @@ class NotesModel {
   String noteMediaPath;
   String noteImgBase64;
   String noteLabelIdsStr;
+  String noteDateOfDeletion;
   int isNotePinned;
   int isNoteArchived;
   int isNoteTrashed;
@@ -19,6 +20,7 @@ class NotesModel {
       this.noteMediaPath,
       this.noteImgBase64,
       this.noteLabelIdsStr,
+      this.noteDateOfDeletion,
       this.isNotePinned,
       this.isNoteArchived,
       this.isNoteTrashed);
@@ -32,6 +34,7 @@ class NotesModel {
       this.noteMediaPath,
       this.noteImgBase64,
       this.noteLabelIdsStr,
+      this.noteDateOfDeletion,
       this.isNotePinned,
       this.isNoteArchived,
       this.isNoteTrashed);
@@ -46,6 +49,7 @@ class NotesModel {
       'noteMediaPath': noteMediaPath,
       'noteImgBase64': noteImgBase64,
       'noteLabelIdsStr': noteLabelIdsStr,
+      'noteDateOfDeletion': noteDateOfDeletion,
       'isNotePinned': isNotePinned,
       'isNoteArchived': isNoteArchived,
       'isNoteTrashed': isNoteTrashed
@@ -61,6 +65,7 @@ class NotesModel {
         noteMediaPath = json['noteMediaPath'],
         noteImgBase64 = json['noteImgBase64'],
         noteLabelIdsStr = json['noteLabelIdsStr'],
+        noteDateOfDeletion = json['noteDateOfDeletion'],
         isNotePinned = json['isNotePinned'],
         isNoteArchived = json['isNoteArchived'],
         isNoteTrashed = json['isNoteTrashed'];
@@ -74,6 +79,7 @@ class NotesModel {
         'noteMediaPath': noteMediaPath,
         'noteImgBase64': noteImgBase64,
         'noteLabelIdsStr': noteLabelIdsStr,
+        'noteDateOfDeletion': noteDateOfDeletion,
         'isNotePinned': isNotePinned,
         'isNoteArchived': isNoteArchived,
         'isNoteTrashed': isNoteTrashed

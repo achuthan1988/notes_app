@@ -1,11 +1,8 @@
-import 'dart:io';
-
+import 'package:cron/cron.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:notes_app/landing_page.dart';
 import 'package:notes_app/login.dart';
-import 'package:notes_app/new_note_page.dart';
-import 'package:progress_dialog/progress_dialog.dart';
+
 import 'util/constants.dart' as Constants;
 
 void main() {
@@ -13,9 +10,9 @@ void main() {
   runApp(MyApp());
 }
 
-
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
+
 
   MaterialColor bgColorMaterial = MaterialColor(0xFFFF5A5F, {
     50: Color.fromRGBO(250, 90, 95, .1),
@@ -30,8 +27,6 @@ class MyApp extends StatelessWidget {
     900: Color.fromRGBO(250, 90, 95, 1),
   });
 
-
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -45,6 +40,8 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
+
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -67,7 +64,6 @@ class _SplashScreenState extends State<SplashScreen>
       //invoke progress dialog
       // redirect after an interval to Login Page
     });
-
   }
 
   @override

@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:cron/cron.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:intl/intl.dart';
 import 'package:jiffy/jiffy.dart';
 import 'package:notes_app/archive_page.dart';
 import 'package:notes_app/models/LabelModel.dart';
@@ -69,6 +71,35 @@ class _LandingPageState extends State<LandingPage> {
     initDB();
     numOfNotesSelected = 0;
     drawerPosition = 0;
+
+    // final cron = Cron()
+    //   ..schedule(Schedule.parse('*/1 * * * * *'), () {
+    //     print("inside cron job scheduler!");
+    //     removeNotesFromDB();
+    //   });
+
+  }
+
+  void removeNotesFromDB() {
+    print("inside deleteOlderNotesFromDB()");
+
+    DateFormat dateFormat = DateFormat("yyyy-MM-dd HH:mm:ss");
+    String currentDateTime = dateFormat.format(DateTime.now());
+    print("currentDate: $currentDateTime");
+
+    List<NotesModel> filteredList = notesModelList.where((notesModel) {
+      return notesModel.isNoteTrashed == 1;
+    });
+
+    filteredList.forEach((notesModel) {
+      String dateOfDeletion = notesModel.noteDateOfDeletion;
+      DateTime dtOfDeletion = dateFormat.parse(dateOfDeletion);
+      DateTime currentDT = dateFormat.parse(currentDateTime);
+      if (currentDT.difference(dtOfDeletion).inDays >= 7) {
+        notesDB.delete('notes', where: "id = ?", whereArgs: [notesModel.id]);
+      }
+    });
+
   }
 
   refresh() {
@@ -374,38 +405,13 @@ class _LandingPageState extends State<LandingPage> {
                             longPressedNotesMap.keys.forEach((keyVal) {
                               if (longPressedNotesMap[keyVal])
                                 idList.add(keyVal.toString());
-
-                              /* String msgTxt = "";
-                          if (idList.length == 1) {
-                            msgTxt = "Note trashed.";
-                          } else if (idList.length > 1) {
-                            msgTxt = "${idList.length} notes trashed.";
-                          }
-
-                          final snackBar = SnackBar(
-                            content: Text(msgTxt),
-                            action: SnackBarAction(
-                              label: 'Undo',
-                              onPressed: () {
-                                sendToTrash(0, idList);
-                              },
-                            ),
-                          );
-
-                          ScaffoldMessenger.of(context).showSnackBar(snackBar);*/
-                              /*
-                          * (1) Show snack bar with number of notes from size
-                          *  of idList above
-                          *
-                          * (2) before duration click reverts the state by
-                          * calling sendToTrash with 0 flag
-                          *
-                          * (3)
-                          *
-                          *
-                          * */
                             });
-                            sendToTrash(context, 1, idList);
+
+                            DateFormat dateFormat =
+                                DateFormat("yyyy-MM-dd HH:mm:ss");
+                            String currentDateTime =
+                                dateFormat.format(DateTime.now());
+                            sendToTrash(context, 1, idList, currentDateTime);
                           },
                         ),
                       )
@@ -2343,15 +2349,17 @@ class _LandingPageState extends State<LandingPage> {
     });
   }
 
-  Future<void> sendToTrash(
-      BuildContext context, int newState, List<String> idList) async {
+  Future<void> sendToTrash(BuildContext context, int newState,
+      List<String> idList, String currentDateTime) async {
     print("inside sendToTrash() id list size: ${idList.length}");
     int counter = 0;
+
     notesDB =
         await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
 
     while (counter < idList.length) {
-      notesDB.update('notes', {'isNoteTrashed': newState},
+      notesDB.update('notes',
+          {'isNoteTrashed': newState, 'noteDateOfDeletion': currentDateTime},
           where: 'id = ?', whereArgs: [idList[counter]]);
       counter++;
     }
@@ -2372,7 +2380,7 @@ class _LandingPageState extends State<LandingPage> {
               label: 'Undo',
               onPressed: () {
                 print("Snackbar Undo onPressed!");
-                sendToTrash(context, 0, idList);
+                sendToTrash(context, 0, idList, "");
               },
             ),
           );
@@ -2472,7 +2480,8 @@ class _LandingPageState extends State<LandingPage> {
         db.execute(
           "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
           " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
-          "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT,"
+          "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT, "
+          "noteDateOfDeletion TEXT,"
           "isNotePinned INTEGER, isNoteArchived INTEGER, isNoteTrashed "
           "INTEGER)",
         );
@@ -2566,6 +2575,7 @@ class _LandingPageState extends State<LandingPage> {
           maps[i]['noteMediaPath'],
           maps[i]['noteImgBase64'],
           maps[i]['noteLabelIdsStr'],
+          maps[i]['noteDateOfDeletion'],
           maps[i]['isNotePinned'],
           maps[i]['isNoteArchived'],
           maps[i]['isNoteTrashed']);

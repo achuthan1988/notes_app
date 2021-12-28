@@ -455,6 +455,7 @@ class TrashPageState extends State<TrashPage> {
           maps[i]['noteMediaPath'],
           maps[i]['noteImgBase64'],
           maps[i]['noteLabelIdsStr'],
+          maps[i]['noteDateOfDeletion'],
           maps[i]['isNotePinned'],
           maps[i]['isNoteArchived'],
           maps[i]['isNoteTrashed']);

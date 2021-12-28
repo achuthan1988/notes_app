@@ -105,7 +105,8 @@ class _NewNotePageState extends State<NewNotePage> {
         db.execute(
           "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
           " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
-          "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT,"
+          "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT, "
+              "noteDateOfDeletion TEXT, "
           "isNotePinned INTEGER, isNoteArchived INTEGER,isNoteTrashed INTEGER)",
         );
         db.execute(
@@ -376,6 +377,7 @@ class _NewNotePageState extends State<NewNotePage> {
         (_BottomMenuBarState.galleryPathArr.length > 0
             ? (_BottomMenuBarState.galleryPathArr.join(','))
             : ""),
+        "",
         "",
         "",
         0,
@@ -885,6 +887,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
                                         "5",
                                         "#FFFFFF",
                                         finalFilePath,
+                                        "",
                                         "",
                                         "",
                                         0,
@@ -2030,7 +2033,7 @@ class _DrawingWidgetState extends State<DrawingWidget> {
       print("base64: $base64Str");
       print("bgHexStr: $bgHexStr");
       final noteDrawing =
-          NotesModel("", "", "4", bgHexStr, "", base64Str, "", 0, 0,0);
+          NotesModel("", "", "4", bgHexStr, "", base64Str, "","", 0, 0,0);
       await insertDrawing(noteDrawing);
 
       Route route = MaterialPageRoute(builder: (context) => LandingPage());
