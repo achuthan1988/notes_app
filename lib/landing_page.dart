@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
-import 'package:cron/cron.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
@@ -35,13 +34,16 @@ class _LandingPageState extends State<LandingPage> {
   bool isArchiveSection = false;
   bool isTrashActive = false;
   Widget pageWidget;
-  TextEditingController _controller = new TextEditingController();
+  TextEditingController _dateController = new TextEditingController();
+  TextEditingController _timeController = new TextEditingController();
+  TimeOfDay selectedTime = TimeOfDay.now();
   final GlobalKey<TrashPageState> _key = GlobalKey();
   List<bool> labelsCheckedList = [];
   List<Widget> sliderLabelWidgetList = [];
   List<NotesModel> notesModelList = new List<NotesModel>();
   List<LabelModel> labelModelList = new List<LabelModel>();
   Map longPressedNotesMap = new Map();
+  String dropDownValue = "Does not repeat";
   var sliderTitleArray = [
     "Home",
     "Edit Labels",
@@ -77,7 +79,6 @@ class _LandingPageState extends State<LandingPage> {
     //     print("inside cron job scheduler!");
     //     removeNotesFromDB();
     //   });
-
   }
 
   void removeNotesFromDB() {
@@ -99,7 +100,6 @@ class _LandingPageState extends State<LandingPage> {
         notesDB.delete('notes', where: "id = ?", whereArgs: [notesModel.id]);
       }
     });
-
   }
 
   refresh() {
@@ -240,62 +240,245 @@ class _LandingPageState extends State<LandingPage> {
                               print(
                                   "currentTimeInMillis: $currentTimeInMillis");
 
-                              Widget okButton = TextButton(
-                                child: Text("OK"),
-                                onPressed: () {},
-                              );
-
+                              _dateController.value = TextEditingValue(
+                                  text: Jiffy(DateTime.now()).yMMMd);
+                              _timeController.value = TextEditingValue(
+                                  text: TimeOfDay.now().format(context));
                               // set up the AlertDialog
-                              AlertDialog alert = AlertDialog(
-                                content: SingleChildScrollView(
-                                  scrollDirection: Axis.vertical,
-                                  child: StatefulBuilder(
-                                      builder: (context, _mainSetState) {
-                                    return Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text("Set Reminder"),
-                                        SizedBox(
-                                          height: 10,
-                                        ),
-                                        GestureDetector(
-                                            child: AbsorbPointer(
-                                                child: TextField(
-                                              textAlign: TextAlign.center,
-                                              enabled: false,
-                                              decoration: InputDecoration(
-                                                contentPadding:
-                                                    EdgeInsets.all(0),
-                                                prefixIcon: Icon(
-                                                  Icons.calendar_today_rounded,
-                                                  size: 24.0,
-                                                ),
-                                                prefixIconConstraints:
-                                                    BoxConstraints(
-                                                        minWidth: 0,
-                                                        minHeight: 0),
-                                                isDense: true,
-                                              ),
-                                              controller: _controller,
-                                            )),
-                                            onTap: () {
-                                              _selectDate(context);
-                                            }),
-                                      ],
-                                    );
-                                  }),
-                                ),
-                                actions: [okButton],
-                              );
+
                               // show the dialog
                               showDialog(
                                 context: context,
                                 barrierDismissible: false,
                                 builder: (BuildContext context) {
-                                  return alert;
+                                  return ButtonBarTheme(
+                                    data: ButtonBarThemeData(
+                                        alignment: MainAxisAlignment.center),
+                                    child: WillPopScope(
+                                      onWillPop: () async => false,
+                                      child: AlertDialog(
+                                        content: SingleChildScrollView(
+                                          scrollDirection: Axis.vertical,
+                                          child: StatefulBuilder(builder:
+                                              (context, _mainSetState) {
+                                            return Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text("Set Reminder"),
+                                                SizedBox(
+                                                  height: 10,
+                                                ),
+                                                GestureDetector(
+                                                    child: AbsorbPointer(
+                                                        child: TextField(
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      enabled: false,
+                                                      decoration:
+                                                          InputDecoration(
+                                                        contentPadding:
+                                                            EdgeInsets.all(5.0),
+                                                        prefixIcon: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(5.0),
+                                                          child: Icon(
+                                                            Icons
+                                                                .calendar_today_rounded,
+                                                            size: 30.0,
+                                                            color: Colors
+                                                                .grey[400],
+                                                          ),
+                                                        ),
+                                                        border:
+                                                            OutlineInputBorder(),
+                                                        prefixIconConstraints:
+                                                            BoxConstraints(
+                                                                minWidth: 0,
+                                                                minHeight: 0),
+                                                        isDense: true,
+                                                      ),
+                                                      controller:
+                                                          _dateController,
+                                                    )),
+                                                    onTap: () {
+                                                      _selectDate(context);
+                                                    }),
+                                                SizedBox(
+                                                  height: 10,
+                                                ),
+                                                GestureDetector(
+                                                    child: AbsorbPointer(
+                                                        child: TextField(
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      enabled: false,
+                                                      decoration:
+                                                          InputDecoration(
+                                                        contentPadding:
+                                                            EdgeInsets.all(5.0),
+                                                        prefixIcon: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .all(5.0),
+                                                          child: Icon(
+                                                            Icons.alarm,
+                                                            size: 30.0,
+                                                            color: Colors
+                                                                .grey[400],
+                                                          ),
+                                                        ),
+                                                        border:
+                                                            OutlineInputBorder(),
+                                                        prefixIconConstraints:
+                                                            BoxConstraints(
+                                                                minWidth: 0,
+                                                                minHeight: 0),
+                                                        isDense: true,
+                                                      ),
+                                                      controller:
+                                                          _timeController,
+                                                    )),
+                                                    onTap: () {
+                                                      _selectTime(context);
+                                                    }),
+                                                SizedBox(
+                                                  height: 10,
+                                                ),
+                                                DropdownButtonFormField(
+                                                  isExpanded: true,
+                                                  value: dropDownValue,
+                                                  onChanged: (newValue) {
+                                                    print("inside onChanged!: "
+                                                        "$newValue");
+                                                    dropDownValue = newValue;
+                                                    _mainSetState(() {});
+                                                  },
+                                                  decoration: InputDecoration(
+                                                    contentPadding:
+                                                        EdgeInsets.all(5.0),
+                                                    prefixIcon: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              5.0),
+                                                      child: Icon(
+                                                        Icons.repeat,
+                                                        size: 30.0,
+                                                        color: Colors.grey[400],
+                                                      ),
+                                                    ),
+                                                    border:
+                                                        OutlineInputBorder(),
+                                                    prefixIconConstraints:
+                                                        BoxConstraints(
+                                                            minWidth: 0,
+                                                            minHeight: 0),
+                                                    isDense: true,
+                                                  ),
+                                                  items: [
+                                                    DropdownMenuItem(
+                                                      child: Text(
+                                                          "Does not repeat"),
+                                                      value: "Does not repeat",
+                                                    ),
+                                                    DropdownMenuItem(
+                                                      child: Text("Daily"),
+                                                      value: "Daily",
+                                                    ),
+                                                    DropdownMenuItem(
+                                                      child: Text("Weekly"),
+                                                      value: "Weekly",
+                                                    ),
+                                                    DropdownMenuItem(
+                                                      child: Text("Monthly"),
+                                                      value: "Monthly",
+                                                    ),
+                                                    DropdownMenuItem(
+                                                      child: Text("Yearly"),
+                                                      value: "Yearly",
+                                                    ),
+                                                  ],
+                                                  hint: Text("Select item"),
+                                                ),
+                                              ],
+                                            );
+                                          }),
+                                        ),
+                                        actions: [
+                                          Row(
+                                            mainAxisSize: MainAxisSize.max,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.30,
+                                                child: RaisedButton(
+                                                  child: new Text(
+                                                    'Set',
+                                                    style: TextStyle(
+                                                        color: Colors.white),
+                                                  ),
+                                                  color: Constants.bgMainColor,
+                                                  shape:
+                                                      new RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        new BorderRadius
+                                                            .circular(30.0),
+                                                  ),
+                                                  onPressed: () {
+                                                    
+                                                  },
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.01,
+                                              ),
+                                              Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.30,
+                                                child: RaisedButton(
+                                                  child: new Text(
+                                                    'Cancel',
+                                                    style: TextStyle(
+                                                        color: Colors.white),
+                                                  ),
+                                                  color: Constants.bgMainColor,
+                                                  shape:
+                                                      new RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        new BorderRadius
+                                                            .circular(30.0),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.02,
+                                              ),
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  );
                                 },
                               );
                             },
@@ -1201,7 +1384,26 @@ class _LandingPageState extends State<LandingPage> {
     if (picked != null && picked != selectedDate)
       setState(() {
         selectedDate = picked;
-        _controller.value = TextEditingValue(text: Jiffy(picked).yMMMd);
+        _dateController.value = TextEditingValue(text: Jiffy(picked).yMMMd);
+      });
+  }
+
+  Future<Null> _selectTime(BuildContext context) async {
+    final TimeOfDay pickedS = await showTimePicker(
+        context: context,
+        initialTime: selectedTime,
+        builder: (BuildContext context, Widget child) {
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+            child: child,
+          );
+        });
+
+    if (pickedS != null && pickedS != selectedTime)
+      setState(() {
+        selectedTime = pickedS;
+        _timeController.value =
+            TextEditingValue(text: selectedTime.format(context));
       });
   }
 
