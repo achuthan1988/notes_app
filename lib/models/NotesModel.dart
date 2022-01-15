@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class NotesModel {
   int id;
   String noteTitle;
@@ -11,6 +13,8 @@ class NotesModel {
   int isNotePinned;
   int isNoteArchived;
   int isNoteTrashed;
+  int reminderID;
+  Widget reminderWidget;
 
   NotesModel(
       this.noteTitle,
@@ -23,7 +27,8 @@ class NotesModel {
       this.noteDateOfDeletion,
       this.isNotePinned,
       this.isNoteArchived,
-      this.isNoteTrashed);
+      this.isNoteTrashed,
+      this.reminderID);
 
   NotesModel.param(
       this.id,
@@ -37,7 +42,8 @@ class NotesModel {
       this.noteDateOfDeletion,
       this.isNotePinned,
       this.isNoteArchived,
-      this.isNoteTrashed);
+      this.isNoteTrashed,
+      this.reminderID);
 
   Map<String, dynamic> toMap() {
     return {
@@ -52,7 +58,8 @@ class NotesModel {
       'noteDateOfDeletion': noteDateOfDeletion,
       'isNotePinned': isNotePinned,
       'isNoteArchived': isNoteArchived,
-      'isNoteTrashed': isNoteTrashed
+      'isNoteTrashed': isNoteTrashed,
+      'reminderID': reminderID
     };
   }
 
@@ -68,7 +75,8 @@ class NotesModel {
         noteDateOfDeletion = json['noteDateOfDeletion'],
         isNotePinned = json['isNotePinned'],
         isNoteArchived = json['isNoteArchived'],
-        isNoteTrashed = json['isNoteTrashed'];
+        isNoteTrashed = json['isNoteTrashed'],
+        reminderID = json['reminderID'];
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -82,6 +90,7 @@ class NotesModel {
         'noteDateOfDeletion': noteDateOfDeletion,
         'isNotePinned': isNotePinned,
         'isNoteArchived': isNoteArchived,
-        'isNoteTrashed': isNoteTrashed
+        'isNoteTrashed': isNoteTrashed,
+        'reminderID': reminderID
       };
 }

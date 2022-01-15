@@ -458,7 +458,8 @@ class TrashPageState extends State<TrashPage> {
           maps[i]['noteDateOfDeletion'],
           maps[i]['isNotePinned'],
           maps[i]['isNoteArchived'],
-          maps[i]['isNoteTrashed']);
+          maps[i]['isNoteTrashed'],
+          maps[i]['reminderID']);
     });
     print(" trash_page notes size :${mainList.length}");
     return mainList;

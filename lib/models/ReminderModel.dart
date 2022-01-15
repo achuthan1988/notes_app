@@ -4,8 +4,12 @@ class ReminderModel {
   String reminderTime;
   String reminderInterval;
 
-  ReminderModel(
-      this.id, this.reminderDate, this.reminderTime, this.reminderInterval);
+  ReminderModel(this.reminderDate, this.reminderTime, this.reminderInterval);
+
+  factory ReminderModel.fromJson(dynamic json) {
+    return ReminderModel(json['reminderDate'] as String,
+        json['reminderTime'] as String, json['reminderInterval'] as String);
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -15,5 +19,4 @@ class ReminderModel {
       'reminderInterval': reminderInterval
     };
   }
-
 }

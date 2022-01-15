@@ -102,7 +102,7 @@ class _NewNotePageState extends State<NewNotePage> {
         print("inside onCreate DB!!");
         notesDB = db;
         // Run the CREATE TABLE statement on the database.
-        db.execute(
+        /*db.execute(
           "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
           " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
           "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT, "
@@ -111,6 +111,9 @@ class _NewNotePageState extends State<NewNotePage> {
         );
         db.execute(
             "CREATE TABLE TblLabels(id INTEGER PRIMARY KEY AUTOINCREMENT, labelTitle TEXT)");
+        db.execute("CREATE TABLE TblReminders(id INTEGER PRIMARY KEY "
+            "AUTOINCREMENT, reminderDate TEXT, reminderTime TEXT, "
+            "reminderInterval TEXT)");*/
       },
       // Set the version. This executes the onCreate function and provides a
       // path to perform database upgrades and downgrades.
@@ -381,7 +384,7 @@ class _NewNotePageState extends State<NewNotePage> {
         "",
         "",
         0,
-        0,0);
+        0,0,0);
 
     return noteObject;
   }
@@ -891,7 +894,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
                                         "",
                                         "",
                                         0,
-                                        0,0);
+                                        0,0,0);
 
                                     insertAudioNote(notesModel);
                                     Navigator.pushReplacement(context,
@@ -2033,7 +2036,7 @@ class _DrawingWidgetState extends State<DrawingWidget> {
       print("base64: $base64Str");
       print("bgHexStr: $bgHexStr");
       final noteDrawing =
-          NotesModel("", "", "4", bgHexStr, "", base64Str, "","", 0, 0,0);
+          NotesModel("", "", "4", bgHexStr, "", base64Str, "","", 0, 0,0,0);
       await insertDrawing(noteDrawing);
 
       Route route = MaterialPageRoute(builder: (context) => LandingPage());

@@ -10,6 +10,7 @@ import 'package:jiffy/jiffy.dart';
 import 'package:notes_app/archive_page.dart';
 import 'package:notes_app/models/LabelModel.dart';
 import 'package:notes_app/models/NotesModel.dart';
+import 'package:notes_app/models/ReminderModel.dart';
 import 'package:notes_app/trash_page.dart';
 import 'package:notes_app/util/HexColor.dart';
 import 'package:path/path.dart';
@@ -39,7 +40,7 @@ class _LandingPageState extends State<LandingPage> {
   TimeOfDay selectedTime = TimeOfDay.now();
   final GlobalKey<TrashPageState> _key = GlobalKey();
   List<bool> labelsCheckedList = [];
-  List<Widget> sliderLabelWidgetList = [];
+  List<Widget> sliderLabelWidgetList = [], reminderWidgetList = [];
   List<NotesModel> notesModelList = new List<NotesModel>();
   List<LabelModel> labelModelList = new List<LabelModel>();
   Map longPressedNotesMap = new Map();
@@ -70,7 +71,11 @@ class _LandingPageState extends State<LandingPage> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    initDB();
+
+    new Future.delayed(Duration.zero, () {
+      initDB();
+    });
+
     numOfNotesSelected = 0;
     drawerPosition = 0;
 
@@ -132,6 +137,7 @@ class _LandingPageState extends State<LandingPage> {
           if (isOpened) {
             labelModelList = await getAllLabels();
             notesModelList = await getAllNotes();
+            reminderWidgetList = await getReminderWidgets();
             sliderLabelWidgetList = getLabelSliderWidgets();
 
             setState(() {});
@@ -235,252 +241,7 @@ class _LandingPageState extends State<LandingPage> {
                           *   (3)
                           *
                           * */
-                              int currentTimeInMillis =
-                                  DateTime.now().millisecondsSinceEpoch;
-                              print(
-                                  "currentTimeInMillis: $currentTimeInMillis");
-
-                              _dateController.value = TextEditingValue(
-                                  text: Jiffy(DateTime.now()).yMMMd);
-                              _timeController.value = TextEditingValue(
-                                  text: TimeOfDay.now().format(context));
-                              // set up the AlertDialog
-
-                              // show the dialog
-                              showDialog(
-                                context: context,
-                                barrierDismissible: false,
-                                builder: (BuildContext context) {
-                                  return ButtonBarTheme(
-                                    data: ButtonBarThemeData(
-                                        alignment: MainAxisAlignment.center),
-                                    child: WillPopScope(
-                                      onWillPop: () async => false,
-                                      child: AlertDialog(
-                                        content: SingleChildScrollView(
-                                          scrollDirection: Axis.vertical,
-                                          child: StatefulBuilder(builder:
-                                              (context, _mainSetState) {
-                                            return Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text("Set Reminder"),
-                                                SizedBox(
-                                                  height: 10,
-                                                ),
-                                                GestureDetector(
-                                                    child: AbsorbPointer(
-                                                        child: TextField(
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      enabled: false,
-                                                      decoration:
-                                                          InputDecoration(
-                                                        contentPadding:
-                                                            EdgeInsets.all(5.0),
-                                                        prefixIcon: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(5.0),
-                                                          child: Icon(
-                                                            Icons
-                                                                .calendar_today_rounded,
-                                                            size: 30.0,
-                                                            color: Colors
-                                                                .grey[400],
-                                                          ),
-                                                        ),
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        prefixIconConstraints:
-                                                            BoxConstraints(
-                                                                minWidth: 0,
-                                                                minHeight: 0),
-                                                        isDense: true,
-                                                      ),
-                                                      controller:
-                                                          _dateController,
-                                                    )),
-                                                    onTap: () {
-                                                      _selectDate(context);
-                                                    }),
-                                                SizedBox(
-                                                  height: 10,
-                                                ),
-                                                GestureDetector(
-                                                    child: AbsorbPointer(
-                                                        child: TextField(
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                      enabled: false,
-                                                      decoration:
-                                                          InputDecoration(
-                                                        contentPadding:
-                                                            EdgeInsets.all(5.0),
-                                                        prefixIcon: Padding(
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .all(5.0),
-                                                          child: Icon(
-                                                            Icons.alarm,
-                                                            size: 30.0,
-                                                            color: Colors
-                                                                .grey[400],
-                                                          ),
-                                                        ),
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                        prefixIconConstraints:
-                                                            BoxConstraints(
-                                                                minWidth: 0,
-                                                                minHeight: 0),
-                                                        isDense: true,
-                                                      ),
-                                                      controller:
-                                                          _timeController,
-                                                    )),
-                                                    onTap: () {
-                                                      _selectTime(context);
-                                                    }),
-                                                SizedBox(
-                                                  height: 10,
-                                                ),
-                                                DropdownButtonFormField(
-                                                  isExpanded: true,
-                                                  value: dropDownValue,
-                                                  onChanged: (newValue) {
-                                                    print("inside onChanged!: "
-                                                        "$newValue");
-                                                    dropDownValue = newValue;
-                                                    _mainSetState(() {});
-                                                  },
-                                                  decoration: InputDecoration(
-                                                    contentPadding:
-                                                        EdgeInsets.all(5.0),
-                                                    prefixIcon: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              5.0),
-                                                      child: Icon(
-                                                        Icons.repeat,
-                                                        size: 30.0,
-                                                        color: Colors.grey[400],
-                                                      ),
-                                                    ),
-                                                    border:
-                                                        OutlineInputBorder(),
-                                                    prefixIconConstraints:
-                                                        BoxConstraints(
-                                                            minWidth: 0,
-                                                            minHeight: 0),
-                                                    isDense: true,
-                                                  ),
-                                                  items: [
-                                                    DropdownMenuItem(
-                                                      child: Text(
-                                                          "Does not repeat"),
-                                                      value: "Does not repeat",
-                                                    ),
-                                                    DropdownMenuItem(
-                                                      child: Text("Daily"),
-                                                      value: "Daily",
-                                                    ),
-                                                    DropdownMenuItem(
-                                                      child: Text("Weekly"),
-                                                      value: "Weekly",
-                                                    ),
-                                                    DropdownMenuItem(
-                                                      child: Text("Monthly"),
-                                                      value: "Monthly",
-                                                    ),
-                                                    DropdownMenuItem(
-                                                      child: Text("Yearly"),
-                                                      value: "Yearly",
-                                                    ),
-                                                  ],
-                                                  hint: Text("Select item"),
-                                                ),
-                                              ],
-                                            );
-                                          }),
-                                        ),
-                                        actions: [
-                                          Row(
-                                            mainAxisSize: MainAxisSize.max,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: <Widget>[
-                                              Container(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.30,
-                                                child: RaisedButton(
-                                                  child: new Text(
-                                                    'Set',
-                                                    style: TextStyle(
-                                                        color: Colors.white),
-                                                  ),
-                                                  color: Constants.bgMainColor,
-                                                  shape:
-                                                      new RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        new BorderRadius
-                                                            .circular(30.0),
-                                                  ),
-                                                  onPressed: () {
-                                                    
-                                                  },
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.01,
-                                              ),
-                                              Container(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.30,
-                                                child: RaisedButton(
-                                                  child: new Text(
-                                                    'Cancel',
-                                                    style: TextStyle(
-                                                        color: Colors.white),
-                                                  ),
-                                                  color: Constants.bgMainColor,
-                                                  shape:
-                                                      new RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        new BorderRadius
-                                                            .circular(30.0),
-                                                  ),
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    0.02,
-                                              ),
-                                            ],
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              );
+                              showReminderDialog(context, null);
                             },
                           ),
                         ),
@@ -847,170 +608,176 @@ class _LandingPageState extends State<LandingPage> {
                                                     (i.isNotePinned == 1 &&
                                                         i.isNoteArchived == 0))
                                                 .toList();
-                                        List<Widget> widgetList =
-                                            getLabelTagWidgets(
-                                                filteredList[position],
-                                                filteredList[position]
-                                                    .noteBgColorHex);
+                                        List<Widget> widgetList = [];
+
+                                        widgetList = getLabelTagWidgets(
+                                            filteredList[position],
+                                            filteredList[position]
+                                                .noteBgColorHex);
+
                                         print(
                                             "inside itemBuilder widgetList.length "
                                             "${widgetList.length}");
 
                                         return GestureDetector(
-                                          onTap: () {
-                                            NotesModel notesModel =
-                                                filteredList[position];
-                                            Navigator.push(
+                                            onTap: () => Navigator.push(
                                                 context,
                                                 ScaleRoute(
                                                     page: NewNotePage(
-                                                        notesModel)));
-                                          },
-                                          onLongPress: () {
-                                            print(
-                                                "inside onLongPress longPressList[position]");
+                                                        filteredList[
+                                                            position]))),
+                                            onLongPress: () {
+                                              print(
+                                                  "inside onLongPress longPressList[position]");
 
-                                            if (!longPressedNotesMap[
-                                                filteredList[position].id]) {
-                                              setState(() {
-                                                longPressedNotesMap[
-                                                    filteredList[position]
-                                                        .id] = true;
-                                                isToggleAppBar = true;
-                                                numOfNotesSelected += 1;
-                                              });
-                                            }
-                                          },
-                                          child: Hero(
-                                            tag: 'heroTag $position',
-                                            child: Stack(
-                                              children: [
-                                                Container(
-                                                  margin: EdgeInsets.all(3.0),
-                                                  padding: EdgeInsets.all(1.0),
-                                                  decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.all(
-                                                              Radius.circular(
-                                                                  7.0)),
-                                                      color: HexColor(
-                                                          filteredList[position]
-                                                              .noteBgColorHex)),
-                                                  child: (filteredList[position]
-                                                              .noteType ==
-                                                          "0"
-                                                      ? Column(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          mainAxisSize:
-                                                              MainAxisSize.max,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Container(
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                color: Colors
-                                                                    .black,
-                                                                border:
-                                                                    Border.all(
-                                                                        width:
-                                                                            0),
-                                                              ),
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .all(2.0),
-                                                              child: Text(
-                                                                filteredList[
-                                                                        position]
-                                                                    .noteTitle,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        14.0,
+                                              if (!longPressedNotesMap[
+                                                  filteredList[position].id]) {
+                                                setState(() {
+                                                  longPressedNotesMap[
+                                                      filteredList[position]
+                                                          .id] = true;
+                                                  isToggleAppBar = true;
+                                                  numOfNotesSelected += 1;
+                                                });
+                                              }
+                                              Hero(
+                                                tag: 'heroTag $position',
+                                                child: Stack(
+                                                  children: [
+                                                    Container(
+                                                      margin:
+                                                          EdgeInsets.all(3.0),
+                                                      padding:
+                                                          EdgeInsets.all(1.0),
+                                                      decoration: BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius.all(
+                                                                  Radius
+                                                                      .circular(
+                                                                          7.0)),
+                                                          color: HexColor(
+                                                              filteredList[
+                                                                      position]
+                                                                  .noteBgColorHex)),
+                                                      child: (filteredList[
+                                                                      position]
+                                                                  .noteType ==
+                                                              "0"
+                                                          ? Column(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .spaceBetween,
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .max,
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Container(
+                                                                  decoration:
+                                                                      BoxDecoration(
                                                                     color: Colors
                                                                         .black,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600),
-                                                              ),
-                                                            ),
-                                                            Container(
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                color: Colors
-                                                                    .black,
-                                                                border:
-                                                                    Border.all(
+                                                                    border: Border.all(
                                                                         width:
                                                                             0),
-                                                              ),
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .all(2.0),
-                                                              child: Text(
-                                                                filteredList[
-                                                                        position]
-                                                                    .noteContent,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                                maxLines: 10,
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        12.0,
-                                                                    color: Colors
-                                                                        .black,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w300),
-                                                              ),
-                                                            ),
-                                                            Expanded(
-                                                              child: Align(
-                                                                alignment: Alignment
-                                                                    .bottomLeft,
-                                                                child: Wrap(
-                                                                  children:
-                                                                      widgetList,
+                                                                  ),
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .all(
+                                                                              2.0),
+                                                                  child: Text(
+                                                                    filteredList[
+                                                                            position]
+                                                                        .noteTitle,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    style: TextStyle(
+                                                                        fontSize:
+                                                                            14.0,
+                                                                        color: Colors
+                                                                            .black,
+                                                                        fontWeight:
+                                                                            FontWeight.w600),
+                                                                  ),
                                                                 ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        )
-                                                      : changeNoteCell(
-                                                          filteredList[
-                                                              position])),
+                                                                Container(
+                                                                  decoration:
+                                                                      BoxDecoration(
+                                                                    color: Colors
+                                                                        .black,
+                                                                    border: Border.all(
+                                                                        width:
+                                                                            0),
+                                                                  ),
+                                                                  padding:
+                                                                      EdgeInsets
+                                                                          .all(
+                                                                              2.0),
+                                                                  child: Text(
+                                                                    filteredList[
+                                                                            position]
+                                                                        .noteContent,
+                                                                    overflow:
+                                                                        TextOverflow
+                                                                            .ellipsis,
+                                                                    maxLines:
+                                                                        10,
+                                                                    style: TextStyle(
+                                                                        fontSize:
+                                                                            12.0,
+                                                                        color: Colors
+                                                                            .black,
+                                                                        fontWeight:
+                                                                            FontWeight.w300),
+                                                                  ),
+                                                                ),
+                                                                Expanded(
+                                                                  child: Align(
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .bottomLeft,
+                                                                    child: Wrap(
+                                                                      children:
+                                                                          widgetList,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            )
+                                                          : changeNoteCell(
+                                                              filteredList[
+                                                                  position])),
+                                                    ),
+                                                    Positioned(
+                                                      top: 0,
+                                                      right: 2.0,
+                                                      child: Visibility(
+                                                        visible:
+                                                            longPressedNotesMap[
+                                                                filteredList[
+                                                                        position]
+                                                                    .id],
+                                                        maintainState: true,
+                                                        maintainSize: true,
+                                                        maintainAnimation: true,
+                                                        child: Container(
+                                                            width: 15.0,
+                                                            height: 15.0,
+                                                            child: Icon(
+                                                              Icons
+                                                                  .check_circle,
+                                                              color: Colors
+                                                                  .black87,
+                                                            )),
+                                                      ), //CircularAvatar
+                                                    ),
+                                                  ],
                                                 ),
-                                                Positioned(
-                                                  top: 0,
-                                                  right: 2.0,
-                                                  child: Visibility(
-                                                    visible:
-                                                        longPressedNotesMap[
-                                                            filteredList[
-                                                                    position]
-                                                                .id],
-                                                    maintainState: true,
-                                                    maintainSize: true,
-                                                    maintainAnimation: true,
-                                                    child: Container(
-                                                        width: 15.0,
-                                                        height: 15.0,
-                                                        child: Icon(
-                                                          Icons.check_circle,
-                                                          color: Colors.black87,
-                                                        )),
-                                                  ), //CircularAvatar
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
+                                              );
+                                            });
                                       })),
                                 ],
                               ),
@@ -1069,14 +836,14 @@ class _LandingPageState extends State<LandingPage> {
                                                     i.isNoteArchived == 0)
                                                 .toList();
 
-                                        List<Widget> widgetList =
-                                            getLabelTagWidgets(
-                                                filteredList[position],
-                                                filteredList[position]
-                                                    .noteBgColorHex);
-                                        // print(
-                                        //     "inside itemBuilder widgetList.length "
-                                        //     "${widgetList.length}");
+                                        List<Widget> widgetList = [];
+                                        widgetList = getLabelTagWidgets(
+                                            filteredList[position],
+                                            filteredList[position]
+                                                .noteBgColorHex);
+
+                                        print("inside itembuilder widgetList "
+                                            "size: ${widgetList.length}");
 
                                         return GestureDetector(
                                           onTap: () {
@@ -1333,6 +1100,251 @@ class _LandingPageState extends State<LandingPage> {
             : pageWidget));
   }
 
+  showReminderDialog(BuildContext context, ReminderModel model) {
+    int currentTimeInMillis = DateTime.now().millisecondsSinceEpoch;
+    print("currentTimeInMillis: $currentTimeInMillis");
+
+    if (model != null) {
+      _dateController.value = TextEditingValue(text: model.reminderDate);
+      _timeController.value = TextEditingValue(text: model.reminderTime);
+    } else {
+      _dateController.value =
+          TextEditingValue(text: Jiffy(DateTime.now()).yMMMd);
+      _timeController.value =
+          TextEditingValue(text: TimeOfDay.now().format(context));
+    }
+
+    // set up the AlertDialog
+    // show the dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return ButtonBarTheme(
+          data: ButtonBarThemeData(alignment: MainAxisAlignment.center),
+          child: WillPopScope(
+            onWillPop: () async => false,
+            child: AlertDialog(
+              content: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: StatefulBuilder(builder: (context, _mainSetState) {
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(((model != null
+                          ? "Update Reminder"
+                          : "Set Reminder"))),
+                      SizedBox(
+                        height: 10,
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                              child: AbsorbPointer(
+                                  child: TextField(
+                                textAlign: TextAlign.center,
+                                enabled: false,
+                                decoration: InputDecoration(
+                                  contentPadding: EdgeInsets.all(5.0),
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Icon(
+                                      Icons.calendar_today_rounded,
+                                      size: 30.0,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                  border: OutlineInputBorder(),
+                                  prefixIconConstraints:
+                                      BoxConstraints(minWidth: 0, minHeight: 0),
+                                  isDense: true,
+                                ),
+                                controller: _dateController,
+                              )),
+                              onTap: () {
+                                _selectDate(context);
+                              }),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          GestureDetector(
+                              child: AbsorbPointer(
+                                  child: TextField(
+                                textAlign: TextAlign.center,
+                                enabled: false,
+                                decoration: InputDecoration(
+                                  contentPadding: EdgeInsets.all(5.0),
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Icon(
+                                      Icons.alarm,
+                                      size: 30.0,
+                                      color: Colors.grey[400],
+                                    ),
+                                  ),
+                                  border: OutlineInputBorder(),
+                                  prefixIconConstraints:
+                                      BoxConstraints(minWidth: 0, minHeight: 0),
+                                  isDense: true,
+                                ),
+                                controller: _timeController,
+                              )),
+                              onTap: () {
+                                _selectTime(context);
+                              }),
+                          SizedBox(
+                            height: 10,
+                          ),
+                          DropdownButtonFormField(
+                            isExpanded: true,
+                            value: dropDownValue,
+                            onChanged: (newValue) {
+                              print("inside onChanged!: "
+                                  "$newValue");
+                              dropDownValue = newValue;
+                              _mainSetState(() {});
+                            },
+                            decoration: InputDecoration(
+                              contentPadding: EdgeInsets.all(5.0),
+                              prefixIcon: Padding(
+                                padding: const EdgeInsets.all(5.0),
+                                child: Icon(
+                                  Icons.repeat,
+                                  size: 30.0,
+                                  color: Colors.grey[400],
+                                ),
+                              ),
+                              border: OutlineInputBorder(),
+                              prefixIconConstraints:
+                                  BoxConstraints(minWidth: 0, minHeight: 0),
+                              isDense: true,
+                            ),
+                            items: [
+                              DropdownMenuItem(
+                                child: Center(
+                                  child: Text("Does not repeat"),
+                                ),
+                                value: "Does not repeat",
+                              ),
+                              DropdownMenuItem(
+                                child: Center(child: Text("Daily")),
+                                value: "Daily",
+                              ),
+                              DropdownMenuItem(
+                                child: Center(child: Text("Weekly")),
+                                value: "Weekly",
+                              ),
+                              DropdownMenuItem(
+                                child: Center(child: Text("Monthly")),
+                                value: "Monthly",
+                              ),
+                              DropdownMenuItem(
+                                child: Center(child: Text("Yearly")),
+                                value: "Yearly",
+                              ),
+                            ],
+                            hint: Center(child: Text("Select item")),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                }),
+              ),
+              actions: [
+                Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.20,
+                      child: RaisedButton(
+                        child: new Text(
+                          'Close',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        color: Constants.bgMainColor,
+                        shape: new RoundedRectangleBorder(
+                          borderRadius: new BorderRadius.circular(30.0),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.01,
+                    ),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.20,
+                      child: RaisedButton(
+                        child: new Text(
+                          'Set',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        color: Constants.bgMainColor,
+                        shape: new RoundedRectangleBorder(
+                          borderRadius: new BorderRadius.circular(30.0),
+                        ),
+                        onPressed: () {
+                          /*(1) Insert
+                                                    reminderDate,
+                                                    reminderTime,
+                                                    reminderInterval to
+                                                    TblReminder
+                                                    (2) notes table to have
+                                                    id of reminder inserted
+                                                    into it.
+
+                                                    * */
+                          Navigator.of(context).pop();
+                          ReminderModel reminderModel = ReminderModel(
+                              _dateController.value.text,
+                              _timeController.value.text,
+                              dropDownValue);
+
+                          if (model != null) {
+                            updateReminder(model);
+                          } else {
+                            insertNewReminder(
+                              reminderModel
+                            );
+                          }
+
+                        },
+                      ),
+                    ),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.height * 0.01,
+                    ),
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.20,
+                      child: RaisedButton(
+                        child: new Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        color: Constants.bgMainColor,
+                        shape: new RoundedRectangleBorder(
+                          borderRadius: new BorderRadius.circular(30.0),
+                        ),
+                        onPressed: () {},
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   showDeleteForever(BuildContext context) {
     // set up the buttons
     Widget noButton = TextButton(
@@ -1437,6 +1449,76 @@ class _LandingPageState extends State<LandingPage> {
     }
     print(" getLabelSliderWidgets() size ${widgetList.length}");
 
+    return widgetList;
+  }
+
+  Future<List<Widget>> getReminderWidgets() async {
+    print("inside getReminderWidgets()");
+    List<Widget> widgetList = [];
+
+    for (var notesModel in notesModelList) {
+      Widget reminderWidget;
+      Color bgTagColor =
+          darkerColorByPerc(HexColor(notesModel.noteBgColorHex), 0.15);
+      if (notesModel.reminderID != 0) {
+        print("reminderID:${notesModel.reminderID}");
+        List<Map<String, dynamic>> resultMap = await notesDB.query(
+            'TblReminders',
+            where: 'id = ?',
+            whereArgs: [notesModel.reminderID]);
+        resultMap.forEach((row) => print("ROW!: $row"));
+
+        if (resultMap.isNotEmpty) {
+          reminderWidget = Builder(builder: (context) {
+            return GestureDetector(
+              child: Container(
+                margin: EdgeInsets.all(3.0),
+                child: SizedBox(
+                  width: 65.0,
+                  child: Center(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(
+                          resultMap[0]['reminderInterval'] == "Does not repeat"
+                              ? Icons.alarm
+                              : Icons.repeat,
+                          size: 15.0,
+                          color: Colors.black87,
+                        ),
+                        Text(
+                          '${resultMap[0]['reminderTime']}',
+                          style: TextStyle(
+                              fontSize: 11.0,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                decoration: BoxDecoration(
+                  color: bgTagColor,
+                  border: Border.all(
+                    color: Colors.transparent,
+                    width: 2.0,
+                  ),
+                  borderRadius: BorderRadius.circular(5.0),
+                ),
+              ),
+              onTap: () {
+                ReminderModel reminderModel =
+                    ReminderModel.fromJson(resultMap[0]);
+                showReminderDialog(context, reminderModel);
+              },
+            );
+          });
+        }
+      }
+      notesModel.reminderWidget = reminderWidget;
+      if (reminderWidget != null) widgetList.add(reminderWidget);
+    }
+    print(" getReminderWidgets() size ${widgetList.length}");
     return widgetList;
   }
 
@@ -1599,6 +1681,20 @@ class _LandingPageState extends State<LandingPage> {
       List<String> labelIdArr = labelIdsStr.split(",");
       List<String> selectedLabelsStrArr = [];
 
+      Widget reminderWidget = notesModel.reminderWidget;
+      if (reminderWidget != null) {
+        widgetList.add(reminderWidget);
+      }
+
+/*      getRemindersForNote(bgTagColor, notesModel.reminderID).then((value) {
+        reminderWidget = value;
+        print('value!=null:${value != null}');
+        if (reminderWidget != null) {
+          widgetList.add(reminderWidget);
+        }
+      });*/
+
+      print('after if widgetList size: ${widgetList.length}');
       int totalLabelSize = labelIdArr.length;
       int noOfLabelCounters = totalLabelSize > 2 ? (totalLabelSize - 2) : 0;
       Widget trailingWidget = (noOfLabelCounters > 0
@@ -1639,6 +1735,22 @@ class _LandingPageState extends State<LandingPage> {
             ? (2)
             : selectedLabelsStrArr.length);
 
+        //ADD REMINDER CUSTOM WIDGET to widgetList HERE, IF IT EXISTS FOR THE NOTE!!
+        // if (notesModel.reminderID != 0) {
+        //
+        //   List<Map> result = await notesDB.query(
+        //       'TblReminders',
+        //       columns: [
+        //         "id"
+        //       ],
+        //       where: 'id = ?',
+        //       whereArgs: notesModel.reminderID);
+        //   // print the results
+        //   result.forEach((row) => print(row));
+        //
+        //
+        // }
+
         for (int i = 0; i < finalSize; i++) {
           print("labelTitle ${selectedLabelsStrArr[i]}");
           String labelTitle = selectedLabelsStrArr[i].trim();
@@ -1676,8 +1788,8 @@ class _LandingPageState extends State<LandingPage> {
             "inside getLabelTagWidgets() widgetList.length: ${widgetList.length}");
       }
     }
-
-    return widgetList;
+    print("return widgetList size:${widgetList.length}");
+    return (widgetList);
   }
 
 // Future<List<Widget>> getLabelChips(int position) async {
@@ -2458,6 +2570,46 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
+  Future<void> updateReminder(ReminderModel model) async {
+    print("inside updateReminder()");
+    int updateCount = await notesDB.update('TblReminders', model.toMap(),
+        where: 'id = ?', whereArgs: [model.id.toString()]);
+    print("inside updateReminder() updateCount: $updateCount");
+
+    setState(() {});
+  }
+
+  Future<void> insertNewReminder(ReminderModel model) async {
+    print("inside insertNewReminder()");
+    List<String> idList = [];
+    longPressedNotesMap.keys.forEach((keyVal) {
+      if (longPressedNotesMap[keyVal]) idList.add(keyVal.toString());
+    });
+    print("idList.length:${idList.length}");
+
+    notesDB =
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+    final insertedId = await notesDB.insert(
+      'TblReminders',
+      model.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+    print("insertedId: $insertedId");
+
+    if (insertedId != "0") {
+      /*
+      * (1) Update notes table id with insertedId
+      * (2) UI TAG(clock or loop symbol)
+      * (3) Appbar close
+      * (4) Click of reminder tag opens dialog
+      * */
+      Map<String, dynamic> row = {'reminderID': insertedId};
+      int updateCount = await notesDB
+          .update('notes', row, where: 'id = ?', whereArgs: [idList[0]]);
+      print("inside insertNewReminder updateCount: $updateCount");
+    }
+  }
+
   Future<int> updateLabel(String updatedLabel, LabelModel model) async {
     print("inside updateLabel() modelID: ${model.id}");
 
@@ -2685,10 +2837,14 @@ class _LandingPageState extends State<LandingPage> {
           "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT, "
           "noteDateOfDeletion TEXT,"
           "isNotePinned INTEGER, isNoteArchived INTEGER, isNoteTrashed "
-          "INTEGER)",
+          "INTEGER, reminderID INTEGER)",
         );
         db.execute(
             "CREATE TABLE TblLabels(id INTEGER PRIMARY KEY AUTOINCREMENT, labelTitle TEXT)");
+
+        db.execute("CREATE TABLE TblReminders(id INTEGER PRIMARY KEY "
+            "AUTOINCREMENT, reminderDate TEXT, reminderTime TEXT, "
+            "reminderInterval TEXT)");
       },
       // Set the version. This executes the onCreate function and provides a
       // path to perform database upgrades and downgrades.
@@ -2698,6 +2854,7 @@ class _LandingPageState extends State<LandingPage> {
 
     notesModelList = await getAllNotes();
     labelModelList = await getAllLabels();
+    reminderWidgetList = await getReminderWidgets();
 
     if (!isListPopulated) {
       // longPressList =
@@ -2780,7 +2937,8 @@ class _LandingPageState extends State<LandingPage> {
           maps[i]['noteDateOfDeletion'],
           maps[i]['isNotePinned'],
           maps[i]['isNoteArchived'],
-          maps[i]['isNoteTrashed']);
+          maps[i]['isNoteTrashed'],
+          maps[i]['reminderID']);
     });
 
     if (drawerLabelId == -1)
@@ -2817,6 +2975,54 @@ class _LandingPageState extends State<LandingPage> {
     return List.generate(maps.length, (i) {
       return LabelModel.param(maps[i]['id'], maps[i]['labelTitle']);
     });
+  }
+
+  Future<Widget> getRemindersForNote(Color bgTagColor, int reminderID) async {
+    print("inside getRemindersForNote");
+    Widget reminderWidget;
+    if (reminderID != 0) {
+      print("reminderID:$reminderID");
+      List<Map<String, dynamic>> resultMap = await notesDB
+          .query('TblReminders', where: 'id = ?', whereArgs: [reminderID]);
+      resultMap.forEach((row) => print(row));
+
+      reminderWidget = Container(
+        margin: EdgeInsets.all(3.0),
+        child: SizedBox(
+          width: 50.0,
+          child: Row(
+            children: [
+              Icon(
+                resultMap[0]['reminderInterval'] != "Does not repeat"
+                    ? Icons.alarm
+                    : Icons.repeat,
+                size: 30.0,
+                color: Colors.grey[400],
+              ),
+              Text(
+                '${resultMap[0]['reminderDate']},'
+                '${resultMap[0]['reminderTime']}',
+                style: TextStyle(
+                    fontSize: 11.0,
+                    overflow: TextOverflow.ellipsis,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+        decoration: BoxDecoration(
+          color: bgTagColor,
+          border: Border.all(
+            color: Colors.transparent,
+            width: 2.0,
+          ),
+          borderRadius: BorderRadius.circular(5.0),
+        ),
+      );
+    }
+    print('reminderWidget!=null: ${reminderWidget != null}');
+    return reminderWidget;
   }
 }
 
