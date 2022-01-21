@@ -1302,19 +1302,19 @@ class _LandingPageState extends State<LandingPage> {
 
                                                     * */
                           Navigator.of(context).pop();
-                          ReminderModel reminderModel = ReminderModel(
-                              _dateController.value.text,
-                              _timeController.value.text,
-                              dropDownValue);
 
                           if (model != null) {
-                            updateReminder(model);
+                            updateReminder(ReminderModel.param(
+                                model.id,
+                                _dateController.value.text,
+                                _timeController.value.text,
+                                dropDownValue));
                           } else {
-                            insertNewReminder(
-                              reminderModel
-                            );
+                            insertNewReminder(ReminderModel(
+                                _dateController.value.text,
+                                _timeController.value.text,
+                                dropDownValue));
                           }
-
                         },
                       ),
                     ),
@@ -1332,7 +1332,15 @@ class _LandingPageState extends State<LandingPage> {
                         shape: new RoundedRectangleBorder(
                           borderRadius: new BorderRadius.circular(30.0),
                         ),
-                        onPressed: () {},
+                        onPressed: () {
+                          /*
+                          * (1) Delete row based on ID from TblReminders
+                          * (2) Update reminderID in notes table to empty string
+                          * */
+
+                          deleteReminder(model);
+                          Navigator.of(context).pop();
+                        },
                       ),
                     ),
                   ],
@@ -2572,11 +2580,26 @@ class _LandingPageState extends State<LandingPage> {
 
   Future<void> updateReminder(ReminderModel model) async {
     print("inside updateReminder()");
+    Map<String, dynamic> map = model.toMap();
+    print("Reminder ID: $map");
     int updateCount = await notesDB.update('TblReminders', model.toMap(),
-        where: 'id = ?', whereArgs: [model.id.toString()]);
+        where: 'id = ?', whereArgs: [map['id']]);
     print("inside updateReminder() updateCount: $updateCount");
-
     setState(() {});
+  }
+
+  Future<void> deleteReminder(ReminderModel model) async {
+    print("inside deleteReminder()");
+    int count = await notesDB
+        .rawDelete('DELETE FROM TblReminders WHERE id = ?', [model.id]);
+    if (count > 0) {
+      Map<String, dynamic> row = {'reminderID': 0};
+      int updateCount = await notesDB
+          .update('notes', row, where: 'reminderID = ?', whereArgs: [model.id]);
+      print("inside deleteReminder() updateCount: $updateCount");
+      setState(() {});
+    }
+
   }
 
   Future<void> insertNewReminder(ReminderModel model) async {
@@ -2925,6 +2948,7 @@ class _LandingPageState extends State<LandingPage> {
     print("inside getAllNotes drawerLabelId: $drawerLabelId");
     // Convert the List<Map<String, dynamic> into a List<NotesModel>.
     List<NotesModel> mainList = List.generate(maps.length, (i) {
+      print("ReminderID: ${maps[i]['reminderID']}");
       return NotesModel.param(
           maps[i]['id'],
           maps[i]['noteTitle'],
@@ -2938,7 +2962,7 @@ class _LandingPageState extends State<LandingPage> {
           maps[i]['isNotePinned'],
           maps[i]['isNoteArchived'],
           maps[i]['isNoteTrashed'],
-          maps[i]['reminderID']);
+          maps[i]['reminderID'].toString());
     });
 
     if (drawerLabelId == -1)

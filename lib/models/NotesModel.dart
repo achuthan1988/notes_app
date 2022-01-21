@@ -13,7 +13,7 @@ class NotesModel {
   int isNotePinned;
   int isNoteArchived;
   int isNoteTrashed;
-  int reminderID;
+  String reminderID;
   Widget reminderWidget;
 
   NotesModel(

@@ -384,7 +384,7 @@ class _NewNotePageState extends State<NewNotePage> {
         "",
         "",
         0,
-        0,0,0);
+        0,0,"0");
 
     return noteObject;
   }
@@ -894,7 +894,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
                                         "",
                                         "",
                                         0,
-                                        0,0,0);
+                                        0,0,"0");
 
                                     insertAudioNote(notesModel);
                                     Navigator.pushReplacement(context,
@@ -2036,7 +2036,7 @@ class _DrawingWidgetState extends State<DrawingWidget> {
       print("base64: $base64Str");
       print("bgHexStr: $bgHexStr");
       final noteDrawing =
-          NotesModel("", "", "4", bgHexStr, "", base64Str, "","", 0, 0,0,0);
+          NotesModel("", "", "4", bgHexStr, "", base64Str, "","", 0, 0,0,"0");
       await insertDrawing(noteDrawing);
 
       Route route = MaterialPageRoute(builder: (context) => LandingPage());
