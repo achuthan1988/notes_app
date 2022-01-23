@@ -645,112 +645,112 @@ class _LandingPageState extends State<LandingPage> {
                                                 child: Stack(
                                                   children: [
                                                     Container(
-                                                      margin:
-                                                          EdgeInsets.all(3.0),
-                                                      padding:
-                                                          EdgeInsets.all(1.0),
-                                                      decoration: BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius.all(
-                                                                  Radius
-                                                                      .circular(
-                                                                          7.0)),
-                                                          color: HexColor(
-                                                              filteredList[
-                                                                      position]
-                                                                  .noteBgColorHex)),
-                                                      child: (filteredList[
-                                                                      position]
-                                                                  .noteType ==
-                                                              "0"
-                                                          ? Column(
-                                                              mainAxisAlignment:
-                                                                  MainAxisAlignment
-                                                                      .spaceBetween,
-                                                              mainAxisSize:
-                                                                  MainAxisSize
-                                                                      .max,
-                                                              crossAxisAlignment:
-                                                                  CrossAxisAlignment
-                                                                      .start,
-                                                              children: [
-                                                                Container(
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    color: Colors
-                                                                        .black,
-                                                                    border: Border.all(
-                                                                        width:
-                                                                            0),
-                                                                  ),
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .all(
-                                                                              2.0),
-                                                                  child: Text(
-                                                                    filteredList[
-                                                                            position]
-                                                                        .noteTitle,
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            14.0,
-                                                                        color: Colors
-                                                                            .black,
-                                                                        fontWeight:
-                                                                            FontWeight.w600),
+                                                    margin:
+                                                        EdgeInsets.all(3.0),
+                                                    padding:
+                                                        EdgeInsets.all(1.0),
+                                                    decoration: BoxDecoration(
+                                                        borderRadius:
+                                                            BorderRadius.all(
+                                                                Radius
+                                                                    .circular(
+                                                                        7.0)),
+                                                        color: HexColor(
+                                                            filteredList[
+                                                                    position]
+                                                                .noteBgColorHex)),
+                                                    child: (filteredList[
+                                                                    position]
+                                                                .noteType ==
+                                                            "0"
+                                                        ? Column(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Container(
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  color: Colors
+                                                                      .black,
+                                                                  border: Border.all(
+                                                                      width:
+                                                                          0),
+                                                                ),
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .all(
+                                                                            2.0),
+                                                                child: Text(
+                                                                  filteredList[
+                                                                          position]
+                                                                      .noteTitle,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          14.0,
+                                                                      color: Colors
+                                                                          .black,
+                                                                      fontWeight:
+                                                                          FontWeight.w600),
+                                                                ),
+                                                              ),
+                                                              Container(
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  color: Colors
+                                                                      .black,
+                                                                  border: Border.all(
+                                                                      width:
+                                                                          0),
+                                                                ),
+                                                                padding:
+                                                                    EdgeInsets
+                                                                        .all(
+                                                                            2.0),
+                                                                child: Text(
+                                                                  filteredList[
+                                                                          position]
+                                                                      .noteContent,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  maxLines:
+                                                                      10,
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          12.0,
+                                                                      color: Colors
+                                                                          .black,
+                                                                      fontWeight:
+                                                                          FontWeight.w300),
+                                                                ),
+                                                              ),
+                                                              Container(
+                                                                child: Align(
+                                                                  alignment:
+                                                                      Alignment
+                                                                          .bottomLeft,
+                                                                  child: Wrap(
+                                                                    children:
+                                                                        widgetList,
                                                                   ),
                                                                 ),
-                                                                Container(
-                                                                  decoration:
-                                                                      BoxDecoration(
-                                                                    color: Colors
-                                                                        .black,
-                                                                    border: Border.all(
-                                                                        width:
-                                                                            0),
-                                                                  ),
-                                                                  padding:
-                                                                      EdgeInsets
-                                                                          .all(
-                                                                              2.0),
-                                                                  child: Text(
-                                                                    filteredList[
-                                                                            position]
-                                                                        .noteContent,
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
-                                                                    maxLines:
-                                                                        10,
-                                                                    style: TextStyle(
-                                                                        fontSize:
-                                                                            12.0,
-                                                                        color: Colors
-                                                                            .black,
-                                                                        fontWeight:
-                                                                            FontWeight.w300),
-                                                                  ),
-                                                                ),
-                                                                Expanded(
-                                                                  child: Align(
-                                                                    alignment:
-                                                                        Alignment
-                                                                            .bottomLeft,
-                                                                    child: Wrap(
-                                                                      children:
-                                                                          widgetList,
-                                                                    ),
-                                                                  ),
-                                                                ),
-                                                              ],
-                                                            )
-                                                          : changeNoteCell(
-                                                              filteredList[
-                                                                  position])),
-                                                    ),
+                                                              ),
+                                                            ],
+                                                          )
+                                                        : changeNoteCell(
+                                                            filteredList[
+                                                                position])),
+                                                      ),
                                                     Positioned(
                                                       top: 0,
                                                       right: 2.0,

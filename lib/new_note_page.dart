@@ -57,7 +57,7 @@ class _NewNotePageState extends State<NewNotePage> {
   Future<void> initState() {
     // TODO: implement initState
     super.initState();
-
+    scaffoldBackgroundColorPos = 0;
     noteTitleVal = (notesModel != null) ? (notesModel.noteTitle) : ("");
     noteContentVal = (notesModel != null) ? (notesModel.noteContent) : ("");
     mediaStr = (notesModel != null) ? (notesModel.noteMediaPath) : ("");
@@ -343,7 +343,7 @@ class _NewNotePageState extends State<NewNotePage> {
                   String originalTitle = notesModel.noteTitle;
                   notesModel.noteTitle = noteTitleController.text.trim();
                   notesModel.noteContent = noteContentController.text.trim();
-                  Color color = Constants.bgArray[scaffoldBackgroundColorPos];
+                  Color color = Constants.bgArray[scaffoldBackgroundCol orPos];
                   notesModel.noteBgColorHex =
                       '#${color.value.toRadixString(16)}';
 
