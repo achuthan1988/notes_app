@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:notes_app/landing_page.dart';
 
 import 'util/constants.dart' as Constants;
@@ -29,6 +28,7 @@ class _State extends State<LoginPage> {
 
   TextEditingController nameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+  FirebaseAuth auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -92,14 +92,17 @@ class _State extends State<LoginPage> {
                           nameController.text + " " + passwordController.text);
 
                       if (!isUserNameBlank && !isPassWordBlank) {
-                        if (!isDummyLoginEntered()) {
-                          var snackBar =
-                              SnackBar(content: Text('User does not exist.'));
-                          ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                        } else {
-                          //from valid,redirect to landing page using routing
-                          navigateToLandingPage(context);
-                        }
+                        isLoginCredsValid().then((value) {
+                          if (!value) {
+                            var snackBar =
+                                SnackBar(content: Text('User does not exist.'));
+                            ScaffoldMessenger.of(context)
+                                .showSnackBar(snackBar);
+                          } else {
+                            //from valid,redirect to landing page using routing
+                            navigateToLandingPage(context);
+                          }
+                        });
                       }
                     },
                   )),
@@ -110,7 +113,7 @@ class _State extends State<LoginPage> {
                       SignInButton(
                         Buttons.Google,
                         onPressed: () {
-                         /* signInWithGoogle()
+                          /* signInWithGoogle()
                               .then((value) => print("google sign in email id:"
                                   " ${value.user.email} URL : ${value.user.photoUrl}"));*/
                         },
@@ -160,13 +163,29 @@ class _State extends State<LoginPage> {
     return true;
   }
 
-  bool isDummyLoginEntered() {
+  Future<bool> isLoginCredsValid() async {
     String userName = nameController.text;
     String passWord = passwordController.text;
 
-    if (userName == "test" && passWord == "test") {
-      return true;
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .signInWithEmailAndPassword(email: userName, password: passWord);
+
+      if (userCredential.user != null) {
+        print("Valid user! ${userCredential.user.displayName}");
+        return true;
+      }else
+        return false;
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        print('No user found for that email.');
+        return false;
+      } else if (e.code == 'wrong-password') {
+        print('Wrong password provided for that user.');
+        return false;
+      }
     }
+
     return false;
   }
 
@@ -175,7 +194,7 @@ class _State extends State<LoginPage> {
     Navigator.pushReplacement(context, route);
   }
 
- /* Future<AuthResult> signInWithGoogle() async {
+/* Future<AuthResult> signInWithGoogle() async {
     // Trigger the authentication flow
     final GoogleSignInAccount googleUser = await GoogleSignIn().signIn();
     // Obtain the auth details from the request

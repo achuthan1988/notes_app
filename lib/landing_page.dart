@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:intl/intl.dart';
 import 'package:jiffy/jiffy.dart';
+import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:notes_app/archive_page.dart';
 import 'package:notes_app/models/LabelModel.dart';
 import 'package:notes_app/models/NotesModel.dart';
@@ -132,133 +133,133 @@ class _LandingPageState extends State<LandingPage> {
   Widget build(BuildContext context) {
     print("inside build! landing page");
     return Scaffold(
-        resizeToAvoidBottomInset: false,
-        onDrawerChanged: (isOpened) async {
-          if (isOpened) {
-            labelModelList = await getAllLabels();
-            notesModelList = await getAllNotes();
-            reminderWidgetList = await getReminderWidgets();
-            sliderLabelWidgetList = getLabelSliderWidgets();
+      resizeToAvoidBottomInset: false,
+      onDrawerChanged: (isOpened) async {
+        if (isOpened) {
+          labelModelList = await getAllLabels();
+          notesModelList = await getAllNotes();
+          reminderWidgetList = await getReminderWidgets();
+          sliderLabelWidgetList = getLabelSliderWidgets();
 
-            setState(() {});
-          }
-        },
-        appBar: ((!isToggleAppBar && !isTrashActive)
-            ? AppBar(
-                title: (drawerLabelId == -1)
-                    ? Text(sliderTitleArray[drawerPosition])
-                    : Text(drawerLabelTitle),
-              )
-            : ((isToggleAppBar && !isTrashActive)
-                ? AppBar(
-                    backgroundColor: Colors.white,
-                    leading: Padding(
-                      padding: const EdgeInsets.all(5.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        // set your alignment
-                        children: [
-                          GestureDetector(
-                            child: Flexible(
-                              child: GestureDetector(
-                                child: Icon(
-                                  Icons.close,
-                                  color: Colors.blue,
-                                  size: 25.0,
-                                ),
-                              ),
-                            ),
-                            onTap: () {
-                              print("onTap of X button!");
-                              setState(() {
-                                isToggleAppBar = false;
-                                numOfNotesSelected = 0;
-                                notesModelList.forEach((notesModel) {
-                                  longPressedNotesMap[notesModel.id] = false;
-                                });
-                              });
-                            },
-                          ),
-                          Spacer(),
-                          Flexible(
-                            child: Text(
-                              numOfNotesSelected.toString(),
-                              style: TextStyle(
-                                  color: Colors.blue,
-                                  fontSize: 20.0,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    actions: [
-                      Flexible(
-                        child: GestureDetector(
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Icon(
-                              (isNotesUnpinned()
-                                  ? Icons.push_pin
-                                  : Icons.push_pin_outlined),
-                              color: Colors.blue,
-                              size: 30.0,
-                            ),
-                          ),
-                          onTap: () {
-                            print("pin icon clicked!!");
-
-                            List<String> idList = [];
-                            longPressedNotesMap.keys.forEach((keyVal) {
-                              if (longPressedNotesMap[keyVal])
-                                idList.add(keyVal.toString());
-                            });
-
-                            if (isNotesUnpinned()) {
-                              updatePinnedStateRows(1, idList);
-                            } else {
-                              updatePinnedStateRows(0, idList);
-                            }
-                          },
-                        ),
-                      ),
-                      Visibility(
-                        child: Flexible(
-                          child: GestureDetector(
-                            child: Padding(
-                              padding: const EdgeInsets.all(10.0),
+          setState(() {});
+        }
+      },
+      appBar: ((!isToggleAppBar && !isTrashActive)
+          ? AppBar(
+              title: (drawerLabelId == -1)
+                  ? Text(sliderTitleArray[drawerPosition])
+                  : Text(drawerLabelTitle),
+            )
+          : ((isToggleAppBar && !isTrashActive)
+              ? AppBar(
+                  backgroundColor: Colors.white,
+                  leading: Padding(
+                    padding: const EdgeInsets.all(5.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      // set your alignment
+                      children: [
+                        GestureDetector(
+                          child: Flexible(
+                            child: GestureDetector(
                               child: Icon(
-                                Icons.notification_add,
+                                Icons.close,
                                 color: Colors.blue,
                                 size: 25.0,
                               ),
                             ),
-                            onTap: () {
-                              /* => Alert for reminders display
+                          ),
+                          onTap: () {
+                            print("onTap of X button!");
+                            setState(() {
+                              isToggleAppBar = false;
+                              numOfNotesSelected = 0;
+                              notesModelList.forEach((notesModel) {
+                                longPressedNotesMap[notesModel.id] = false;
+                              });
+                            });
+                          },
+                        ),
+                        Spacer(),
+                        Flexible(
+                          child: Text(
+                            numOfNotesSelected.toString(),
+                            style: TextStyle(
+                                color: Colors.blue,
+                                fontSize: 20.0,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    Flexible(
+                      child: GestureDetector(
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Icon(
+                            (isNotesUnpinned()
+                                ? Icons.push_pin
+                                : Icons.push_pin_outlined),
+                            color: Colors.blue,
+                            size: 30.0,
+                          ),
+                        ),
+                        onTap: () {
+                          print("pin icon clicked!!");
+
+                          List<String> idList = [];
+                          longPressedNotesMap.keys.forEach((keyVal) {
+                            if (longPressedNotesMap[keyVal])
+                              idList.add(keyVal.toString());
+                          });
+
+                          if (isNotesUnpinned()) {
+                            updatePinnedStateRows(1, idList);
+                          } else {
+                            updatePinnedStateRows(0, idList);
+                          }
+                        },
+                      ),
+                    ),
+                    Visibility(
+                      child: Flexible(
+                        child: GestureDetector(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: Icon(
+                              Icons.notification_add,
+                              color: Colors.blue,
+                              size: 25.0,
+                            ),
+                          ),
+                          onTap: () {
+                            /* => Alert for reminders display
                           *   (1) get current time
                           *   (2) grey out duration values in dropdown based
                           * on above value.
                           *   (3)
                           *
                           * */
-                              showReminderDialog(context, null);
-                            },
+                            showReminderDialog(context, null);
+                          },
+                        ),
+                      ),
+                      visible: (numOfNotesSelected <= 1),
+                    ),
+                    Flexible(
+                      child: GestureDetector(
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Icon(
+                            Icons.archive_outlined,
+                            color: Colors.blue,
+                            size: 25.0,
                           ),
                         ),
-                        visible: (numOfNotesSelected <= 1),
-                      ),
-                      Flexible(
-                        child: GestureDetector(
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Icon(
-                              Icons.archive_outlined,
-                              color: Colors.blue,
-                              size: 25.0,
-                            ),
-                          ),
-                          onTap: () {
-                            /*
+                        onTap: () {
+                          /*
                       * (1) Get all note objects long pressed and change flag
                       *  state to 1 in DB.
                       * (2) refresh ui state
@@ -266,28 +267,28 @@ class _LandingPageState extends State<LandingPage> {
                       * (4) If UNDO pressed restoration of those notes
                       * archived in step (1) by change of state in DB and UI.
                       * */
-                            List<String> idList = [];
-                            longPressedNotesMap.keys.forEach((keyVal) {
-                              if (longPressedNotesMap[keyVal])
-                                idList.add(keyVal.toString());
-                            });
-                            updateArchivedStateRows(1, idList, context);
-                          },
-                        ),
+                          List<String> idList = [];
+                          longPressedNotesMap.keys.forEach((keyVal) {
+                            if (longPressedNotesMap[keyVal])
+                              idList.add(keyVal.toString());
+                          });
+                          updateArchivedStateRows(1, idList, context);
+                        },
                       ),
-                      Flexible(
-                        child: GestureDetector(
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Icon(
-                              Icons.label_outline,
-                              color: Colors.blue,
-                              size: 25.0,
-                            ),
+                    ),
+                    Flexible(
+                      child: GestureDetector(
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Icon(
+                            Icons.label_outline,
+                            color: Colors.blue,
+                            size: 25.0,
                           ),
-                          onTap: () {
-                            print("label onTap pressed");
-                            /*
+                        ),
+                        onTap: () {
+                          print("label onTap pressed");
+                          /*
                         * (1) show a dialog with UI as per set requirement
                         * (done)
                         * (2) Populate based on entries in Labels table (done)
@@ -302,24 +303,24 @@ class _LandingPageState extends State<LandingPage> {
                         *
                         * */
 
-                            showLabelsDialog(context);
-                          },
-                        ),
+                          showLabelsDialog(context);
+                        },
                       ),
-                      Flexible(
-                        child: GestureDetector(
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Icon(
-                              Icons.color_lens_outlined,
-                              color: Colors.blue,
-                              size: 25.0,
-                            ),
+                    ),
+                    Flexible(
+                      child: GestureDetector(
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Icon(
+                            Icons.color_lens_outlined,
+                            color: Colors.blue,
+                            size: 25.0,
                           ),
-                          onTap: () {
-                            print("pallette icon clicked!!");
+                        ),
+                        onTap: () {
+                          print("pallette icon clicked!!");
 
-                            /*
+                          /*
                         * (1) Show all constant 8 colors as circles , inside
                         * an alert dialog, with no button
                         * (2) All long pressed notes to be updated with the
@@ -329,101 +330,63 @@ class _LandingPageState extends State<LandingPage> {
                         *
                         * */
 
-                            showColorPaletteDialog(context);
-                          },
-                        ),
+                          showColorPaletteDialog(context);
+                        },
                       ),
-                      Flexible(
-                        child: GestureDetector(
-                          child: Padding(
-                            padding: const EdgeInsets.all(10.0),
-                            child: Icon(
-                              Icons.delete,
-                              color: Colors.blue,
-                              size: 25.0,
-                            ),
+                    ),
+                    Flexible(
+                      child: GestureDetector(
+                        child: Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Icon(
+                            Icons.delete,
+                            color: Colors.blue,
+                            size: 25.0,
                           ),
-                          onTap: () {
-                            print("delete icon clicked!!");
-                            List<String> idList = [];
-                            longPressedNotesMap.keys.forEach((keyVal) {
-                              if (longPressedNotesMap[keyVal])
-                                idList.add(keyVal.toString());
-                            });
+                        ),
+                        onTap: () {
+                          print("delete icon clicked!!");
+                          List<String> idList = [];
+                          longPressedNotesMap.keys.forEach((keyVal) {
+                            if (longPressedNotesMap[keyVal])
+                              idList.add(keyVal.toString());
+                          });
 
-                            DateFormat dateFormat =
-                                DateFormat("yyyy-MM-dd HH:mm:ss");
-                            String currentDateTime =
-                                dateFormat.format(DateTime.now());
-                            sendToTrash(context, 1, idList, currentDateTime);
-                          },
-                        ),
-                      )
-                    ],
-                  )
-                : ((isToggleAppBar && isTrashActive))
-                    ? AppBar(
-                        backgroundColor: Colors.white,
-                        leading: Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            // set your alignment
-                            children: [
-                              GestureDetector(
-                                child: Flexible(
-                                  child: GestureDetector(
-                                    child: Icon(
-                                      Icons.close,
-                                      color: Colors.blue,
-                                      size: 25.0,
-                                    ),
+                          DateFormat dateFormat =
+                              DateFormat("yyyy-MM-dd HH:mm:ss");
+                          String currentDateTime =
+                              dateFormat.format(DateTime.now());
+                          sendToTrash(context, 1, idList, currentDateTime);
+                        },
+                      ),
+                    )
+                  ],
+                )
+              : ((isToggleAppBar && isTrashActive))
+                  ? AppBar(
+                      backgroundColor: Colors.white,
+                      leading: Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          // set your alignment
+                          children: [
+                            GestureDetector(
+                              child: Flexible(
+                                child: GestureDetector(
+                                  child: Icon(
+                                    Icons.close,
+                                    color: Colors.blue,
+                                    size: 25.0,
                                   ),
-                                ),
-                                onTap: () {
-                                  print("onTap of X button!");
-                                  setState(() {
-                                    _key.currentState.refresh();
-                                    isTrashActive = false;
-                                    isToggleAppBar = false;
-                                    numOfNotesSelected = 0;
-                                    notesModelList.forEach((notesModel) {
-                                      longPressedNotesMap[notesModel.id] =
-                                          false;
-                                    });
-                                  });
-                                },
-                              ),
-                              Spacer(),
-                              Flexible(
-                                child: Text(
-                                  numOfNotesSelected.toString(),
-                                  style: TextStyle(
-                                      color: Colors.blue,
-                                      fontSize: 20.0,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        actions: [
-                          Flexible(
-                            child: GestureDetector(
-                              child: Padding(
-                                padding: const EdgeInsets.all(10.0),
-                                child: Icon(
-                                  Icons.restore_from_trash,
-                                  color: Colors.blue,
-                                  size: 25.0,
                                 ),
                               ),
                               onTap: () {
-                                print("restore icon clicked!!");
-                                _key.currentState.setup(context, 0);
+                                print("onTap of X button!");
                                 setState(() {
-                                  isToggleAppBar = false;
+                                  _key.currentState.refresh();
                                   isTrashActive = false;
+                                  isToggleAppBar = false;
                                   numOfNotesSelected = 0;
                                   notesModelList.forEach((notesModel) {
                                     longPressedNotesMap[notesModel.id] = false;
@@ -431,673 +394,705 @@ class _LandingPageState extends State<LandingPage> {
                                 });
                               },
                             ),
-                          ),
-                          Flexible(
-                            child: GestureDetector(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(10.0),
-                                  child: Icon(
-                                    Icons.delete_forever,
+                            Spacer(),
+                            Flexible(
+                              child: Text(
+                                numOfNotesSelected.toString(),
+                                style: TextStyle(
                                     color: Colors.blue,
-                                    size: 25.0,
+                                    fontSize: 20.0,
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      actions: [
+                        Flexible(
+                          child: GestureDetector(
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Icon(
+                                Icons.restore_from_trash,
+                                color: Colors.blue,
+                                size: 25.0,
+                              ),
+                            ),
+                            onTap: () {
+                              print("restore icon clicked!!");
+                              _key.currentState.setup(context, 0);
+                              setState(() {
+                                isToggleAppBar = false;
+                                isTrashActive = false;
+                                numOfNotesSelected = 0;
+                                notesModelList.forEach((notesModel) {
+                                  longPressedNotesMap[notesModel.id] = false;
+                                });
+                              });
+                            },
+                          ),
+                        ),
+                        Flexible(
+                          child: GestureDetector(
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Icon(
+                                  Icons.delete_forever,
+                                  color: Colors.blue,
+                                  size: 25.0,
+                                ),
+                              ),
+                              onTap: () {
+                                print("delete forever icon clicked!!");
+                                showDeleteForever(context);
+                              }),
+                        ),
+                      ],
+                    )
+                  : AppBar(
+                      title: (drawerLabelId == -1)
+                          ? Text(sliderTitleArray[drawerPosition])
+                          : Text(drawerLabelTitle),
+                    ))),
+      drawer: Drawer(
+          child: Container(
+        child: ListView.separated(
+          padding: EdgeInsets.zero,
+          itemCount: sliderTitleArray.length,
+          itemBuilder: (ctx, index) {
+            return InkWell(
+              child: Container(
+                padding: EdgeInsets.all(3.0),
+                height: (index != 4
+                    ? 25.0
+                    : (sliderLabelWidgetList.length > 0
+                        ? sliderLabelWidgetList.length * 30.0
+                        : 0.0)),
+                child: (index != 4
+                    ? Row(
+                        children: [
+                            Icon(sliderIconsArray[index]),
+                            SizedBox(
+                                child: Text('${sliderTitleArray[index]}',
+                                    overflow: TextOverflow.ellipsis),
+                                width: 150),
+                          ],
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center)
+                    : Visibility(
+                        child: Container(
+                          height: (sliderLabelWidgetList.length > 0
+                              ? sliderLabelWidgetList.length * 40.0
+                              : 0.0),
+                          child: Wrap(
+                            children: [
+                              Divider(
+                                color: Colors.grey[600],
+                              ),
+                              ListView.builder(
+                                  shrinkWrap: true,
+                                  physics: NeverScrollableScrollPhysics(),
+                                  itemCount: sliderLabelWidgetList.length,
+                                  itemBuilder: (context, position) {
+                                    return GestureDetector(
+                                      child: sliderLabelWidgetList[position],
+                                      onTap: () {
+                                        print("inside onTap() of ListView!!"
+                                            " $position");
+                                        drawerLabelId =
+                                            labelModelList[position].id;
+                                        drawerLabelTitle =
+                                            labelModelList[position].labelTitle;
+                                        print("inside label click "
+                                            "drawerLabelId: $drawerLabelId");
+                                        Navigator.pop(context);
+
+                                        setState(() {});
+                                      },
+                                    );
+                                  }),
+                            ],
+                          ),
+                        ),
+                        visible: sliderLabelWidgetList.length > 0,
+                      )),
+              ),
+              onTap: () {
+                drawerPosition = index;
+                Navigator.pop(context);
+                if (drawerPosition == 1) {
+                  showAddLabelDialog(context, this);
+                } else {
+                  if (drawerPosition == 0) drawerLabelId = -1;
+                  setState(() {
+                    pageWidget = switchDrawerWidget();
+                  });
+                }
+              },
+            );
+          },
+          separatorBuilder: (context, index) {
+            return Divider(
+              color: Colors.transparent,
+            );
+          },
+        ),
+      )),
+      floatingActionButton: Visibility(
+        visible: !isArchiveSection && (drawerPosition != 3),
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.pushReplacement(context,
+                MaterialPageRoute(builder: (BuildContext context) {
+              return NewNotePage(null);
+            }));
+          },
+          child: Icon(Icons.add),
+          backgroundColor: Constants.bgMainColor,
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      body: ((drawerPosition == 0 || drawerPosition == 1)
+          ? (FutureBuilder<List>(
+              future: initDB(),
+              builder: (context, snapshot) {
+                print("inside builder of FutureBuilder ${snapshot.hasData}");
+                if (snapshot.data != null && snapshot.data.isNotEmpty)
+                  return SingleChildScrollView(
+                      child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Visibility(
+                        visible: (notesModelList.every(
+                                (notesModel) => (notesModel.isNotePinned == 0))
+                            ? false
+                            : true),
+                        child: Column(
+                          children: [
+                            Align(
+                              alignment: Alignment.topLeft,
+                              child: Padding(
+                                padding: const EdgeInsets.all(5.0),
+                                child: Text(
+                                  "Pinned",
+                                  style: TextStyle(
+                                      fontSize: 14.0,
+                                      color: Colors.black87,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ),
+                            GridView(
+                                padding: EdgeInsets.all(2.0),
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 2.0,
+                                  mainAxisSpacing: 2.0,
+                                ),
+                                children: List.generate(
+                                    notesModelList
+                                        .where((i) => (i.isNotePinned == 1 &&
+                                            i.isNoteArchived == 0))
+                                        .toList()
+                                        .length, (position) {
+                                  print("inside itemBuilder of GridView");
+                                  List<NotesModel> filteredList = notesModelList
+                                      .where((i) => (i.isNotePinned == 1 &&
+                                          i.isNoteArchived == 0))
+                                      .toList();
+                                  List<Widget> widgetList = [];
+
+                                  widgetList = getLabelTagWidgets(
+                                      filteredList[position],
+                                      filteredList[position].noteBgColorHex);
+
+                                  print("inside itemBuilder widgetList.length "
+                                      "${widgetList.length}");
+
+                                  return GestureDetector(
+                                      onTap: () => Navigator.push(
+                                          context,
+                                          ScaleRoute(
+                                              page: NewNotePage(
+                                                  filteredList[position]))),
+                                      onLongPress: () {
+                                        print(
+                                            "inside onLongPress longPressList[position]");
+
+                                        if (!longPressedNotesMap[
+                                            filteredList[position].id]) {
+                                          setState(() {
+                                            longPressedNotesMap[
+                                                    filteredList[position].id] =
+                                                true;
+                                            isToggleAppBar = true;
+                                            numOfNotesSelected += 1;
+                                          });
+                                        }
+                                        Hero(
+                                          tag: 'heroTag $position',
+                                          child: Stack(
+                                            children: [
+                                              Container(
+                                                margin: EdgeInsets.all(3.0),
+                                                padding: EdgeInsets.all(1.0),
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.all(
+                                                            Radius.circular(
+                                                                7.0)),
+                                                    color: HexColor(
+                                                        filteredList[position]
+                                                            .noteBgColorHex)),
+                                                child: (filteredList[position]
+                                                            .noteType ==
+                                                        "0"
+                                                    ? Column(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Container(
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color:
+                                                                  Colors.black,
+                                                              border:
+                                                                  Border.all(
+                                                                      width: 0),
+                                                            ),
+                                                            padding:
+                                                                EdgeInsets.all(
+                                                                    2.0),
+                                                            child: Text(
+                                                              filteredList[
+                                                                      position]
+                                                                  .noteTitle,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style: TextStyle(
+                                                                  fontSize:
+                                                                      14.0,
+                                                                  color: Colors
+                                                                      .black,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600),
+                                                            ),
+                                                          ),
+                                                          Container(
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              color:
+                                                                  Colors.black,
+                                                              border:
+                                                                  Border.all(
+                                                                      width: 0),
+                                                            ),
+                                                            padding:
+                                                                EdgeInsets.all(
+                                                                    2.0),
+                                                            child: Text(
+                                                              filteredList[
+                                                                      position]
+                                                                  .noteContent,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              maxLines: 10,
+                                                              style: TextStyle(
+                                                                  fontSize:
+                                                                      12.0,
+                                                                  color: Colors
+                                                                      .black,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w300),
+                                                            ),
+                                                          ),
+                                                          Container(
+                                                            child: Align(
+                                                              alignment: Alignment
+                                                                  .bottomLeft,
+                                                              child: Wrap(
+                                                                children:
+                                                                    widgetList,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      )
+                                                    : changeNoteCell(
+                                                        filteredList[
+                                                            position])),
+                                              ),
+                                              Positioned(
+                                                top: 0,
+                                                right: 2.0,
+                                                child: Visibility(
+                                                  visible: longPressedNotesMap[
+                                                      filteredList[position]
+                                                          .id],
+                                                  maintainState: true,
+                                                  maintainSize: true,
+                                                  maintainAnimation: true,
+                                                  child: Container(
+                                                      width: 15.0,
+                                                      height: 15.0,
+                                                      child: Icon(
+                                                        Icons.check_circle,
+                                                        color: Colors.black87,
+                                                      )),
+                                                ), //CircularAvatar
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      });
+                                })),
+                          ],
+                        ),
+                      ),
+                      Visibility(
+                        visible: (notesModelList.every((notesModel) =>
+                                (notesModel.isNotePinned == 1 &&
+                                    notesModel.isNoteArchived == 0))
+                            ? false
+                            : true),
+                        child: Column(
+                          children: [
+                            Visibility(
+                              visible: (notesModelList.every((notesModel) =>
+                                      notesModel.isNotePinned == 0 &&
+                                      notesModel.isNoteArchived == 0)
+                                  ? false
+                                  : true),
+                              child: Align(
+                                alignment: Alignment.topLeft,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(5.0),
+                                  child: Text(
+                                    "Others",
+                                    style: TextStyle(
+                                        fontSize: 14.0,
+                                        color: Colors.black87,
+                                        fontWeight: FontWeight.w600),
                                   ),
                                 ),
-                                onTap: () {
-                                  print("delete forever icon clicked!!");
-                                  showDeleteForever(context);
-                                }),
-                          ),
-                        ],
-                      )
-                    : AppBar(
-                        title: (drawerLabelId == -1)
-                            ? Text(sliderTitleArray[drawerPosition])
-                            : Text(drawerLabelTitle),
-                      ))),
-        drawer: Drawer(
-            child: Container(
-          child: ListView.separated(
-            padding: EdgeInsets.zero,
-            itemCount: sliderTitleArray.length,
-            itemBuilder: (ctx, index) {
-              return InkWell(
-                child: Container(
-                  padding: EdgeInsets.all(3.0),
-                  height: (index != 4
-                      ? 25.0
-                      : (sliderLabelWidgetList.length > 0
-                          ? sliderLabelWidgetList.length * 30.0
-                          : 0.0)),
-                  child: (index != 4
-                      ? Row(
-                          children: [
-                              Icon(sliderIconsArray[index]),
-                              SizedBox(
-                                  child: Text('${sliderTitleArray[index]}',
-                                      overflow: TextOverflow.ellipsis),
-                                  width: 150),
-                            ],
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center)
-                      : Visibility(
-                          child: Container(
-                            height: (sliderLabelWidgetList.length > 0
-                                ? sliderLabelWidgetList.length * 40.0
-                                : 0.0),
-                            child: Wrap(
-                              children: [
-                                Divider(
-                                  color: Colors.grey[600],
+                              ),
+                            ),
+                            GridView(
+                                padding: EdgeInsets.all(2.0),
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                gridDelegate:
+                                    SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 2.0,
+                                  mainAxisSpacing: 2.0,
                                 ),
-                                ListView.builder(
-                                    shrinkWrap: true,
-                                    physics: NeverScrollableScrollPhysics(),
-                                    itemCount: sliderLabelWidgetList.length,
-                                    itemBuilder: (context, position) {
-                                      return GestureDetector(
-                                        child: sliderLabelWidgetList[position],
-                                        onTap: () {
-                                          print("inside onTap() of ListView!!"
-                                              " $position");
-                                          drawerLabelId =
-                                              labelModelList[position].id;
-                                          drawerLabelTitle =
-                                              labelModelList[position]
-                                                  .labelTitle;
-                                          print("inside label click "
-                                              "drawerLabelId: $drawerLabelId");
-                                          Navigator.pop(context);
+                                children: List.generate(
+                                    notesModelList
+                                        .where((i) =>
+                                            i.isNotePinned == 0 &&
+                                            i.isNoteArchived == 0)
+                                        .toList()
+                                        .length, (position) {
+                                  print("inside itemBuilder of GridView");
+                                  List<NotesModel> filteredList = notesModelList
+                                      .where((i) =>
+                                          i.isNotePinned == 0 &&
+                                          i.isNoteArchived == 0)
+                                      .toList();
 
-                                          setState(() {});
-                                        },
-                                      );
-                                    }),
+                                  List<Widget> widgetList = [];
+                                  widgetList = getLabelTagWidgets(
+                                      filteredList[position],
+                                      filteredList[position].noteBgColorHex);
+
+                                  print("inside itembuilder widgetList "
+                                      "size: ${widgetList.length}");
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      NotesModel notesModel =
+                                          filteredList[position];
+                                      Navigator.push(
+                                          context,
+                                          ScaleRoute(
+                                              page: NewNotePage(notesModel)));
+                                    },
+                                    onLongPress: () {
+                                      print(
+                                          "inside onLongPress longPressList[position]");
+
+                                      if (!longPressedNotesMap[
+                                          filteredList[position].id]) {
+                                        setState(() {
+                                          longPressedNotesMap[
+                                              filteredList[position].id] = true;
+                                          isToggleAppBar = true;
+                                          numOfNotesSelected += 1;
+                                        });
+                                      }
+                                    },
+                                    child: Hero(
+                                      tag: 'heroTag $position',
+                                      child: Stack(
+                                        children: [
+                                          Container(
+                                            margin: EdgeInsets.all(3.0),
+                                            padding: EdgeInsets.all(1.0),
+                                            decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(7.0)),
+                                                color: HexColor(
+                                                    filteredList[position]
+                                                        .noteBgColorHex)),
+                                            child: (filteredList[position]
+                                                        .noteType ==
+                                                    "0"
+                                                ? Column(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    mainAxisSize:
+                                                        MainAxisSize.max,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Visibility(
+                                                        child: (filteredList[
+                                                                    position]
+                                                                .noteMediaPath
+                                                                .isEmpty
+                                                            ? Container()
+                                                            : Container(
+                                                                height: 70.0,
+                                                                width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width,
+                                                                child: Padding(
+                                                                    padding:
+                                                                        const EdgeInsets.all(
+                                                                            2),
+                                                                    child: GridView
+                                                                        .builder(
+                                                                      itemCount: filteredList[
+                                                                              position]
+                                                                          .noteMediaPath
+                                                                          .split(
+                                                                              ",")
+                                                                          .length,
+                                                                      gridDelegate:
+                                                                          SliverGridDelegateWithFixedCrossAxisCount(
+                                                                              crossAxisCount: 3),
+                                                                      shrinkWrap:
+                                                                          true,
+                                                                      itemBuilder:
+                                                                          (BuildContext context,
+                                                                              int index) {
+                                                                        return Padding(
+                                                                          padding:
+                                                                              const EdgeInsets.all(1.0),
+                                                                          child:
+                                                                              Stack(
+                                                                            children: <Widget>[
+                                                                              GestureDetector(
+                                                                                child: Container(
+                                                                                  color: Constants.bgWhiteColor.withOpacity(0.3),
+                                                                                  child: Center(
+                                                                                    child: Image.file(
+                                                                                      File(
+                                                                                        filteredList[position].noteMediaPath.split(",")[index],
+                                                                                      ),
+                                                                                      fit: BoxFit.cover,
+                                                                                    ),
+                                                                                  ),
+                                                                                ),
+                                                                                onTap: () {
+                                                                                  Navigator.push(
+                                                                                      context,
+                                                                                      MaterialPageRoute(
+                                                                                        builder: (context) => NewNotePage(
+                                                                                          filteredList[position],
+                                                                                        ),
+                                                                                      ));
+                                                                                },
+                                                                              ),
+                                                                              /*Positioned(
+                                                                                          right: 1.0,
+                                                                                          top: 1.0,
+                                                                                          child: GestureDetector(
+                                                                                            child: Container(
+                                                                                              child: Icon(
+                                                                                                Icons.delete,
+                                                                                                color: Colors.white,
+                                                                                                size: 12.0,
+                                                                                              ),
+                                                                                              color: Colors.black87.withOpacity(0.6),
+                                                                                            ),
+                                                                                            onTap: () {
+                                                                                              print("delete button "
+                                                                                                  "clicked at $index");
+                                                                                              filteredList[position].noteMediaPath.split(",").removeAt(index);
+                                                                                              setState(() {});
+                                                                                            },
+                                                                                          ),
+                                                                                        )*/
+                                                                            ],
+                                                                          ),
+                                                                        );
+                                                                      },
+                                                                    )),
+                                                              )),
+                                                        visible: (filteredList[
+                                                                position]
+                                                            .noteMediaPath
+                                                            .isNotEmpty),
+                                                      ),
+                                                      Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors
+                                                              .transparent,
+                                                          border: Border.all(
+                                                              width: 0,
+                                                              color: Colors
+                                                                  .transparent),
+                                                        ),
+                                                        padding:
+                                                            EdgeInsets.all(2.0),
+                                                        child: Text(
+                                                          filteredList[position]
+                                                              .noteTitle,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: TextStyle(
+                                                              fontSize: 14.0,
+                                                              color:
+                                                                  Colors.black,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600),
+                                                        ),
+                                                      ),
+                                                      Container(
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors
+                                                              .transparent,
+                                                          border: Border.all(
+                                                              width: 0,
+                                                              color: Colors
+                                                                  .transparent),
+                                                        ),
+                                                        padding:
+                                                            EdgeInsets.all(2.0),
+                                                        child: Text(
+                                                          filteredList[position]
+                                                              .noteContent,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          maxLines: 10,
+                                                          style: TextStyle(
+                                                              fontSize: 12.0,
+                                                              color:
+                                                                  Colors.black,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w300),
+                                                        ),
+                                                      ),
+                                                      Expanded(
+                                                        child: Align(
+                                                          alignment: Alignment
+                                                              .bottomLeft,
+                                                          child: Wrap(
+                                                            children:
+                                                                widgetList,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  )
+                                                : changeNoteCell(
+                                                    filteredList[position])),
+                                          ),
+                                          Positioned(
+                                            top: 0,
+                                            right: 2.0,
+                                            child: Visibility(
+                                              visible: longPressedNotesMap[
+                                                  filteredList[position].id],
+                                              maintainState: true,
+                                              maintainSize: true,
+                                              maintainAnimation: true,
+                                              child: Container(
+                                                  width: 15.0,
+                                                  height: 15.0,
+                                                  child: Icon(
+                                                    Icons.check_circle,
+                                                    color: Colors.black87,
+                                                  )),
+                                            ), //CircularAvatar
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                })),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ));
+                else
+                  return Align(
+                    alignment: Alignment.center,
+                    child: LayoutBuilder(
+                      builder:
+                          (BuildContext context, BoxConstraints constraints) {
+                        return Container(
+                          height: constraints.maxHeight,
+                          width: MediaQuery.of(context).size.width,
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(MdiIcons.note,
+                                    size: 100.0, color: Colors.grey[400]),
+                                Center(
+                                  child: Text(
+                                    "No Notes Added",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                        fontSize: 18.0,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[400]),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
-                          visible: sliderLabelWidgetList.length > 0,
-                        )),
-                ),
-                onTap: () {
-                  drawerPosition = index;
-                  Navigator.pop(context);
-                  if (drawerPosition == 1) {
-                    showAddLabelDialog(context, this);
-                  } else {
-                    if (drawerPosition == 0) drawerLabelId = -1;
-                    setState(() {
-                      pageWidget = switchDrawerWidget();
-                    });
-                  }
-                },
-              );
-            },
-            separatorBuilder: (context, index) {
-              return Divider(
-                color: Colors.transparent,
-              );
-            },
-          ),
-        )),
-        floatingActionButton: Visibility(
-          visible: !isArchiveSection && (drawerPosition != 3),
-          child: FloatingActionButton(
-            onPressed: () {
-              Navigator.pushReplacement(context,
-                  MaterialPageRoute(builder: (BuildContext context) {
-                return NewNotePage(null);
-              }));
-            },
-            child: Icon(Icons.add),
-            backgroundColor: Constants.bgMainColor,
-          ),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-        body: ((drawerPosition == 0 || drawerPosition == 1)
-            ? (FutureBuilder<List>(
-                future: initDB(),
-                builder: (context, snapshot) {
-                  print("inside builder of FutureBuilder ${snapshot.hasData}");
-                  return snapshot.hasData
-                      ? SingleChildScrollView(
-                          child: new Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Visibility(
-                              visible: (notesModelList.every((notesModel) =>
-                                      (notesModel.isNotePinned == 0))
-                                  ? false
-                                  : true),
-                              child: Column(
-                                children: [
-                                  Align(
-                                    alignment: Alignment.topLeft,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(5.0),
-                                      child: Text(
-                                        "Pinned",
-                                        style: TextStyle(
-                                            fontSize: 14.0,
-                                            color: Colors.black87,
-                                            fontWeight: FontWeight.w600),
-                                      ),
-                                    ),
-                                  ),
-                                  GridView(
-                                      padding: EdgeInsets.all(2.0),
-                                      shrinkWrap: true,
-                                      physics: NeverScrollableScrollPhysics(),
-                                      gridDelegate:
-                                          SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        crossAxisSpacing: 2.0,
-                                        mainAxisSpacing: 2.0,
-                                      ),
-                                      children: List.generate(
-                                          notesModelList
-                                              .where((i) =>
-                                                  (i.isNotePinned == 1 &&
-                                                      i.isNoteArchived == 0))
-                                              .toList()
-                                              .length, (position) {
-                                        print("inside itemBuilder of GridView");
-                                        List<NotesModel> filteredList =
-                                            notesModelList
-                                                .where((i) =>
-                                                    (i.isNotePinned == 1 &&
-                                                        i.isNoteArchived == 0))
-                                                .toList();
-                                        List<Widget> widgetList = [];
-
-                                        widgetList = getLabelTagWidgets(
-                                            filteredList[position],
-                                            filteredList[position]
-                                                .noteBgColorHex);
-
-                                        print(
-                                            "inside itemBuilder widgetList.length "
-                                            "${widgetList.length}");
-
-                                        return GestureDetector(
-                                            onTap: () => Navigator.push(
-                                                context,
-                                                ScaleRoute(
-                                                    page: NewNotePage(
-                                                        filteredList[
-                                                            position]))),
-                                            onLongPress: () {
-                                              print(
-                                                  "inside onLongPress longPressList[position]");
-
-                                              if (!longPressedNotesMap[
-                                                  filteredList[position].id]) {
-                                                setState(() {
-                                                  longPressedNotesMap[
-                                                      filteredList[position]
-                                                          .id] = true;
-                                                  isToggleAppBar = true;
-                                                  numOfNotesSelected += 1;
-                                                });
-                                              }
-                                              Hero(
-                                                tag: 'heroTag $position',
-                                                child: Stack(
-                                                  children: [
-                                                    Container(
-                                                    margin:
-                                                        EdgeInsets.all(3.0),
-                                                    padding:
-                                                        EdgeInsets.all(1.0),
-                                                    decoration: BoxDecoration(
-                                                        borderRadius:
-                                                            BorderRadius.all(
-                                                                Radius
-                                                                    .circular(
-                                                                        7.0)),
-                                                        color: HexColor(
-                                                            filteredList[
-                                                                    position]
-                                                                .noteBgColorHex)),
-                                                    child: (filteredList[
-                                                                    position]
-                                                                .noteType ==
-                                                            "0"
-                                                        ? Column(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceBetween,
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .min,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              Container(
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color: Colors
-                                                                      .black,
-                                                                  border: Border.all(
-                                                                      width:
-                                                                          0),
-                                                                ),
-                                                                padding:
-                                                                    EdgeInsets
-                                                                        .all(
-                                                                            2.0),
-                                                                child: Text(
-                                                                  filteredList[
-                                                                          position]
-                                                                      .noteTitle,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  style: TextStyle(
-                                                                      fontSize:
-                                                                          14.0,
-                                                                      color: Colors
-                                                                          .black,
-                                                                      fontWeight:
-                                                                          FontWeight.w600),
-                                                                ),
-                                                              ),
-                                                              Container(
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  color: Colors
-                                                                      .black,
-                                                                  border: Border.all(
-                                                                      width:
-                                                                          0),
-                                                                ),
-                                                                padding:
-                                                                    EdgeInsets
-                                                                        .all(
-                                                                            2.0),
-                                                                child: Text(
-                                                                  filteredList[
-                                                                          position]
-                                                                      .noteContent,
-                                                                  overflow:
-                                                                      TextOverflow
-                                                                          .ellipsis,
-                                                                  maxLines:
-                                                                      10,
-                                                                  style: TextStyle(
-                                                                      fontSize:
-                                                                          12.0,
-                                                                      color: Colors
-                                                                          .black,
-                                                                      fontWeight:
-                                                                          FontWeight.w300),
-                                                                ),
-                                                              ),
-                                                              Container(
-                                                                child: Align(
-                                                                  alignment:
-                                                                      Alignment
-                                                                          .bottomLeft,
-                                                                  child: Wrap(
-                                                                    children:
-                                                                        widgetList,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          )
-                                                        : changeNoteCell(
-                                                            filteredList[
-                                                                position])),
-                                                      ),
-                                                    Positioned(
-                                                      top: 0,
-                                                      right: 2.0,
-                                                      child: Visibility(
-                                                        visible:
-                                                            longPressedNotesMap[
-                                                                filteredList[
-                                                                        position]
-                                                                    .id],
-                                                        maintainState: true,
-                                                        maintainSize: true,
-                                                        maintainAnimation: true,
-                                                        child: Container(
-                                                            width: 15.0,
-                                                            height: 15.0,
-                                                            child: Icon(
-                                                              Icons
-                                                                  .check_circle,
-                                                              color: Colors
-                                                                  .black87,
-                                                            )),
-                                                      ), //CircularAvatar
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            });
-                                      })),
-                                ],
-                              ),
-                            ),
-                            Visibility(
-                              visible: (notesModelList.every((notesModel) =>
-                                      (notesModel.isNotePinned == 1 &&
-                                          notesModel.isNoteArchived == 0))
-                                  ? false
-                                  : true),
-                              child: Column(
-                                children: [
-                                  Visibility(
-                                    visible: (notesModelList.every(
-                                            (notesModel) =>
-                                                notesModel.isNotePinned == 0 &&
-                                                notesModel.isNoteArchived == 0)
-                                        ? false
-                                        : true),
-                                    child: Align(
-                                      alignment: Alignment.topLeft,
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(5.0),
-                                        child: Text(
-                                          "Others",
-                                          style: TextStyle(
-                                              fontSize: 14.0,
-                                              color: Colors.black87,
-                                              fontWeight: FontWeight.w600),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  GridView(
-                                      padding: EdgeInsets.all(2.0),
-                                      shrinkWrap: true,
-                                      physics: NeverScrollableScrollPhysics(),
-                                      gridDelegate:
-                                          SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
-                                        crossAxisSpacing: 2.0,
-                                        mainAxisSpacing: 2.0,
-                                      ),
-                                      children: List.generate(
-                                          notesModelList
-                                              .where((i) =>
-                                                  i.isNotePinned == 0 &&
-                                                  i.isNoteArchived == 0)
-                                              .toList()
-                                              .length, (position) {
-                                        print("inside itemBuilder of GridView");
-                                        List<NotesModel> filteredList =
-                                            notesModelList
-                                                .where((i) =>
-                                                    i.isNotePinned == 0 &&
-                                                    i.isNoteArchived == 0)
-                                                .toList();
-
-                                        List<Widget> widgetList = [];
-                                        widgetList = getLabelTagWidgets(
-                                            filteredList[position],
-                                            filteredList[position]
-                                                .noteBgColorHex);
-
-                                        print("inside itembuilder widgetList "
-                                            "size: ${widgetList.length}");
-
-                                        return GestureDetector(
-                                          onTap: () {
-                                            NotesModel notesModel =
-                                                filteredList[position];
-                                            Navigator.push(
-                                                context,
-                                                ScaleRoute(
-                                                    page: NewNotePage(
-                                                        notesModel)));
-                                          },
-                                          onLongPress: () {
-                                            print(
-                                                "inside onLongPress longPressList[position]");
-
-                                            if (!longPressedNotesMap[
-                                                filteredList[position].id]) {
-                                              setState(() {
-                                                longPressedNotesMap[
-                                                    filteredList[position]
-                                                        .id] = true;
-                                                isToggleAppBar = true;
-                                                numOfNotesSelected += 1;
-                                              });
-                                            }
-                                          },
-                                          child: Hero(
-                                            tag: 'heroTag $position',
-                                            child: Stack(
-                                              children: [
-                                                Container(
-                                                  margin: EdgeInsets.all(3.0),
-                                                  padding: EdgeInsets.all(1.0),
-                                                  decoration: BoxDecoration(
-                                                      borderRadius:
-                                                          BorderRadius.all(
-                                                              Radius.circular(
-                                                                  7.0)),
-                                                      color: HexColor(
-                                                          filteredList[position]
-                                                              .noteBgColorHex)),
-                                                  child: (filteredList[position]
-                                                              .noteType ==
-                                                          "0"
-                                                      ? Column(
-                                                          mainAxisAlignment:
-                                                              MainAxisAlignment
-                                                                  .spaceBetween,
-                                                          mainAxisSize:
-                                                              MainAxisSize.max,
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Visibility(
-                                                              child: (filteredList[
-                                                                          position]
-                                                                      .noteMediaPath
-                                                                      .isEmpty
-                                                                  ? Container()
-                                                                  : Container(
-                                                                      height:
-                                                                          70.0,
-                                                                      width: MediaQuery.of(
-                                                                              context)
-                                                                          .size
-                                                                          .width,
-                                                                      child: Padding(
-                                                                          padding: const EdgeInsets.all(2),
-                                                                          child: GridView.builder(
-                                                                            itemCount:
-                                                                                filteredList[position].noteMediaPath.split(",").length,
-                                                                            gridDelegate:
-                                                                                SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
-                                                                            shrinkWrap:
-                                                                                true,
-                                                                            itemBuilder:
-                                                                                (BuildContext context, int index) {
-                                                                              return Padding(
-                                                                                padding: const EdgeInsets.all(1.0),
-                                                                                child: Stack(
-                                                                                  children: <Widget>[
-                                                                                    GestureDetector(
-                                                                                      child: Container(
-                                                                                        color: Constants.bgWhiteColor.withOpacity(0.3),
-                                                                                        child: Center(
-                                                                                          child: Image.file(
-                                                                                            File(
-                                                                                              filteredList[position].noteMediaPath.split(",")[index],
-                                                                                            ),
-                                                                                            fit: BoxFit.cover,
-                                                                                          ),
-                                                                                        ),
-                                                                                      ),
-                                                                                      onTap: () {
-                                                                                        Navigator.push(
-                                                                                            context,
-                                                                                            MaterialPageRoute(
-                                                                                              builder: (context) => NewNotePage(
-                                                                                                filteredList[position],
-                                                                                              ),
-                                                                                            ));
-                                                                                      },
-                                                                                    ),
-                                                                                    /*Positioned(
-                                                                                      right: 1.0,
-                                                                                      top: 1.0,
-                                                                                      child: GestureDetector(
-                                                                                        child: Container(
-                                                                                          child: Icon(
-                                                                                            Icons.delete,
-                                                                                            color: Colors.white,
-                                                                                            size: 12.0,
-                                                                                          ),
-                                                                                          color: Colors.black87.withOpacity(0.6),
-                                                                                        ),
-                                                                                        onTap: () {
-                                                                                          print("delete button "
-                                                                                              "clicked at $index");
-                                                                                          filteredList[position].noteMediaPath.split(",").removeAt(index);
-                                                                                          setState(() {});
-                                                                                        },
-                                                                                      ),
-                                                                                    )*/
-                                                                                  ],
-                                                                                ),
-                                                                              );
-                                                                            },
-                                                                          )),
-                                                                    )),
-                                                              visible: (filteredList[
-                                                                      position]
-                                                                  .noteMediaPath
-                                                                  .isNotEmpty),
-                                                            ),
-                                                            Container(
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                color: Colors
-                                                                    .transparent,
-                                                                border: Border.all(
-                                                                    width: 0,
-                                                                    color: Colors
-                                                                        .transparent),
-                                                              ),
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .all(2.0),
-                                                              child: Text(
-                                                                filteredList[
-                                                                        position]
-                                                                    .noteTitle,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        14.0,
-                                                                    color: Colors
-                                                                        .black,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w600),
-                                                              ),
-                                                            ),
-                                                            Container(
-                                                              decoration:
-                                                                  BoxDecoration(
-                                                                color: Colors
-                                                                    .transparent,
-                                                                border: Border.all(
-                                                                    width: 0,
-                                                                    color: Colors
-                                                                        .transparent),
-                                                              ),
-                                                              padding:
-                                                                  EdgeInsets
-                                                                      .all(2.0),
-                                                              child: Text(
-                                                                filteredList[
-                                                                        position]
-                                                                    .noteContent,
-                                                                overflow:
-                                                                    TextOverflow
-                                                                        .ellipsis,
-                                                                maxLines: 10,
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        12.0,
-                                                                    color: Colors
-                                                                        .black,
-                                                                    fontWeight:
-                                                                        FontWeight
-                                                                            .w300),
-                                                              ),
-                                                            ),
-                                                            Expanded(
-                                                              child: Align(
-                                                                alignment: Alignment
-                                                                    .bottomLeft,
-                                                                child: Wrap(
-                                                                  children:
-                                                                      widgetList,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        )
-                                                      : changeNoteCell(
-                                                          filteredList[
-                                                              position])),
-                                                ),
-                                                Positioned(
-                                                  top: 0,
-                                                  right: 2.0,
-                                                  child: Visibility(
-                                                    visible:
-                                                        longPressedNotesMap[
-                                                            filteredList[
-                                                                    position]
-                                                                .id],
-                                                    maintainState: true,
-                                                    maintainSize: true,
-                                                    maintainAnimation: true,
-                                                    child: Container(
-                                                        width: 15.0,
-                                                        height: 15.0,
-                                                        child: Icon(
-                                                          Icons.check_circle,
-                                                          color: Colors.black87,
-                                                        )),
-                                                  ), //CircularAvatar
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                      })),
-                                ],
-                              ),
-                            )
-                          ],
-                        ))
-                      : Center(
-                          child: Text(
-                            "No Notes Added",
-                            style: TextStyle(
-                                fontSize: 16.0,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.grey),
-                          ),
                         );
-                }))
-            : pageWidget));
+                      },
+                    ),
+                  );
+              }))
+          : pageWidget),
+    );
   }
 
   showReminderDialog(BuildContext context, ReminderModel model) {
@@ -2599,7 +2594,6 @@ class _LandingPageState extends State<LandingPage> {
       print("inside deleteReminder() updateCount: $updateCount");
       setState(() {});
     }
-
   }
 
   Future<void> insertNewReminder(ReminderModel model) async {

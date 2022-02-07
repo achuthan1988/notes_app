@@ -57,6 +57,7 @@ dependencies:
   jiffy: ^4.1.0
 
   cron: ^0.4.0
+  material_design_icons_flutter: ^5.0.6595
 
 
 

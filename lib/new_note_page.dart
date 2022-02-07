@@ -19,6 +19,7 @@ import 'package:popup_menu/popup_menu.dart';
 import 'package:speech_recognition/speech_recognition.dart';
 import 'package:sqflite/sqflite.dart';
 
+
 import 'landing_page.dart';
 import 'models/NotesModel.dart';
 import 'util/constants.dart' as Constants;
@@ -157,7 +158,8 @@ class _NewNotePageState extends State<NewNotePage> {
     print("inside build(): _BottomMenuBarState.galleryPathArr "
         "${_BottomMenuBarState.galleryPathArr.length}");
 
-    if (scaffoldNoteTypePos == 0 || scaffoldNoteTypePos == 5)
+    if (scaffoldNoteTypePos == 0 || scaffoldNoteTypePos ==
+        5||scaffoldNoteTypePos == 2)
       return Scaffold(
         backgroundColor: bgHexMain,
         body: Stack(
@@ -326,13 +328,12 @@ class _NewNotePageState extends State<NewNotePage> {
                           notesDao.saveNote(model);
                         }
 
-
-                        Route route = MaterialPageRoute(builder: (context) => LandingPage());
+                        Route route = MaterialPageRoute(
+                            builder: (context) => LandingPage());
                         Navigator.pushReplacement(context, route);
 
                         // Navigator.pushReplacement(
                         //     context, ScaleRoute(page: LandingPage()));
-
                       }),
                 ),
               ),
@@ -367,8 +368,10 @@ class _NewNotePageState extends State<NewNotePage> {
       );
     else if (scaffoldNoteTypePos == 3)
       return DrawingWidget(this.notesModel, this);
-    else
-      return Container(width: 0.0, height: 0.0);
+    /*else if (scaffoldNoteTypePos == 2)
+      return Scaffold(body: CustomCheckItemsWidget());*/
+    /*else
+      return Container(width: 0.0, height: 0.0);*/
   }
 
   NotesModel createNoteObject() {
@@ -384,7 +387,9 @@ class _NewNotePageState extends State<NewNotePage> {
         "",
         "",
         0,
-        0,0,"0");
+        0,
+        0,
+        "0");
 
     return noteObject;
   }
@@ -894,7 +899,9 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
                                         "",
                                         "",
                                         0,
-                                        0,0,"0");
+                                        0,
+                                        0,
+                                        "0");
 
                                     insertAudioNote(notesModel);
                                     Navigator.pushReplacement(context,
@@ -996,9 +1003,9 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
 
   void onDismiss() {
     print('Menu is dismiss');
-    setState(() {
+    /* setState(() {
       _NewNotePageState.scaffoldNoteTypePos = 0;
-    });
+    });*/
   }
 
   void showPopUpMenu(BuildContext context) {
@@ -1538,131 +1545,133 @@ class _CustomListViewWidgetState extends State<CustomListViewWidget> {
   @override
   Widget build(BuildContext context) {
     print("inside build() of ListViewWidget!");
-    return ReorderableListView.builder(
-      key: reorderListKey,
-      scrollDirection: Axis.vertical,
-      itemCount: _CustomCheckItemsWidgetState.rowWidgetSize,
-      shrinkWrap: true,
-      itemBuilder: (BuildContext context, int index) {
-        print("inside itemBuilder ListView index: $index state: "
-            "${_CustomCheckItemsWidgetState.checkBoxStateList[index]}"
-            "");
+    return Material(
+      child: ReorderableListView.builder(
+        key: reorderListKey,
+        scrollDirection: Axis.vertical,
+        itemCount: _CustomCheckItemsWidgetState.rowWidgetSize,
+        shrinkWrap: true,
+        itemBuilder: (BuildContext context, int index) {
+          print("inside itemBuilder ListView index: $index state: "
+              "${_CustomCheckItemsWidgetState.checkBoxStateList[index]}"
+              "");
 
-        return Container(
-          key: Key('$index'),
-          child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                GestureDetector(
-                  onTap: () {},
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
+          return Container(
+            key: Key('$index'),
+            child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () {},
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        child: SizedBox(
+                          width: 24.0,
+                          height: 24.0,
+                          child: Icon(
+                            Icons.menu,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.center,
                     child: Container(
-                      child: SizedBox(
-                        width: 24.0,
-                        height: 24.0,
-                        child: Icon(
-                          Icons.menu,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.center,
-                  child: Container(
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 5.0),
-                      child: SizedBox(
-                        width: 24.0,
-                        height: 24.0,
-                        child: Checkbox(
-                          value: _CustomCheckItemsWidgetState
-                              .checkBoxStateList[index],
-                          onChanged: (newValue) {
-                            print(
-                                "inside listview checkedValue  $newValue at $index");
-                            _CustomCheckItemsWidgetState
-                                .checkBoxStateList[index] = newValue;
-                            print(
-                                "checkBoxStateList[index]: ${_CustomCheckItemsWidgetState.checkBoxStateList[index]}");
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 5.0),
+                        child: SizedBox(
+                          width: 24.0,
+                          height: 24.0,
+                          child: Checkbox(
+                            value: _CustomCheckItemsWidgetState
+                                .checkBoxStateList[index],
+                            onChanged: (newValue) {
+                              print(
+                                  "inside listview checkedValue  $newValue at $index");
+                              _CustomCheckItemsWidgetState
+                                  .checkBoxStateList[index] = newValue;
+                              print(
+                                  "checkBoxStateList[index]: ${_CustomCheckItemsWidgetState.checkBoxStateList[index]}");
 
-                            // _setState(() {});
-                            /* setState(() {
-                                    });*/
-                          },
+                              // _setState(() {});
+                              /* setState(() {
+                                      });*/
+                            },
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                Expanded(
-                  child: _CustomCheckItemsWidgetState.checkBoxStateList[index]
-                      ? TextField(
-                          onChanged: ((String txt) {
-                            print("Textfield onChanged String $txt");
-                          }),
-                          maxLines: 1,
-                          style: TextStyle(
-                              fontSize: 12.0,
-                              decorationColor: Colors.red,
-                              decorationStyle: TextDecorationStyle.solid,
-                              decoration: TextDecoration.lineThrough),
-                          controller: _CustomCheckItemsWidgetState
-                              .controllersList[index],
-                          decoration: InputDecoration(
-                            contentPadding: EdgeInsets.zero,
-                            isDense: true,
-                            border: InputBorder.none,
+                  Expanded(
+                    child: _CustomCheckItemsWidgetState.checkBoxStateList[index]
+                        ? TextField(
+                            onChanged: ((String txt) {
+                              print("Textfield onChanged String $txt");
+                            }),
+                            maxLines: 1,
+                            style: TextStyle(
+                                fontSize: 12.0,
+                                decorationColor: Colors.red,
+                                decorationStyle: TextDecorationStyle.solid,
+                                decoration: TextDecoration.lineThrough),
+                            controller: _CustomCheckItemsWidgetState
+                                .controllersList[index],
+                            decoration: InputDecoration(
+                              contentPadding: EdgeInsets.zero,
+                              isDense: true,
+                              border: InputBorder.none,
+                            ),
+                          )
+                        : TextField(
+                            onChanged: ((String txt) {
+                              print("Textfield onChanged String $txt");
+                            }),
+                            maxLines: 1,
+                            style: TextStyle(
+                                fontSize: 12.0,
+                                decorationColor: Colors.red,
+                                decorationStyle: TextDecorationStyle.solid,
+                                decoration: TextDecoration.none),
+                            controller: _CustomCheckItemsWidgetState
+                                .controllersList[index],
+                            decoration: InputDecoration(
+                              contentPadding: EdgeInsets.zero,
+                              isDense: true,
+                              border: InputBorder.none,
+                            ),
                           ),
-                        )
-                      : TextField(
-                          onChanged: ((String txt) {
-                            print("Textfield onChanged String $txt");
-                          }),
-                          maxLines: 1,
-                          style: TextStyle(
-                              fontSize: 12.0,
-                              decorationColor: Colors.red,
-                              decorationStyle: TextDecorationStyle.solid,
-                              decoration: TextDecoration.none),
-                          controller: _CustomCheckItemsWidgetState
-                              .controllersList[index],
-                          decoration: InputDecoration(
-                            contentPadding: EdgeInsets.zero,
-                            isDense: true,
-                            border: InputBorder.none,
-                          ),
-                        ),
-                ),
-                GestureDetector(
-                  onTap: () {
+                  ),
+                  GestureDetector(
+                    onTap: () {
 /*                      setState(() {
-                          Key key = Key('$index');
-                          int indexVal = int.parse(key.toString());
-                          print("indexVal: $indexVal");
-                        });*/
-                  },
-                  child: Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      child: SizedBox(
-                        width: 24.0,
-                        height: 24.0,
-                        child: Icon(
-                          Icons.close,
-                          color: Colors.grey,
+                            Key key = Key('$index');
+                            int indexVal = int.parse(key.toString());
+                            print("indexVal: $indexVal");
+                          });*/
+                    },
+                    child: Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        child: SizedBox(
+                          width: 24.0,
+                          height: 24.0,
+                          child: Icon(
+                            Icons.close,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ]),
-        );
-      },
-      onReorder: (oldIdx, newIdx) {},
+                ]),
+          );
+        },
+        onReorder: (oldIdx, newIdx) {},
+      ),
     );
   }
 }
@@ -2035,8 +2044,8 @@ class _DrawingWidgetState extends State<DrawingWidget> {
       String base64Str = base64.encode(value);
       print("base64: $base64Str");
       print("bgHexStr: $bgHexStr");
-      final noteDrawing =
-          NotesModel("", "", "4", bgHexStr, "", base64Str, "","", 0, 0,0,"0");
+      final noteDrawing = NotesModel(
+          "", "", "4", bgHexStr, "", base64Str, "", "", 0, 0, 0, "0");
       await insertDrawing(noteDrawing);
 
       Route route = MaterialPageRoute(builder: (context) => LandingPage());
