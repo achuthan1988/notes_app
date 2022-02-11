@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:notes_app/landing_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'util/constants.dart' as Constants;
 
@@ -33,15 +34,15 @@ class _State extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Center(child: Text('Login')),
-        ),
+        appBar: null,
         body: Padding(
             padding: EdgeInsets.all(10),
-            child: ListView(children: <Widget>[
+            child: ListView(
+                padding: EdgeInsets.all(0),
+                children: <Widget>[
               Container(
                   alignment: Alignment.center,
-                  padding: EdgeInsets.all(10),
+                  padding: EdgeInsets.all(5),
                   child: Text(
                     Constants.appName,
                     style: TextStyle(
@@ -50,26 +51,25 @@ class _State extends State<LoginPage> {
                         fontSize: 30),
                   )),
               Container(
-                padding: EdgeInsets.all(10),
+                alignment: Alignment.topLeft,
+                padding: EdgeInsets.all(5),
+                child: Text("Email Address",
+                    style: TextStyle(
+                        color: Constants.darkGreyColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18)),
+              ),
+              Container(
+                padding: EdgeInsets.all(5),
+                alignment: Alignment.center,
                 child: TextField(
                   controller: nameController,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Email ID',
-                    errorText: isUserNameBlank ? 'Please enter username' : null,
-                  ),
                 ),
               ),
               Container(
-                padding: EdgeInsets.fromLTRB(10, 10, 10, 0),
+                padding: EdgeInsets.all(5),
                 child: TextField(
-                  obscureText: true,
                   controller: passwordController,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Password',
-                    errorText: isPassWordBlank ? 'Please enter password' : null,
-                  ),
                 ),
               ),
               Container(
@@ -87,7 +87,7 @@ class _State extends State<LoginPage> {
                         style: TextStyle(
                             color: Constants.bgWhiteColor,
                             fontWeight: FontWeight.bold)),
-                    onPressed: () {
+                    onPressed: () async {
                       validateFormBlankFields(
                           nameController.text + " " + passwordController.text);
 
@@ -124,18 +124,6 @@ class _State extends State<LoginPage> {
                       ),
                     ],
                   )),
-/*              Container(
-                  child: TextButton(
-                    child: Text(
-                      'New User?,Register',
-                      style: TextStyle(
-                          color: Constants.bgMainColor,
-                          fontWeight: FontWeight.w500),
-                    ),
-                    onPressed: () {
-                      //signup screen
-                    },
-                  )),*/
             ])));
   }
 
@@ -166,15 +154,16 @@ class _State extends State<LoginPage> {
   Future<bool> isLoginCredsValid() async {
     String userName = nameController.text;
     String passWord = passwordController.text;
-
+    var prefs = await SharedPreferences.getInstance();
     try {
       UserCredential userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: userName, password: passWord);
 
       if (userCredential.user != null) {
-        print("Valid user! ${userCredential.user.displayName}");
+        print("Valid user!, UID: ${userCredential.user.uid}");
+        prefs.setString("USER_ID", userCredential.user.uid);
         return true;
-      }else
+      } else
         return false;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {

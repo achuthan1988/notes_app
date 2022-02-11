@@ -1,13 +1,14 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../util/HexColor.dart';
 
-const appName = "EASY NOTES";
+const appName = "NotePad";
 Color bgMainColor = HexColor("#FF5A5F");
 Color appGreenColor = HexColor("#00A699");
 Color bgWhiteColor = HexColor('#fdfdff');
-
+Color darkGreyColor = HexColor('#515151');
 var hexArray = [
   "#FFFFFF",
   "#ffb6c1",

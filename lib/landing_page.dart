@@ -2849,7 +2849,9 @@ class _LandingPageState extends State<LandingPage> {
         notesDB = db;
         // Run the CREATE TABLE statement on the database.
         db.execute(
-          "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
+          "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT,userId "
+              "TEXT, "
+              "noteTitle"
           " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
           "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT, "
           "noteDateOfDeletion TEXT,"
@@ -2945,6 +2947,7 @@ class _LandingPageState extends State<LandingPage> {
       print("ReminderID: ${maps[i]['reminderID']}");
       return NotesModel.param(
           maps[i]['id'],
+          maps[i]['userId'],
           maps[i]['noteTitle'],
           maps[i]['noteContent'],
           maps[i]['noteType'],

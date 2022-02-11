@@ -6,6 +6,7 @@ import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:notes_app/util/HexColor.dart';
 import 'package:notes_app/util/PositionSeekWidget.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'models/LabelModel.dart';
@@ -437,7 +438,7 @@ class TrashPageState extends State<TrashPage> {
     // Get a reference to the database.
     List<NotesModel> filteredList = [];
     final Database db = await notesDB;
-
+    final prefs = await SharedPreferences.getInstance();
     // Query the table for all The Notes.
     final List<Map<String, dynamic>> maps = await db.query('notes',
         where: 'is'
@@ -448,6 +449,7 @@ class TrashPageState extends State<TrashPage> {
     List<NotesModel> mainList = List.generate(maps.length, (i) {
       return NotesModel.param(
           maps[i]['id'],
+          prefs.getString("USER_ID"),
           maps[i]['noteTitle'],
           maps[i]['noteContent'],
           maps[i]['noteType'],

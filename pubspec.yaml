@@ -50,14 +50,14 @@ dependencies:
   permission_handler: ^8.3.0
   assets_audio_player: ^3.0.3+6
   flutter_neumorphic: ^3.2.0
-  speech_recognition: ^0.3.0+1
   flutter_sound: ^8.4.2
   flutter_staggered_grid_view: ^0.4.1
   intl: ^0.17.0
   jiffy: ^4.1.0
-
+  speech_recognition: ^0.3.0
   cron: ^0.4.0
   material_design_icons_flutter: ^5.0.6595
+  shared_preferences: ^2.0.13
 
 
 

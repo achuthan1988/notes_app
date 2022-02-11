@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -16,9 +17,9 @@ import 'package:painter/painter.dart';
 import 'package:path/path.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:popup_menu/popup_menu.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_recognition/speech_recognition.dart';
 import 'package:sqflite/sqflite.dart';
-
 
 import 'landing_page.dart';
 import 'models/NotesModel.dart';
@@ -53,6 +54,8 @@ class _NewNotePageState extends State<NewNotePage> {
   var notesDB;
   static HexColor scaffoldBgHex;
   static HexColor bgHexMain;
+  CollectionReference notesCollection =
+      FirebaseFirestore.instance.collection('NotesCollection');
 
   @override
   Future<void> initState() {
@@ -102,7 +105,7 @@ class _NewNotePageState extends State<NewNotePage> {
       onCreate: (db, version) {
         print("inside onCreate DB!!");
         notesDB = db;
-        // Run the CREATE TABLE statement on the database.
+        // Run the   statement on the database.
         /*db.execute(
           "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT, noteTitle"
           " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
@@ -136,6 +139,15 @@ class _NewNotePageState extends State<NewNotePage> {
       model.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    addNoteToFireStore(model);
+  }
+
+  Future<void> addNoteToFireStore(NotesModel model) {
+    print("in addNoteToFireStore()");
+    notesCollection
+        .add(model.toMap())
+        .then((value) => print("Notes Added"))
+        .catchError((error) => print("Failed to add note: $error"));
   }
 
   Future<void> updateNote(String originalTitle, NotesModel model) async {
@@ -158,8 +170,9 @@ class _NewNotePageState extends State<NewNotePage> {
     print("inside build(): _BottomMenuBarState.galleryPathArr "
         "${_BottomMenuBarState.galleryPathArr.length}");
 
-    if (scaffoldNoteTypePos == 0 || scaffoldNoteTypePos ==
-        5||scaffoldNoteTypePos == 2)
+    if (scaffoldNoteTypePos == 0 ||
+        scaffoldNoteTypePos == 5 ||
+        scaffoldNoteTypePos == 2)
       return Scaffold(
         backgroundColor: bgHexMain,
         body: Stack(
@@ -323,9 +336,11 @@ class _NewNotePageState extends State<NewNotePage> {
                           updateNote(originalTitle, notesModel);
                         } else {
                           print("inside else of  onTap()");
-                          NotesModel model = createNoteObject();
+                          final prefs = await SharedPreferences.getInstance();
+                          String userID = prefs.getString("USER_ID");
+                          NotesModel model = createNoteObject(userID);
                           await insertNote(model);
-                          notesDao.saveNote(model);
+                          // notesDao.saveNote(model);
                         }
 
                         Route route = MaterialPageRoute(
@@ -374,8 +389,9 @@ class _NewNotePageState extends State<NewNotePage> {
       return Container(width: 0.0, height: 0.0);*/
   }
 
-  NotesModel createNoteObject() {
+  NotesModel createNoteObject(String userID) {
     final noteObject = NotesModel(
+        userID,
         noteTitleController.text.trim(),
         noteContentController.text.trim(),
         "0",
@@ -785,7 +801,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
   Future<void> showRecorderDialog(BuildContext context) async {
     print("in showRecorderDialog");
     bool isRecording = false;
-
+    final prefs = await SharedPreferences.getInstance();
     bool result = await showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -890,6 +906,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
                                     // displayed in the grid.
 
                                     NotesModel notesModel = new NotesModel(
+                                        prefs.getString("USER_ID"),
                                         "",
                                         "",
                                         "5",
@@ -2042,10 +2059,11 @@ class _DrawingWidgetState extends State<DrawingWidget> {
 
     pictureDetails.toPNG().then((value) async {
       String base64Str = base64.encode(value);
+      final prefs = await SharedPreferences.getInstance();
       print("base64: $base64Str");
       print("bgHexStr: $bgHexStr");
-      final noteDrawing = NotesModel(
-          "", "", "4", bgHexStr, "", base64Str, "", "", 0, 0, 0, "0");
+      final noteDrawing = NotesModel(prefs.getString("USER_ID"), "", "", "4",
+          bgHexStr, "", base64Str, "", "", 0, 0, 0, "0");
       await insertDrawing(noteDrawing);
 
       Route route = MaterialPageRoute(builder: (context) => LandingPage());

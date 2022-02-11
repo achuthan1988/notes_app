@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotesModel {
   int id;
+  String userId;
   String noteTitle;
   String noteContent;
   String noteType;
@@ -17,6 +19,7 @@ class NotesModel {
   Widget reminderWidget;
 
   NotesModel(
+      this.userId,
       this.noteTitle,
       this.noteContent,
       this.noteType,
@@ -32,6 +35,7 @@ class NotesModel {
 
   NotesModel.param(
       this.id,
+      this.userId,
       this.noteTitle,
       this.noteContent,
       this.noteType,
@@ -48,6 +52,7 @@ class NotesModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'userId':userId,
       'noteTitle': noteTitle,
       'noteContent': noteContent,
       'noteType': noteType,
