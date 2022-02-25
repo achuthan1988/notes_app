@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:notes_app/landing_page.dart';
+import 'package:notes_app/register_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'util/constants.dart' as Constants;
@@ -30,16 +32,27 @@ class _State extends State<LoginPage> {
   TextEditingController nameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
   FirebaseAuth auth = FirebaseAuth.instance;
+  bool _isPassWordShown = false;
+  CollectionReference usersCollection =
+      FirebaseFirestore.instance.collection('UsersCollection');
+  var profileBase64;
+  UserCredential userCredential;
+  String errorText;
+  String emailPattern =
+      r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]"
+      r"{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]"
+      r"{0,253}[a-zA-Z0-9])?)*$";
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: null,
-        body: Padding(
-            padding: EdgeInsets.all(10),
-            child: ListView(
-                padding: EdgeInsets.all(0),
-                children: <Widget>[
+        resizeToAvoidBottomInset: false,
+        body: Container(
+          height: MediaQuery.of(context).size.height,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
               Container(
                   alignment: Alignment.center,
                   padding: EdgeInsets.all(5),
@@ -50,81 +63,379 @@ class _State extends State<LoginPage> {
                         fontWeight: FontWeight.bold,
                         fontSize: 30),
                   )),
-              Container(
-                alignment: Alignment.topLeft,
-                padding: EdgeInsets.all(5),
-                child: Text("Email Address",
-                    style: TextStyle(
-                        color: Constants.darkGreyColor,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18)),
-              ),
-              Container(
-                padding: EdgeInsets.all(5),
-                alignment: Alignment.center,
-                child: TextField(
-                  controller: nameController,
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.all(5),
-                child: TextField(
-                  controller: passwordController,
-                ),
-              ),
-              Container(
-                  margin: const EdgeInsets.only(top: 10.0),
-                  padding: EdgeInsets.fromLTRB(10, 0, 10, 0),
-                  child: ElevatedButton(
-                    style: ButtonStyle(
-                        shape:
-                            MaterialStateProperty.all<RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(18.0),
-                                    side: BorderSide(
-                                        color: Constants.bgMainColor)))),
-                    child: Text('LOGIN',
-                        style: TextStyle(
-                            color: Constants.bgWhiteColor,
-                            fontWeight: FontWeight.bold)),
-                    onPressed: () async {
-                      validateFormBlankFields(
-                          nameController.text + " " + passwordController.text);
-
-                      if (!isUserNameBlank && !isPassWordBlank) {
-                        isLoginCredsValid().then((value) {
-                          if (!value) {
-                            var snackBar =
-                                SnackBar(content: Text('User does not exist.'));
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(snackBar);
-                          } else {
-                            //from valid,redirect to landing page using routing
-                            navigateToLandingPage(context);
-                          }
-                        });
-                      }
-                    },
-                  )),
-              Container(
-                  margin: const EdgeInsets.only(top: 5.0),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(5.0),
                   child: Column(
-                    children: <Widget>[
-                      SignInButton(
-                        Buttons.Google,
-                        onPressed: () {
-                          /* signInWithGoogle()
-                              .then((value) => print("google sign in email id:"
-                                  " ${value.user.email} URL : ${value.user.photoUrl}"));*/
-                        },
-                      ),
-                      SignInButton(
-                        Buttons.Facebook,
-                        onPressed: () {},
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ListView.separated(
+                        physics: BouncingScrollPhysics(),
+                        shrinkWrap: true,
+                        itemCount: 1,
+                        itemBuilder: (context, index) => Container(
+                          height: MediaQuery.of(context).size.height * 0.8,
+                          padding: EdgeInsets.all(10.0),
+                          child:
+                              ListView(padding: EdgeInsets.all(0), children: <
+                                  Widget>[
+                            SizedBox(height: 10.0),
+                            Container(
+                              padding: EdgeInsets.all(5),
+                              height: 30.0,
+                              alignment: Alignment.center,
+                              child: TextField(
+                                controller: nameController,
+                                decoration: InputDecoration(
+                                  hintStyle: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[400]),
+                                  hintText: 'Email',
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 10.0),
+                            Container(
+                              padding: EdgeInsets.all(5),
+                              height: 30.0,
+                              child: TextField(
+                                textAlignVertical: TextAlignVertical.center,
+                                obscureText: !_isPassWordShown,
+                                controller: passwordController,
+                                decoration: InputDecoration(
+                                  suffixIcon: InkWell(
+                                    child: Icon(
+                                      _isPassWordShown
+                                          ? Icons.visibility_off
+                                          : Icons.visibility,
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        _isPassWordShown = !_isPassWordShown;
+                                      });
+                                    },
+                                  ),
+                                  isDense: true,
+                                  suffixIconConstraints: BoxConstraints(
+                                    minWidth: 7,
+                                    minHeight: 7,
+                                  ),
+                                  hintStyle: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[400]),
+                                  hintText: 'Password',
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 5.0),
+                            GestureDetector(
+                              child: Container(
+                                padding: EdgeInsets.all(5.0),
+                                height: 30.0,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Forgot Password?",
+                                      style: TextStyle(
+                                          color: Constants.bgMainColor,
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 14),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              onTap: () {
+                                print("Forgot password clicked!");
+                                /*
+                                * 1. Display alert with heading , subtitle
+                                * and textfield , button
+                                *
+                                * 2. Click initiates firebase Auth reset mail
+                                *  sending(Validate email blank and proper
+                                * format)
+                                *
+                                * 3. Check if email exists in list of
+                                * registered auths , if not present show a
+                                * snackbar saying user not found.
+                                *
+                                * 4. Dismiss dialog and show snackbar saying
+                                * " Reset password link sent to your mail"
+                                *
+                                * 5. Change password and test failure for
+                                * older paswword & success for new one.(on
+                                * @ login UI)
+                                *
+                                * */
+                                TextEditingController emailController =
+                                    TextEditingController();
+
+                                final _formKey = GlobalKey<FormState>();
+                                Dialog dialog = Dialog(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          12.0)), //this right here
+                                  child: Container(
+                                    height: 250.0,
+                                    width: 300.0,
+                                    child: Form(
+                                      key: _formKey,
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          Padding(
+                                            padding: EdgeInsets.all(5.0),
+                                            child: Text(
+                                              'Forgot Password?',
+                                              style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 18.0),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: EdgeInsets.all(5.0),
+                                            child: Text(
+                                              'Enter the mail id '
+                                              'associated with your account.',
+                                              style: TextStyle(
+                                                  color: Colors.black26,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 14.0),
+                                            ),
+                                          ),
+                                          Padding(
+                                              padding:
+                                                  EdgeInsets.only(top: 10.0)),
+                                          Padding(
+                                            padding: const EdgeInsets.all(5.0),
+                                            child: TextField(
+                                              controller: emailController,
+                                              decoration: InputDecoration(
+                                                hintStyle: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.grey[400]),
+                                                hintText: 'Email',
+                                                errorText: errorText,
+                                              ),
+
+                                            ),
+                                          ),
+                                          SizedBox(height: 20.0),
+                                          ElevatedButton(
+                                            style: ButtonStyle(
+                                                foregroundColor:
+                                                    MaterialStateProperty.all<
+                                                        Color>(Colors.white),
+                                                backgroundColor:
+                                                    MaterialStateProperty.all<Color>(
+                                                        Constants.bgMainColor),
+                                                shape: MaterialStateProperty.all<
+                                                        RoundedRectangleBorder>(
+                                                    RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(2.0),
+                                                        side: BorderSide(color: Constants.bgMainColor)))),
+                                            child: Text('Send Mail',
+                                                style: TextStyle(
+                                                    color:
+                                                        Constants.bgWhiteColor,
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            onPressed: () async {
+                                              if (!RegExp(emailPattern)
+                                                  .hasMatch(
+                                                  emailController
+                                                      .value.text
+                                                      .toString()) ||
+                                                  emailController
+                                                      .value.text.isEmpty) {
+                                                errorText =  'Email id is '
+                                                    'invalid';
+
+                                                // return errorText;
+                                              } else {
+                                                checkIfEmailInUse(
+                                                    emailController
+                                                        .value.text)
+                                                    .then((isEmailExists) {
+                                                  if (!isEmailExists) {
+                                                    errorText =  'This user '
+                                                        'does not exist';
+
+                                                    // return errorText;
+                                                  }
+                                                });
+
+                                                // errorText = "";
+                                                // return errorText;
+                                              }
+                                              setState(() {
+
+                                              });
+
+
+                                              print("errorText: $errorText");
+                                              if (errorText.length==0) {
+                                                auth.sendPasswordResetEmail(
+                                                    email: emailController
+                                                        .value.text);
+
+                                                var snackBar = SnackBar(
+                                                    content: Text(
+                                                        'Reset  password link '
+                                                        'has '
+                                                        'been sent.'));
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(snackBar);
+
+                                              }
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                                showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) => dialog);
+                              },
+                            ),
+                            SizedBox(height: 30.0),
+                            Container(
+                                margin: const EdgeInsets.only(top: 30.0),
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    ElevatedButton(
+                                      style: ButtonStyle(
+                                          foregroundColor:
+                                              MaterialStateProperty.all<Color>(
+                                                  Colors.white),
+                                          backgroundColor:
+                                              MaterialStateProperty.all<Color>(
+                                                  Constants.bgMainColor),
+                                          shape: MaterialStateProperty.all<
+                                                  RoundedRectangleBorder>(
+                                              RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          2.0),
+                                                  side: BorderSide(color: Constants.bgMainColor)))),
+                                      child: Text('LOGIN',
+                                          style: TextStyle(
+                                              color: Constants.bgWhiteColor,
+                                              fontWeight: FontWeight.bold)),
+                                      onPressed: () async {
+                                        validateFormBlankFields(
+                                            nameController.text +
+                                                " " +
+                                                passwordController.text);
+
+                                        if (!isUserNameBlank &&
+                                            !isPassWordBlank) {
+                                          isLoginCredsValid().then((value) {
+                                            if (!value) {
+                                              var snackBar = SnackBar(
+                                                  content: Text(
+                                                      'User does not exist.'));
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(snackBar);
+                                            } else {
+                                              navigateToLandingPage(context);
+
+                                              //from valid,redirect to landing page using routing
+
+                                            }
+                                          });
+                                        }
+                                      },
+                                    ),
+                                    SignInButton(
+                                      Buttons.Google,
+                                      onPressed: () {
+                                        /* signInWithGoogle()
+                                                 .then((value) => print("google sign in email id:"
+                                                     " ${value.user.email} URL : ${value.user.photoUrl}"));*/
+                                      },
+                                    ),
+                                    SizedBox(height: 2.0),
+                                    SignInButton(
+                                      Buttons.Facebook,
+                                      onPressed: () {},
+                                    ),
+                                  ],
+                                )),
+                            SizedBox(height: 30.0),
+                            GestureDetector(
+                              child: Container(
+                                  padding: EdgeInsets.all(5),
+                                  height: 30.0,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        "Dont have an account?",
+                                        style: TextStyle(
+                                            color: Colors.grey,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14),
+                                      ),
+                                      Text(
+                                        "Create Account",
+                                        style: TextStyle(
+                                            color: Constants.bgMainColor,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14),
+                                      )
+                                    ],
+                                  )),
+                              onTap: () {
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (context) => RegisterPage()));
+                              },
+                            ),
+                          ]),
+                        ),
+                        separatorBuilder: (context, index) =>
+                            Divider(height: 10.0),
                       ),
                     ],
-                  )),
-            ])));
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ));
+  }
+
+  Future<bool> checkIfEmailInUse(String emailAddress) async {
+    try {
+      // Fetch sign-in methods for the email address
+      final list =
+          await FirebaseAuth.instance.fetchSignInMethodsForEmail(emailAddress);
+
+      // In case list is not empty
+      if (list.isNotEmpty) {
+        // Return true because there is an existing
+        // user using the email address
+        return true;
+      } else {
+        // Return false because email adress is not in use
+        return false;
+      }
+    } catch (error) {
+      return true;
+    }
   }
 
   bool validateFormBlankFields(String validationText) {
@@ -156,13 +467,33 @@ class _State extends State<LoginPage> {
     String passWord = passwordController.text;
     var prefs = await SharedPreferences.getInstance();
     try {
-      UserCredential userCredential = await FirebaseAuth.instance
+      userCredential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: userName, password: passWord);
 
       if (userCredential.user != null) {
         print("Valid user!, UID: ${userCredential.user.uid}");
-        prefs.setString("USER_ID", userCredential.user.uid);
-        return true;
+
+        if (FirebaseAuth.instance.currentUser.emailVerified) {
+          print("email verified!");
+          prefs.setString("USER_ID", userCredential.user.uid);
+
+          /* usersCollection.where('userId',isEqualTo:userCredential.user.uid.toString())
+            .get().then((QuerySnapshot querySnapshot) {
+              querySnapshot.docs.forEach((doc) {
+                print("base64---- " + doc.get("noteContent"));
+                profileBase64 = doc.get("noteContent");
+                prefs.setString("PROFILE_BASE", profileBase64);
+              });
+            });*/
+
+          return true;
+        } else {
+          var snackBar =
+              SnackBar(content: Text('Email not verified.Check your inbox.'));
+          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+          FirebaseAuth.instance.currentUser.sendEmailVerification();
+          return false;
+        }
       } else
         return false;
     } on FirebaseAuthException catch (e) {
@@ -175,12 +506,26 @@ class _State extends State<LoginPage> {
       }
     }
 
-    return false;
+    return true;
   }
 
   Future navigateToLandingPage(context) async {
-    Route route = MaterialPageRoute(builder: (context) => LandingPage());
-    Navigator.pushReplacement(context, route);
+    var prefs = await SharedPreferences.getInstance();
+
+    usersCollection
+        .where('userId', isEqualTo: userCredential.user.uid.toString())
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+      querySnapshot.docs.forEach((doc) {
+        print("base64---- " + doc.get("noteContent"));
+        profileBase64 = doc.get("noteContent");
+        prefs.setString("PROFILE_BASE", profileBase64);
+        Route route =
+            MaterialPageRoute(builder: (context) => LandingPage
+              (profileBase64,doc.get("userFullName")));
+        Navigator.pushReplacement(context, route);
+      });
+    });
   }
 
 /* Future<AuthResult> signInWithGoogle() async {

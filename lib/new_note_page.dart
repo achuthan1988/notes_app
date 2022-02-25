@@ -344,7 +344,7 @@ class _NewNotePageState extends State<NewNotePage> {
                         }
 
                         Route route = MaterialPageRoute(
-                            builder: (context) => LandingPage());
+                            builder: (context) => LandingPage("",""));
                         Navigator.pushReplacement(context, route);
 
                         // Navigator.pushReplacement(
@@ -922,7 +922,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
 
                                     insertAudioNote(notesModel);
                                     Navigator.pushReplacement(context,
-                                        ScaleRoute(page: LandingPage()));
+                                        ScaleRoute(page: LandingPage("","")));
                                     Navigator.pop(context);
                                   },
                                   child: Icon(
@@ -2066,7 +2066,7 @@ class _DrawingWidgetState extends State<DrawingWidget> {
           bgHexStr, "", base64Str, "", "", 0, 0, 0, "0");
       await insertDrawing(noteDrawing);
 
-      Route route = MaterialPageRoute(builder: (context) => LandingPage());
+      Route route = MaterialPageRoute(builder: (context) => LandingPage("",""));
       Navigator.pushReplacement(context, route);
 
       // Navigator.push(context, ScaleRoute(page: LandingPage()));

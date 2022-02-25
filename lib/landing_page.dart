@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:assets_audio_player/assets_audio_player.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
@@ -23,6 +25,10 @@ import 'util/constants.dart' as Constants;
 
 class LandingPage extends StatefulWidget {
   // setTrashState() => createState().setTrashState();
+  var base64Str;
+  var userFirstName;
+
+  LandingPage(this.base64Str, this.userFirstName);
 
   @override
   _LandingPageState createState() => _LandingPageState();
@@ -31,6 +37,7 @@ class LandingPage extends StatefulWidget {
 class _LandingPageState extends State<LandingPage> {
   Future<Database> database;
   var notesDB;
+  var profileBase64;
   bool isToggleAppBar = false;
   bool isListPopulated = false;
   bool isArchiveSection = false;
@@ -68,12 +75,16 @@ class _LandingPageState extends State<LandingPage> {
   int drawerLabelId = -1;
   String drawerLabelTitle = "";
 
+  CollectionReference usersCollection =
+      FirebaseFirestore.instance.collection('UsersCollection');
+  var sharedPref;
+
   @override
   void initState() {
     // TODO: implement initState
     super.initState();
 
-    new Future.delayed(Duration.zero, () {
+    new Future.delayed(Duration.zero, () async {
       initDB();
     });
 
@@ -132,6 +143,7 @@ class _LandingPageState extends State<LandingPage> {
   @override
   Widget build(BuildContext context) {
     print("inside build! landing page");
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       onDrawerChanged: (isOpened) async {
@@ -149,6 +161,57 @@ class _LandingPageState extends State<LandingPage> {
               title: (drawerLabelId == -1)
                   ? Text(sliderTitleArray[drawerPosition])
                   : Text(drawerLabelTitle),
+              actions: [
+                Flexible(
+                  child: GestureDetector(
+                    child: Padding(
+                      padding: const EdgeInsets.all(3.0),
+                      child: (widget.base64Str.toString().isNotEmpty
+                          ? Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.white),
+                                image: DecorationImage(
+                                    image: Image.memory(
+                                      base64.decode(widget.base64Str),
+                                      fit: BoxFit.cover,
+                                    ).image,
+                                    fit: BoxFit.fill),
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ))
+                          : Container(
+                              width: 50,
+                              height: 50,
+                              child: CircleAvatar(
+                                backgroundColor: Colors.blueGrey,
+                                child: Text(
+                                  widget.userFirstName
+                                      .toString()
+                                      .substring(0, 1)
+                                      .toUpperCase(),
+                                  style: TextStyle(
+                                      fontSize: 26.0, color: Colors.white60),
+                                ),
+                                maxRadius: 30,
+                              ),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.white),
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ))),
+                    ),
+                    onTap: () {
+                      print("profile icon onTap!!");
+                    },
+                    onTapDown: (TapDownDetails details) {
+                      print("profile icon onTapDown!!");
+                      _showProfileMenu(details.globalPosition, context);
+                    },
+                  ),
+                ),
+              ],
             )
           : ((isToggleAppBar && !isTrashActive)
               ? AppBar(
@@ -1389,6 +1452,168 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
+  _showProfileMenu(Offset offset, BuildContext context) async {
+    double left = offset.dx;
+    double top = offset.dy;
+    await showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(left, top, 0, 0),
+      items: [
+        PopupMenuItem(
+          value: 1,
+          height: 0,
+          padding: EdgeInsets.all(5.0),
+          child: (widget.base64Str.toString().isNotEmpty
+              ? Stack(
+                  children: [
+                    Center(
+                      child: Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white),
+                            image: DecorationImage(
+                                image: Image.memory(
+                                  base64.decode(widget.base64Str),
+                                  fit: BoxFit.cover,
+                                ).image,
+                                fit: BoxFit.fill),
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          )),
+                    ),
+                    Positioned(
+                        bottom: -10,
+                        right: 10,
+                        child: RawMaterialButton(
+                          onPressed: () {},
+                          elevation: 0.0,
+                          fillColor: Colors.transparent,
+                          child: SizedBox(
+                              height: 20.0,
+                              width: 20.0,
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.edit,
+                                  color: Colors.black,
+                                  size: 25.0,
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: BoxConstraints(),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _showUpdateProfileDialog(context);
+                                },
+                              )),
+                          padding: EdgeInsets.all(2.0),
+                          shape: CircleBorder(),
+                        )),
+                  ],
+                )
+              : Stack(
+                  children: [
+                    Center(
+                      child: Container(
+                          width: 75,
+                          height: 75,
+                          child: CircleAvatar(
+                            backgroundColor: Colors.blueGrey,
+                            child: Text(
+                              widget.userFirstName
+                                  .toString()
+                                  .substring(0, 1)
+                                  .toUpperCase(),
+                              style: TextStyle(
+                                  fontSize: 30.0, color: Colors.white60),
+                            ),
+                            maxRadius: 30,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.white),
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          )),
+                    ),
+                    Positioned(
+                        bottom: -10,
+                        right: 10,
+                        child: RawMaterialButton(
+                          onPressed: () {},
+                          elevation: 0.0,
+                          fillColor: Colors.transparent,
+                          child: SizedBox(
+                              height: 20.0,
+                              width: 20.0,
+                              child: IconButton(
+                                icon: Icon(
+                                  Icons.edit,
+                                  color: Colors.black,
+                                  size: 25.0,
+                                ),
+                                padding: EdgeInsets.zero,
+                                constraints: BoxConstraints(),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  _showUpdateProfileDialog(context);
+                                },
+                              )),
+                          padding: EdgeInsets.all(2.0),
+                          shape: CircleBorder(),
+                        )),
+                  ],
+                )),
+        ),
+        PopupMenuItem(
+          value: 2,
+          height: 0,
+          padding: EdgeInsets.all(3.0),
+          child: Center(
+            child: Text(
+              widget.userFirstName.toString(),
+              style: TextStyle(
+                  fontSize: 14.0,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.black),
+            ),
+          ),
+        ),
+        PopupMenuItem(
+            value: 3,
+            height: 0,
+            padding: EdgeInsets.zero,
+            child: Center(
+              child: Text(
+                FirebaseAuth.instance.currentUser.email,
+                style: TextStyle(
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.black38),
+              ),
+            )),
+        PopupMenuItem(
+            value: 4,
+            height: 0,
+            padding: EdgeInsets.zero,
+            child: Center(
+              child: OutlinedButton(
+                onPressed: null,
+                style: ButtonStyle(
+                  shape: MaterialStateProperty.all(RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5.0))),
+                ),
+                child: Text(
+                  "Logout",
+                  style: TextStyle(
+                      color: Constants.bgMainColor,
+                      fontWeight: FontWeight.w600),
+                ),
+              ),
+            )),
+      ],
+      elevation: 8.0,
+    );
+  }
+
   Future<Null> _selectDate(BuildContext context) async {
     DateTime selectedDate = DateTime.now();
     final DateTime picked = await showDatePicker(
@@ -1401,6 +1626,71 @@ class _LandingPageState extends State<LandingPage> {
         selectedDate = picked;
         _dateController.value = TextEditingValue(text: Jiffy(picked).yMMMd);
       });
+  }
+
+  _showUpdateProfileDialog(BuildContext context) {
+    TextEditingController emailController = TextEditingController();
+    String errorText;
+    final _formKey = GlobalKey<FormState>();
+    Dialog dialog = Dialog(
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0)), //this right here
+      child: Container(
+        height: 250.0,
+        width: 300.0,
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Padding(
+                padding: EdgeInsets.all(5.0),
+                child: Text(
+                  'Update Profile',
+                  style: TextStyle(
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18.0),
+                ),
+              ),
+              Padding(padding: EdgeInsets.only(top: 10.0)),
+              Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: TextField(
+                  controller: emailController,
+                  decoration: InputDecoration(
+                    hintStyle: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[400]),
+                    hintText: 'First Name',
+                    errorText: errorText,
+                  ),
+                ),
+              ),
+              SizedBox(height: 20.0),
+              ElevatedButton(
+                style: ButtonStyle(
+                    foregroundColor:
+                        MaterialStateProperty.all<Color>(Colors.white),
+                    backgroundColor:
+                        MaterialStateProperty.all<Color>(Constants.bgMainColor),
+                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+                        RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(2.0),
+                            side: BorderSide(color: Constants.bgMainColor)))),
+                child: Text('Update',
+                    style: TextStyle(
+                        color: Constants.bgWhiteColor,
+                        fontWeight: FontWeight.bold)),
+                onPressed: () async {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    showDialog(context: context, builder: (BuildContext context) => dialog);
   }
 
   Future<Null> _selectTime(BuildContext context) async {
@@ -1652,7 +1942,7 @@ class _LandingPageState extends State<LandingPage> {
   Widget switchDrawerWidget() {
     switch (drawerPosition) {
       case 0:
-        return LandingPage();
+        return LandingPage("", "");
         break;
       case 2:
         return ArchivePage();
@@ -2843,15 +3133,15 @@ class _LandingPageState extends State<LandingPage> {
       // constructed for each platform.
       join(await getDatabasesPath(), Constants.DB_NAME),
 
-      // When the database is first created, create a table to store dogs.
+      // When the database is first created, create a table to s  tore dogs.
       onCreate: (db, version) {
         print("inside onCreate()");
         notesDB = db;
         // Run the CREATE TABLE statement on the database.
         db.execute(
           "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT,userId "
-              "TEXT, "
-              "noteTitle"
+          "TEXT, "
+          "noteTitle"
           " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
           "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT, "
           "noteDateOfDeletion TEXT,"
