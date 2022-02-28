@@ -342,9 +342,9 @@ class _NewNotePageState extends State<NewNotePage> {
                           await insertNote(model);
                           // notesDao.saveNote(model);
                         }
-
+                        var prefs = await SharedPreferences.getInstance();
                         Route route = MaterialPageRoute(
-                            builder: (context) => LandingPage("",""));
+                            builder: (context) => LandingPage(prefs.getString("PROFILE_BASE"),prefs.get("FIRST_NAME")));
                         Navigator.pushReplacement(context, route);
 
                         // Navigator.pushReplacement(
@@ -922,7 +922,7 @@ class _BottomMenuBarState extends State<BottomMenuBar> {
 
                                     insertAudioNote(notesModel);
                                     Navigator.pushReplacement(context,
-                                        ScaleRoute(page: LandingPage("","")));
+                                        ScaleRoute(page: LandingPage(prefs.getString("PROFILE_BASE"),prefs.get("FIRST_NAME"))));
                                     Navigator.pop(context);
                                   },
                                   child: Icon(
@@ -2066,7 +2066,7 @@ class _DrawingWidgetState extends State<DrawingWidget> {
           bgHexStr, "", base64Str, "", "", 0, 0, 0, "0");
       await insertDrawing(noteDrawing);
 
-      Route route = MaterialPageRoute(builder: (context) => LandingPage("",""));
+      Route route = MaterialPageRoute(builder: (context) => LandingPage(prefs.getString("PROFILE_BASE"),prefs.get("FIRST_NAME")));
       Navigator.pushReplacement(context, route);
 
       // Navigator.push(context, ScaleRoute(page: LandingPage()));

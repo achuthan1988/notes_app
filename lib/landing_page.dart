@@ -7,16 +7,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:jiffy/jiffy.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
 import 'package:notes_app/archive_page.dart';
+import 'package:notes_app/login.dart';
 import 'package:notes_app/models/LabelModel.dart';
 import 'package:notes_app/models/NotesModel.dart';
 import 'package:notes_app/models/ReminderModel.dart';
 import 'package:notes_app/trash_page.dart';
 import 'package:notes_app/util/HexColor.dart';
 import 'package:path/path.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'new_note_page.dart';
@@ -78,6 +82,7 @@ class _LandingPageState extends State<LandingPage> {
   CollectionReference usersCollection =
       FirebaseFirestore.instance.collection('UsersCollection');
   var sharedPref;
+  File imageFile;
 
   @override
   void initState() {
@@ -257,10 +262,48 @@ class _LandingPageState extends State<LandingPage> {
                     ),
                   ),
                   actions: [
+                    Visibility(
+                      child: Flexible(
+                        child: GestureDetector(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Icon(
+                              Icons.group_add,
+                              color: Colors.blue,
+                              size: 30.0,
+                            ),
+                          ),
+                          onTap: () {
+                            print("colab icon clicked!!");
+
+                            /*
+                            * (1) Show alert with owner image ,name & email
+                            * id (Full screen page , slide up from bottom)
+                            * (2) Adding a new collaborator , based on
+                            * whether its valid email
+                            * (3) On saving the alert the ids get comma
+                            * separated in the note user Ids
+                            * (4) UI Shows avatar tags of owner for other
+                            * collaborators, owner sees all collaborators as
+                            * tags
+                            * (5) +N as used for tags to be used here for
+                            * overflow of avatar tags.
+                            * (6)
+                            *
+                            *
+                            * */
+
+
+
+                          },
+                        ),
+                      ),
+                      visible: (numOfNotesSelected <= 1),
+                    ),
                     Flexible(
                       child: GestureDetector(
                         child: Padding(
-                          padding: const EdgeInsets.all(10.0),
+                          padding: const EdgeInsets.all(8.0),
                           child: Icon(
                             (isNotesUnpinned()
                                 ? Icons.push_pin
@@ -314,7 +357,7 @@ class _LandingPageState extends State<LandingPage> {
                     Flexible(
                       child: GestureDetector(
                         child: Padding(
-                          padding: const EdgeInsets.all(10.0),
+                          padding: const EdgeInsets.all(8.0),
                           child: Icon(
                             Icons.archive_outlined,
                             color: Colors.blue,
@@ -342,7 +385,7 @@ class _LandingPageState extends State<LandingPage> {
                     Flexible(
                       child: GestureDetector(
                         child: Padding(
-                          padding: const EdgeInsets.all(10.0),
+                          padding: const EdgeInsets.all(8.0),
                           child: Icon(
                             Icons.label_outline,
                             color: Colors.blue,
@@ -373,7 +416,7 @@ class _LandingPageState extends State<LandingPage> {
                     Flexible(
                       child: GestureDetector(
                         child: Padding(
-                          padding: const EdgeInsets.all(10.0),
+                          padding: const EdgeInsets.all(8.0),
                           child: Icon(
                             Icons.color_lens_outlined,
                             color: Colors.blue,
@@ -400,7 +443,7 @@ class _LandingPageState extends State<LandingPage> {
                     Flexible(
                       child: GestureDetector(
                         child: Padding(
-                          padding: const EdgeInsets.all(10.0),
+                          padding: const EdgeInsets.all(8.0),
                           child: Icon(
                             Icons.delete,
                             color: Colors.blue,
@@ -1158,6 +1201,12 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
+
+  showCollabDialog(BuildContext context){
+
+
+  }
+
   showReminderDialog(BuildContext context, ReminderModel model) {
     int currentTimeInMillis = DateTime.now().millisecondsSinceEpoch;
     print("currentTimeInMillis: $currentTimeInMillis");
@@ -1502,7 +1551,8 @@ class _LandingPageState extends State<LandingPage> {
                                 constraints: BoxConstraints(),
                                 onPressed: () {
                                   Navigator.pop(context);
-                                  _showUpdateProfileDialog(context);
+                                  _showUpdateProfileDialog(
+                                      context, widget.base64Str.toString());
                                 },
                               )),
                           padding: EdgeInsets.all(2.0),
@@ -1554,7 +1604,8 @@ class _LandingPageState extends State<LandingPage> {
                                 constraints: BoxConstraints(),
                                 onPressed: () {
                                   Navigator.pop(context);
-                                  _showUpdateProfileDialog(context);
+                                  _showUpdateProfileDialog(
+                                      context, widget.base64Str.toString());
                                 },
                               )),
                           padding: EdgeInsets.all(2.0),
@@ -1596,7 +1647,43 @@ class _LandingPageState extends State<LandingPage> {
             padding: EdgeInsets.zero,
             child: Center(
               child: OutlinedButton(
-                onPressed: null,
+                onPressed: () {
+                  // set up the buttons
+                  Widget cancelButton = TextButton(
+                    child: Text("No"),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  );
+                  Widget continueButton = TextButton(
+                    child: Text("Yes"),
+                    onPressed: () async {
+                      SharedPreferences _prefs =
+                          await SharedPreferences.getInstance();
+                      _prefs.clear();
+                      await FirebaseAuth.instance.signOut();
+                      Navigator.pushAndRemoveUntil<dynamic>(
+                        context,
+                        MaterialPageRoute<dynamic>(
+                          builder: (BuildContext context) => LoginPage(),
+                        ),
+                        (route) => false,
+                      );
+                    },
+                  );
+                  AlertDialog alert = AlertDialog(
+                    title: Text("Logout?"),
+                    content: Text("Do you want to logout?"),
+                    actions: [
+                      cancelButton,
+                      continueButton,
+                    ],
+                  );
+                  showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (BuildContext context) => alert);
+                },
                 style: ButtonStyle(
                   shape: MaterialStateProperty.all(RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(5.0))),
@@ -1628,69 +1715,269 @@ class _LandingPageState extends State<LandingPage> {
       });
   }
 
-  _showUpdateProfileDialog(BuildContext context) {
-    TextEditingController emailController = TextEditingController();
-    String errorText;
+  _showUpdateProfileDialog(BuildContext context, String base64Str) {
+    TextEditingController nameController = TextEditingController();
+    String errorText, imageB64 = "";
+    nameController.text = widget.userFirstName.toString();
     final _formKey = GlobalKey<FormState>();
-    Dialog dialog = Dialog(
-      shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0)), //this right here
-      child: Container(
-        height: 250.0,
-        width: 300.0,
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Padding(
-                padding: EdgeInsets.all(5.0),
-                child: Text(
-                  'Update Profile',
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18.0),
-                ),
-              ),
-              Padding(padding: EdgeInsets.only(top: 10.0)),
-              Padding(
-                padding: const EdgeInsets.all(5.0),
-                child: TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    hintStyle: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[400]),
-                    hintText: 'First Name',
-                    errorText: errorText,
+    CollectionReference usersCollection =
+        FirebaseFirestore.instance.collection('UsersCollection');
+    String userId = FirebaseAuth.instance.currentUser.uid;
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) =>
+            StatefulBuilder(builder: (context, _setState) {
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12.0)),
+                //this right here
+                child: Container(
+                  height: 350.0,
+                  width: 300.0,
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Center(
+                          child: SizedBox(
+                            height: 150,
+                            width: 150,
+                            child: (imageFile != null ||
+                                    widget.base64Str.toString().isNotEmpty
+                                ? Stack(
+                                    clipBehavior: Clip.none,
+                                    fit: StackFit.loose,
+                                    children: [
+                                      ClipOval(
+                                        child: Container(
+                                          height: 150,
+                                          width: 150,
+                                          color: Colors.grey.shade200,
+                                          child: (imageFile != null
+                                              ? Image.file(imageFile)
+                                              : widget.base64Str
+                                                      .toString()
+                                                      .isNotEmpty
+                                                  ? Image.memory(base64Decode(
+                                                      widget.base64Str))
+                                                  : Image.asset(
+                                                      'assets/images/profile_pic.png',
+                                                    )),
+                                        ),
+                                      ),
+                                      Positioned(
+                                          bottom: 0,
+                                          right: -30,
+                                          child: RawMaterialButton(
+                                            onPressed: () {
+                                              _pickImage(_setState);
+                                            },
+                                            elevation: 2.0,
+                                            fillColor: Colors.grey.shade200,
+                                            child: Icon(
+                                              Icons.add_a_photo_outlined,
+                                              color: Constants.bgMainColor,
+                                            ),
+                                            padding: EdgeInsets.all(5.0),
+                                            shape: CircleBorder(),
+                                          )),
+                                    ],
+                                  )
+                                : Stack(
+                                    clipBehavior: Clip.none,
+                                    fit: StackFit.loose,
+                                    children: [
+                                      Container(
+                                          height: 150,
+                                          width: 150,
+                                          child: CircleAvatar(
+                                            backgroundColor: Colors.blueGrey,
+                                            child: Text(
+                                              widget.userFirstName
+                                                  .toString()
+                                                  .substring(0, 1)
+                                                  .toUpperCase(),
+                                              style: TextStyle(
+                                                  fontSize: 40.0,
+                                                  color: Colors.white60),
+                                            ),
+                                            maxRadius: 30,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            border:
+                                                Border.all(color: Colors.white),
+                                            color: Colors.white,
+                                            shape: BoxShape.circle,
+                                          )),
+                                      Positioned(
+                                          bottom: 0,
+                                          right: -30,
+                                          child: RawMaterialButton(
+                                            onPressed: () {
+                                              _pickImage(_setState);
+                                            },
+                                            elevation: 2.0,
+                                            fillColor: Colors.grey.shade200,
+                                            child: Icon(
+                                              Icons.add_a_photo_outlined,
+                                              color: Constants.bgMainColor,
+                                            ),
+                                            padding: EdgeInsets.all(5.0),
+                                            shape: CircleBorder(),
+                                          )),
+                                    ],
+                                  )),
+                          ),
+                        ),
+                        Padding(padding: EdgeInsets.only(top: 10.0)),
+                        Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: TextField(
+                            controller: nameController,
+                            decoration: InputDecoration(
+                              hintStyle: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey[400]),
+                              hintText: 'First Name',
+                              errorText: errorText,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 20.0),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              style: ButtonStyle(
+                                  foregroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Colors.white),
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Constants.bgMainColor),
+                                  shape: MaterialStateProperty.all<
+                                          RoundedRectangleBorder>(
+                                      RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(2.0),
+                                          side: BorderSide(
+                                              color: Constants.bgMainColor)))),
+                              child: Text('Update',
+                                  style: TextStyle(
+                                      color: Constants.bgWhiteColor,
+                                      fontWeight: FontWeight.bold)),
+                              onPressed: () async {
+                                if (imageFile != null) {
+                                  List<int> imageBytes =
+                                      imageFile.readAsBytesSync();
+                                  imageB64 = base64Encode(imageBytes);
+                                  print("base64Str: $imageB64");
+                                }
+
+                                QuerySnapshot querySnap = await usersCollection
+                                    .where('userId', isEqualTo: userId)
+                                    .get();
+                                QueryDocumentSnapshot doc = querySnap.docs[0];
+                                DocumentReference docRef = doc.reference;
+                                await docRef.update({
+                                  'noteContent': imageB64,
+                                  'userFullName':
+                                      nameController.value.text.toString()
+                                });
+                                Navigator.pop(context);
+                                setState(() {
+                                  List<int> imageBytes =
+                                      imageFile.readAsBytesSync();
+                                  String imageB64 = base64Encode(imageBytes);
+                                  print("new base64Str: $imageB64");
+                                  widget.base64Str = imageB64;
+                                  widget.userFirstName =
+                                      nameController.text.toString();
+                                });
+                              },
+                            ),
+                            SizedBox(width: 10.0),
+                            ElevatedButton(
+                              style: ButtonStyle(
+                                  foregroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Colors.white),
+                                  backgroundColor:
+                                      MaterialStateProperty.all<Color>(
+                                          Constants.bgMainColor),
+                                  shape: MaterialStateProperty.all<
+                                          RoundedRectangleBorder>(
+                                      RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(2.0),
+                                          side: BorderSide(
+                                              color: Constants.bgMainColor)))),
+                              child: Text('Cancel',
+                                  style: TextStyle(
+                                      color: Constants.bgWhiteColor,
+                                      fontWeight: FontWeight.bold)),
+                              onPressed: () async {
+                                Navigator.pop(context);
+                                imageFile = null;
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: 20.0),
-              ElevatedButton(
-                style: ButtonStyle(
-                    foregroundColor:
-                        MaterialStateProperty.all<Color>(Colors.white),
-                    backgroundColor:
-                        MaterialStateProperty.all<Color>(Constants.bgMainColor),
-                    shape: MaterialStateProperty.all<RoundedRectangleBorder>(
-                        RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(2.0),
-                            side: BorderSide(color: Constants.bgMainColor)))),
-                child: Text('Update',
-                    style: TextStyle(
-                        color: Constants.bgWhiteColor,
-                        fontWeight: FontWeight.bold)),
-                onPressed: () async {},
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    showDialog(context: context, builder: (BuildContext context) => dialog);
+              );
+            }));
+  }
+
+  Future<Null> _pickImage(Function setState) async {
+    print("inside _pickImage()");
+    XFile pickedFile =
+        await ImagePicker().pickImage(source: ImageSource.gallery);
+    print("pickedFile null ${pickedFile == null}");
+    if (pickedFile != null) {
+      imageFile = File(pickedFile.path);
+      print("imagePth ${pickedFile.path}");
+      File croppedFile = await ImageCropper().cropImage(
+          sourcePath: imageFile.path,
+          aspectRatioPresets: Platform.isAndroid
+              ? [
+                  CropAspectRatioPreset.square,
+                  CropAspectRatioPreset.ratio3x2,
+                  CropAspectRatioPreset.original,
+                  CropAspectRatioPreset.ratio4x3,
+                  CropAspectRatioPreset.ratio16x9
+                ]
+              : [
+                  CropAspectRatioPreset.original,
+                  CropAspectRatioPreset.square,
+                  CropAspectRatioPreset.ratio3x2,
+                  CropAspectRatioPreset.ratio4x3,
+                  CropAspectRatioPreset.ratio5x3,
+                  CropAspectRatioPreset.ratio5x4,
+                  CropAspectRatioPreset.ratio7x5,
+                  CropAspectRatioPreset.ratio16x9
+                ],
+          androidUiSettings: AndroidUiSettings(
+              toolbarTitle: 'Cropper',
+              toolbarColor: Colors.deepOrange,
+              toolbarWidgetColor: Colors.white,
+              initAspectRatio: CropAspectRatioPreset.original,
+              lockAspectRatio: false),
+          iosUiSettings: IOSUiSettings(
+            title: 'Cropper',
+          ));
+      if (croppedFile != null) {
+        imageFile = croppedFile;
+        setState(() {
+          // state = AppState.cropped;
+        });
+      }
+    }
   }
 
   Future<Null> _selectTime(BuildContext context) async {

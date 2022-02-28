@@ -520,9 +520,10 @@ class _State extends State<LoginPage> {
         print("base64---- " + doc.get("noteContent"));
         profileBase64 = doc.get("noteContent");
         prefs.setString("PROFILE_BASE", profileBase64);
+        prefs.setString("FIRST_NAME", doc.get("userFullName"));
         Route route =
             MaterialPageRoute(builder: (context) => LandingPage
-              (profileBase64,doc.get("userFullName")));
+              (prefs.getString("PROFILE_BASE"),prefs.get("FIRST_NAME")));
         Navigator.pushReplacement(context, route);
       });
     });
