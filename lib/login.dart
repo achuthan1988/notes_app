@@ -1,10 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:notes_app/landing_page.dart';
+import 'package:notes_app/models/NotesModel.dart';
 import 'package:notes_app/register_page.dart';
+import 'package:path/path.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'util/constants.dart' as Constants;
 
@@ -35,6 +40,8 @@ class _State extends State<LoginPage> {
   bool _isPassWordShown = false;
   CollectionReference usersCollection =
       FirebaseFirestore.instance.collection('UsersCollection');
+  CollectionReference notesCollection =
+      FirebaseFirestore.instance.collection('NotesCollection');
   var profileBase64;
   UserCredential userCredential;
   String errorText;
@@ -42,6 +49,60 @@ class _State extends State<LoginPage> {
       r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]"
       r"{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]"
       r"{0,253}[a-zA-Z0-9])?)*$";
+  var notesDB;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    initDB();
+  }
+
+  void initDB() async {
+    print("enter  init()");
+
+    if (!kIsWeb) {
+      var status = await Permission.storage.request();
+      var statusM = await Permission.microphone.request();
+    }
+    WidgetsFlutterBinding.ensureInitialized();
+// Open the database and store the reference.
+    final Future<Database> database = openDatabase(
+      // Set the path to the database. Note: Using the `join` function from the
+      // `path` package is best practice to ensure the path is correctly
+      // constructed for each platform.
+      join(await getDatabasesPath(), Constants.DB_NAME),
+
+      // When the database is first created, create a table to store dogs.
+      onCreate: (db, version) {
+        print("inside onCreate DB!!");
+        notesDB = db;
+        // Run the   statement on the database.
+        db.execute(
+          "CREATE TABLE notes(id INTEGER PRIMARY KEY AUTOINCREMENT,userId "
+          "TEXT, "
+          "noteTitle"
+          " TEXT, noteContent TEXT, noteType TEXT, noteBgColorHex TEXT, "
+          "noteMediaPath TEXT,  noteImgBase64 TEXT,noteLabelIdsStr TEXT, "
+          "noteDateOfDeletion TEXT,"
+          "isNotePinned INTEGER, isNoteArchived INTEGER, isNoteTrashed "
+          "INTEGER, reminderID INTEGER)",
+        );
+        db.execute(
+            "CREATE TABLE TblLabels(id INTEGER PRIMARY KEY AUTOINCREMENT, labelTitle TEXT)");
+
+        db.execute("CREATE TABLE TblReminders(id INTEGER PRIMARY KEY "
+            "AUTOINCREMENT, reminderDate TEXT, reminderTime TEXT, "
+            "reminderInterval TEXT)");
+      },
+      // Set the version. This executes the onCreate function and provides a
+      // path to perform database upgrades and downgrades.
+      version: 1,
+    );
+
+    //notesDB = database;
+    print("exit init()");
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -224,7 +285,6 @@ class _State extends State<LoginPage> {
                                                 hintText: 'Email',
                                                 errorText: errorText,
                                               ),
-
                                             ),
                                           ),
                                           SizedBox(height: 20.0),
@@ -250,23 +310,22 @@ class _State extends State<LoginPage> {
                                                         FontWeight.bold)),
                                             onPressed: () async {
                                               if (!RegExp(emailPattern)
-                                                  .hasMatch(
-                                                  emailController
-                                                      .value.text
-                                                      .toString()) ||
+                                                      .hasMatch(emailController
+                                                          .value.text
+                                                          .toString()) ||
                                                   emailController
                                                       .value.text.isEmpty) {
-                                                errorText =  'Email id is '
+                                                errorText = 'Email id is '
                                                     'invalid';
 
                                                 // return errorText;
                                               } else {
                                                 checkIfEmailInUse(
-                                                    emailController
-                                                        .value.text)
+                                                        emailController
+                                                            .value.text)
                                                     .then((isEmailExists) {
                                                   if (!isEmailExists) {
-                                                    errorText =  'This user '
+                                                    errorText = 'This user '
                                                         'does not exist';
 
                                                     // return errorText;
@@ -276,13 +335,10 @@ class _State extends State<LoginPage> {
                                                 // errorText = "";
                                                 // return errorText;
                                               }
-                                              setState(() {
-
-                                              });
-
+                                              setState(() {});
 
                                               print("errorText: $errorText");
-                                              if (errorText.length==0) {
+                                              if (errorText.length == 0) {
                                                 auth.sendPasswordResetEmail(
                                                     email: emailController
                                                         .value.text);
@@ -294,7 +350,6 @@ class _State extends State<LoginPage> {
                                                         'been sent.'));
                                                 ScaffoldMessenger.of(context)
                                                     .showSnackBar(snackBar);
-
                                               }
                                             },
                                           ),
@@ -342,7 +397,8 @@ class _State extends State<LoginPage> {
 
                                         if (!isUserNameBlank &&
                                             !isPassWordBlank) {
-                                          isLoginCredsValid().then((value) {
+                                          isLoginCredsValid(context)
+                                              .then((value) {
                                             if (!value) {
                                               var snackBar = SnackBar(
                                                   content: Text(
@@ -462,7 +518,7 @@ class _State extends State<LoginPage> {
     return true;
   }
 
-  Future<bool> isLoginCredsValid() async {
+  Future<bool> isLoginCredsValid(BuildContext context) async {
     String userName = nameController.text;
     String passWord = passwordController.text;
     var prefs = await SharedPreferences.getInstance();
@@ -511,22 +567,94 @@ class _State extends State<LoginPage> {
 
   Future navigateToLandingPage(context) async {
     var prefs = await SharedPreferences.getInstance();
-
     usersCollection
-        .where('userId', isEqualTo: userCredential.user.uid.toString())
+        .where('userId', isEqualTo: userCredential.user.uid)
         .get()
         .then((QuerySnapshot querySnapshot) {
-      querySnapshot.docs.forEach((doc) {
-        print("base64---- " + doc.get("noteContent"));
-        profileBase64 = doc.get("noteContent");
-        prefs.setString("PROFILE_BASE", profileBase64);
-        prefs.setString("FIRST_NAME", doc.get("userFullName"));
-        Route route =
-            MaterialPageRoute(builder: (context) => LandingPage
-              (prefs.getString("PROFILE_BASE"),prefs.get("FIRST_NAME")));
-        Navigator.pushReplacement(context, route);
-      });
+      try {
+        try {
+          try {
+            querySnapshot.docs.forEach((doc) {
+              print("base64---- " + doc.get("noteContent"));
+              profileBase64 = doc.get("noteContent");
+              prefs.setString("PROFILE_BASE", profileBase64);
+              prefs.setString("FIRST_NAME", doc.get("userFullName"));
+              loadFireStoreToDb(context);
+              /*
+              * data populate local db by querying UsersCollection based on uid
+              * The uid comma string if it starts with the login uid he is a
+              * owner else a collaborator
+              *
+              *
+              * */
+              /*   Route route = MaterialPageRoute(
+                  builder: (context) => LandingPage(
+                      prefs.getString("PROFILE_BASE"),
+                      prefs.get("FIRST_NAME")));
+              Navigator.pushReplacement(context, route);*/
+            });
+          } catch (e, s) {
+            print(s);
+          }
+        } catch (e, s) {
+          print(s);
+        }
+      } catch (e, s) {
+        print(s);
+      }
     });
+  }
+
+  Future<void> loadFireStoreToDb(BuildContext context) async {
+    var prefs = await SharedPreferences.getInstance();
+    notesCollection
+        .where("userIDObj", arrayContains: userCredential.user.uid)
+        .get()
+        .then((QuerySnapshot querySnapshot) {
+      querySnapshot.docs.forEach((doc) async {
+        //transfer data to local here!!TODO
+        String userIdStr = "";
+        List<dynamic> userIdList = doc['userIDObj'];
+        userIdList.forEach((element) {
+          userIdStr = userIdStr  + element.toString()+"||";
+        });
+
+        print("userIdStr:$userIdStr");
+        NotesModel modelObj = NotesModel(
+            userIdStr,
+            doc['noteTitle'],
+            doc['noteContent'],
+            doc['noteType'],
+            doc['noteBgColorHex'],
+            doc['noteMediaPath'],
+            doc['noteImgBase64'],
+            doc['noteLabelIdsStr'],
+            doc['noteDateOfDeletion'],
+            doc['isNotePinned'],
+            doc['isNoteArchived'],
+            doc['isNoteTrashed'],
+            doc['reminderID']);
+        await insertNote(modelObj);
+      });
+
+      Route route = MaterialPageRoute(
+          builder: (context) => LandingPage(
+              prefs.getString("PROFILE_BASE"), prefs.get("FIRST_NAME")));
+      Navigator.pushReplacement(context, route);
+    });
+  }
+
+  Future<void> insertNote(NotesModel model) async {
+    print("inside insertNote()");
+
+    notesDB =
+        await openDatabase(join(await getDatabasesPath(), Constants.DB_NAME));
+
+    await notesDB.insert(
+      'notes',
+      model.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
 /* Future<AuthResult> signInWithGoogle() async {

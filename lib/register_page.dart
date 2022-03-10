@@ -262,7 +262,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                                     userCredential.user.uid,
                                                     nameController.value.text
                                                         .toString(),
-                                                    imageB64));
+                                                    imageB64,userCredential
+                                                    .user.email));
 
                                               } on FirebaseAuthException catch (e) {
                                                 if (e.code == 'weak-password') {

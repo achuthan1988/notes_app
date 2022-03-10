@@ -6,12 +6,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:jiffy/jiffy.dart';
 import 'package:material_design_icons_flutter/material_design_icons_flutter.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:notes_app/archive_page.dart';
 import 'package:notes_app/login.dart';
 import 'package:notes_app/models/LabelModel.dart';
@@ -31,6 +33,10 @@ class LandingPage extends StatefulWidget {
   // setTrashState() => createState().setTrashState();
   var base64Str;
   var userFirstName;
+  String emailPattern =
+      r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]"
+      r"{0,253}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]"
+      r"{0,253}[a-zA-Z0-9])?)*$";
 
   LandingPage(this.base64Str, this.userFirstName);
 
@@ -276,6 +282,15 @@ class _LandingPageState extends State<LandingPage> {
                           onTap: () {
                             print("colab icon clicked!!");
 
+                            longPressedNotesMap.keys.forEach((keyVal) {
+                              if (longPressedNotesMap[keyVal]) {
+                                notesModelList.forEach((element) {
+                                  if (keyVal == element.id) {
+                                    showCollabDialog(context, element);
+                                  }
+                                });
+                              }
+                            });
                             /*
                             * (1) Show alert with owner image ,name & email
                             * id (Full screen page , slide up from bottom)
@@ -292,9 +307,6 @@ class _LandingPageState extends State<LandingPage> {
                             *
                             *
                             * */
-
-
-
                           },
                         ),
                       ),
@@ -1201,11 +1213,496 @@ class _LandingPageState extends State<LandingPage> {
     );
   }
 
-
-  showCollabDialog(BuildContext context){
-
-
+  Widget _getCollabCardWidget() {
+    return Card(
+      child: Column(
+        children: [
+          Text('name'),
+          Text('standard'),
+          Text('Roll No'),
+        ],
+      ),
+    );
   }
+
+  showCollabDialog(BuildContext context, NotesModel model) async {
+    bool isEmailSearching = false, isEmailInUse = false;
+    List<Widget> _collabCardList = [];
+    String ownerID = (model.userId.contains("||")
+        ? model.userId.split("||")[0]
+        : model.userId);
+    print("ownerId $ownerID");
+    QuerySnapshot querySnap =
+        await usersCollection.where('userId', isEqualTo: ownerID).get();
+    QueryDocumentSnapshot doc = querySnap.docs[0];
+
+    String userFullName = doc['userFullName'];
+    String userEmailId = doc['userEmailId'];
+    String base64Str = doc['noteContent'];
+
+    print("name,email,base64: $userFullName $userEmailId $base64Str");
+
+    final _formKey = GlobalKey<FormState>();
+    TextEditingController emailController = TextEditingController();
+    String errorMsg;
+    showMaterialModalBottomSheet(
+      useRootNavigator: true,
+      context: context,
+      builder: (context) => StatefulBuilder(builder: (ctx, _setStateOuter) {
+        return Container(
+          padding: EdgeInsets.all(10.0),
+          height: 600.0,
+          color: Colors.white30,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Text(
+                'Collaborators',
+                style: TextStyle(
+                    decoration: TextDecoration.none,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                    fontSize: 16.0),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 5.0),
+                child: Divider(
+                  color: Colors.grey[400],
+                  height: 3,
+                ),
+              ),
+              SizedBox(
+                height: 60.0,
+                child: Container(
+                  height: 60.0,
+                  width: MediaQuery.of(context).size.width,
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: Container(
+                              width: 50,
+                              height: 50,
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                image: DecorationImage(
+                                    image: Image.memory(
+                                      base64.decode(base64Str),
+                                      fit: BoxFit.cover,
+                                    ).image,
+                                    fit: BoxFit.fill),
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              )),
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding:
+                                const EdgeInsets.only(top: 10.0, left: 10.0),
+                            child: Container(
+                              height: 30.0,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        userFullName,
+                                        style: TextStyle(
+                                            decoration: TextDecoration.none,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.black,
+                                            fontSize: 12.0),
+                                      ),
+                                      Text(
+                                        ' (Owner)',
+                                        style: TextStyle(
+                                            decoration: TextDecoration.none,
+                                            fontWeight: FontWeight.w300,
+                                            color: Colors.black,
+                                            fontStyle: FontStyle.italic,
+                                            fontSize: 9.0),
+                                      ),
+                                    ],
+                                  ),
+                                  Text(
+                                    userEmailId,
+                                    style: TextStyle(
+                                        decoration: TextDecoration.none,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black38,
+                                        fontSize: 10.0),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Visibility(
+                child: LimitedBox(
+                  maxHeight: 200.0,
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: _collabCardList.length,
+                    itemBuilder: (context, index) {
+                      return _collabCardList[index];
+                    },
+                  ),
+                ),
+                visible: (_collabCardList.length > 0),
+              ),
+              SizedBox(
+                height: 60.0,
+                child: Container(
+                  height: 60.0,
+                  width: MediaQuery.of(context).size.width,
+                  child: IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            alignment: Alignment.center,
+                            child: CircleAvatar(
+                              radius: 40,
+                              backgroundColor: Colors.transparent,
+                              child: Icon(
+                                Icons.person,
+                                size: 40,
+                                color: Colors.black26,
+                              ),
+                            ),
+                            /*decoration: BoxDecoration(
+                                        border: Border.all(color: Colors.grey),
+                                        image: DecorationImage(
+                                            image: MaterialI
+                                            fit: BoxFit.scaleDown),
+                                        color: Colors.transparent,
+                                        shape: BoxShape.circle,
+                                      ),*/
+                          ),
+                        ),
+                        Expanded(
+                          child: StatefulBuilder(builder: (ctx, _setState) {
+                            return Container(
+                              height: 75.0,
+                              child: IntrinsicHeight(
+                                child: Form(
+                                  key: _formKey,
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Flexible(
+                                          child: TextFormField(
+                                        controller: emailController,
+                                        validator: (txtVal) {
+                                          String valmsg;
+                                          if (!RegExp(widget.emailPattern)
+                                              .hasMatch(txtVal)) {
+                                            valmsg = "Invalid email id";
+                                          } else if (!isEmailInUse) {
+                                            valmsg = "Email id "
+                                                "not found.";
+                                          }
+                                          return valmsg;
+                                        },
+                                        onChanged: (text) {
+                                          print("in onChanged!");
+
+                                          if (text.length > 0)
+                                            isEmailSearching = true;
+                                          else
+                                            isEmailSearching = false;
+
+                                          _setState(() {});
+                                        },
+                                        style: TextStyle(
+                                          color: Colors.black54,
+                                          fontSize: 14.0,
+                                          fontWeight: FontWeight.w600,
+                                          fontStyle: FontStyle.normal,
+                                        ),
+                                        decoration: InputDecoration(
+                                            hintText: 'Enter email address',
+                                            alignLabelWithHint: true,
+                                            errorStyle: TextStyle(
+                                              color: Colors.redAccent,
+                                              fontSize: 12.0,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                            hintStyle: TextStyle(
+                                              color: Colors.black26,
+                                              fontSize: 12.0,
+                                              fontStyle: FontStyle.italic,
+                                            )),
+                                      )),
+                                      Visibility(
+                                        visible: isEmailSearching,
+                                        child: IconButton(
+                                            onPressed: () async {
+                                              _collabCardList.forEach((widget) {
+                                                String key =
+                                                    (widget.key as ValueKey)
+                                                        .value
+                                                        .toString();
+
+                                                print("widgetKey $key");
+                                              });
+
+                                              isEmailInUse =
+                                                  await checkIfEmailInUse(
+                                                      emailController
+                                                          .value.text);
+                                              print("iconbutton "
+                                                  "onPressed!");
+                                              final FormState form =
+                                                  _formKey.currentState;
+                                              if (form.validate()) {
+                                                print('form valid!');
+
+                                                // text in form is valid
+                                                QuerySnapshot querySnap =
+                                                    await usersCollection
+                                                        .where('userEmailId',
+                                                            isEqualTo:
+                                                                emailController
+                                                                    .value.text)
+                                                        .get();
+                                                QueryDocumentSnapshot doc =
+                                                    querySnap.docs[0];
+
+                                                _collabCardList.add(Card(
+                                                  key: ValueKey(emailController
+                                                      .value.text),
+                                                  child: Row(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .center,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceEvenly,
+                                                    children: [
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(5.0),
+                                                        child: Container(
+                                                            width: 50,
+                                                            height: 50,
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              border: Border.all(
+                                                                  color: Colors
+                                                                      .grey),
+                                                              image:
+                                                                  DecorationImage(
+                                                                      image: Image
+                                                                          .memory(
+                                                                        base64.decode(
+                                                                            doc['noteContent']),
+                                                                        fit: BoxFit
+                                                                            .cover,
+                                                                      ).image,
+                                                                      fit: BoxFit
+                                                                          .fill),
+                                                              color:
+                                                                  Colors.white,
+                                                              shape: BoxShape
+                                                                  .circle,
+                                                            )),
+                                                      ),
+                                                      Flexible(
+                                                        child: Text(
+                                                          doc['userEmailId'],
+                                                          style: TextStyle(
+                                                              decoration:
+                                                                  TextDecoration
+                                                                      .none,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w600,
+                                                              color:
+                                                                  Colors.black,
+                                                              fontSize: 12.0),
+                                                        ),
+                                                      ),
+                                                      Spacer(),
+                                                      IconButton(
+                                                          onPressed: () async {
+                                                          // print("clickedIndex"
+                                                          //     " $index")
+                                                            /*_collabCardList.forEach((card) {
+
+                                                              String
+                                                              widgetKey = (card.key
+                                                              as ValueKey)
+                                                                  .value
+                                                                  .toString();
+
+                                                              print
+                                                                ("widgetKey :"
+                                                                  " "
+                                                                  "$widgetKey");
+
+                                                              if((card.key
+                                                              as ValueKey)
+                                                                  .value
+                                                                  .toString() ==
+                                                                  emailController
+                                                                      .value
+                                                                      .text){
+
+                                                                _collabCardList.remove(card);
+                                                              }
+
+                                                            });
+
+                                                            for(int i=0;
+                                                            i<_collabCardList
+                                                                .length;i++){
+
+                                                              if(
+                                                              (_collabCardList[i].key
+                                                              as ValueKey)
+                                                                  .value
+                                                                  .toString() ==
+                                                                  emailController
+                                                                      .value
+                                                                      .text){
+
+                                                                _collabCardList.removeAt(i);
+                                                              }
+
+                                                            }
+
+                                                            print(
+                                                                "_collabCardList.length:${_collabCardList.length}");
+                                                            _setStateOuter(
+                                                                () {});*/
+
+                                                          },
+                                                          icon: Icon(
+                                                            Icons.close,
+                                                            size: 24.0,
+                                                            color: Colors.black,
+                                                          )),
+                                                    ],
+                                                  ),
+                                                ));
+                                                _setStateOuter(() {
+                                                  emailController.clear();
+                                                });
+                                              } else {
+                                                print('form invalid!');
+                                              }
+                                              //TODO check existence in
+                                              // AUTH DB
+                                            },
+                                            icon: Icon(
+                                              Icons.check,
+                                              size: 24.0,
+                                              color: Colors.black26,
+                                            )),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            ],
+          ),
+        );
+      }),
+    );
+  }
+
+  // Returns true if email address is in use.
+  Future<bool> checkIfEmailInUse(String emailAddress) async {
+    print("checkIfEmailInUse $emailAddress");
+    try {
+      // Fetch sign-in methods for the email address
+      final list =
+          await FirebaseAuth.instance.fetchSignInMethodsForEmail(emailAddress);
+
+      // In case list is not empty
+      if (list.isNotEmpty) {
+        // Return true because there is an existing
+        // user using the email address
+
+        return true;
+      } else {
+        print("checkIfEmailInUse email not found!");
+        // Return false because email address is not in use
+        return false;
+      }
+    } catch (error) {
+      print("checkIfEmailInUse catch block");
+      return true;
+    }
+  }
+
+  /* Future<bool> isEmailExistsInDB(String email, String password) async {
+    print("in isEmailExistsInDB");
+    try {
+      await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(email: email, password: email)
+          .then((value) {});
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'email-already-in-use') {
+        print('Email already in use');
+        return true;
+      }
+    }
+
+    return false;
+  }*/
+
+/*  String getExceptionText(Exception e) {
+    print("inside getExceptionText");
+    if (e is PlatformException) {
+      print("inside getExceptionText msg ${e.message}");
+      switch (e.message) {
+        case 'There is no user record corresponding to this identifier. The user may have been deleted.':
+          return 'User with this e-mail not found.';
+          break;
+        case 'The password is invalid or the user does not have a password.':
+          return 'Invalid password.';
+          break;
+        case 'A network error (such as timeout, interrupted connection or unreachable host) has occurred.':
+          return 'No internet connection.';
+          break;
+        case 'The email address is already in use by another account.':
+          return 'Email address is already taken.';
+          break;
+        default:
+          return 'Unknown error occured.';
+      }
+    } else {
+      return 'Unknown error occured.';
+    }
+  }*/
 
   showReminderDialog(BuildContext context, ReminderModel model) {
     int currentTimeInMillis = DateTime.now().millisecondsSinceEpoch;
@@ -1658,6 +2155,7 @@ class _LandingPageState extends State<LandingPage> {
                   Widget continueButton = TextButton(
                     child: Text("Yes"),
                     onPressed: () async {
+                      await clearAllData();
                       SharedPreferences _prefs =
                           await SharedPreferences.getInstance();
                       _prefs.clear();
@@ -1699,6 +2197,12 @@ class _LandingPageState extends State<LandingPage> {
       ],
       elevation: 8.0,
     );
+  }
+
+  Future<void> clearAllData() async {
+    await notesDB.rawQuery("DELETE FROM notes");
+    await notesDB.rawQuery("DELETE FROM TblReminders");
+    await notesDB.rawQuery("DELETE FROM TblLabels");
   }
 
   Future<Null> _selectDate(BuildContext context) async {

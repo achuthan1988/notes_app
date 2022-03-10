@@ -145,8 +145,11 @@ class _NewNotePageState extends State<NewNotePage> {
   Future<void> addNoteToFireStore(NotesModel model) {
     print("in addNoteToFireStore()");
     notesCollection
-        .add(model.toMap())
-        .then((value) => print("Notes Added"))
+        .add(model.toFireStoreMap())
+        .then((value) =>
+        notesCollection.doc(value.id).update({"userIDObj": FieldValue
+            .arrayUnion
+          ([model.userId])}))
         .catchError((error) => print("Failed to add note: $error"));
   }
 

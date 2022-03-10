@@ -68,6 +68,25 @@ class NotesModel {
     };
   }
 
+
+  Map<String, dynamic> toFireStoreMap() {
+    return {
+      'id': id,
+      'noteTitle': noteTitle,
+      'noteContent': noteContent,
+      'noteType': noteType,
+      'noteBgColorHex': noteBgColorHex,
+      'noteMediaPath': noteMediaPath,
+      'noteImgBase64': noteImgBase64,
+      'noteLabelIdsStr': noteLabelIdsStr,
+      'noteDateOfDeletion': noteDateOfDeletion,
+      'isNotePinned': isNotePinned,
+      'isNoteArchived': isNoteArchived,
+      'isNoteTrashed': isNoteTrashed,
+      'reminderID': reminderID
+    };
+  }
+
   NotesModel.fromJson(Map<String, dynamic> json)
       : id = json['id'],
         noteTitle = json['noteTitle'],
